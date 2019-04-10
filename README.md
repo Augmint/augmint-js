@@ -30,6 +30,7 @@ Try it: **[www.augmint.org](http://www.augmint.org)**
 ## Other components
 
 [Web frontend](https://github.com/Augmint/augmint-web)
+
 [Solidty contracts](https://github.com/Augmint/augmint-contracts)
 
 ## Contribution
