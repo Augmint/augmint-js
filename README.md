@@ -43,7 +43,7 @@ We are seeking for great minds to extend our core team. Contribution in any area
 
 Drop us an email: hello@augmint.cc
 
-Say hi on our [Discord server](https://discord.gg/PwDmsnu): [![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu)
+Say hi on our [Discord server](https://discord.gg/PwDmsnu): [![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu) [![Greenkeeper badge](https://badges.greenkeeper.io/Augmint/augmint-js.svg)](https://greenkeeper.io/)
 
 Talk to us on [Telegram](https://t.me/augmint)
 
