@@ -1,12 +1,12 @@
 const BigNumber = require("bignumber.js");
-const { cost } = require("gas.js");
-const { constants } = require("constants.js");
-const Contract = require("Contract.js");
+const { cost } = require("./gas.js");
+const { constants } = require("./constants.js");
+const Contract = require("./Contract.js");
 
-const AugmintToken = require("AugmintToken.js");
-const Rates = require("Rates.js");
+const AugmintToken = require("./AugmintToken.js");
+const Rates = require("./Rates.js");
 
-const ExchangeArtifact = require("abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json");
+const ExchangeArtifact = require("./abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json");
 
 /**
  * Augmint Exchange contract class

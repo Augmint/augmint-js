@@ -1,7 +1,7 @@
 const { assert } = require("chai");
 
-const EthereumConnection = require("EthereumConnection.js");
-const AugmintToken = require("AugmintToken.js");
+const EthereumConnection = require("./EthereumConnection.js");
+const AugmintToken = require("./AugmintToken.js");
 
 const CCY = "EUR";
 
