@@ -1,0 +1,39 @@
+dist: xenial # https://docs.travis-ci.com/user/reference/xenial/
+language: node_js
+cache:
+    directories:
+        - "node_modules"
+        - "augmint-contracts/node_modules"
+before_install:
+    - export BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
+    - yarn global add greenkeeper-lockfile@1
+install:
+    - |
+        if [[ $BRANCH == "greenkeeper/"* ]]; then
+          echo Greenkeeper build using .yarnrc.greenkeeper; cp .yarnrc.greenkeeper .yarnrc; yarn install;
+        else
+          echo Normal build using .yarnrc and --frozen-lockfile option; yarn install --frozen-lockfile;
+        fi
+    - cd augmint-contracts && yarn install && cd ..
+before_script:
+    - greenkeeper-lockfile-update
+    - yarn ganache:run > ganache.out &
+    - yarn contracts:migrate
+script:
+    - yarn test
+after_script: greenkeeper-lockfile-upload
+# discord webhooks hack : https://github.com/DiscordHooks/travis-ci-discord-webhook  until this is released: https://github.com/travis-ci/travis-tasks/pull/71
+after_success:
+    - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
+    - chmod +x send.sh
+    - ./send.sh success $DISCORD_WEBHOOK_URL
+after_failure:
+    - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
+    - chmod +x send.sh
+    - ./send.sh failure $DISCORD_WEBHOOK_URL
+env:
+    global:
+        # GH_TOKEN for greenkeeper
+        - secure: SSgqXUNxvwXsEz2WuY72oqhIy+OOKCtuFejf6vPODnY+eGxYIZIskganepdJmZkFF0EklPi44D3DNnm1yeQNuSrExC1Fq49qiHRhRsa22soY2JrvXsGHA8x3tbZ4FxexYzb7p4Ej75TlAb2F9kRr+r9M0eqq/pD4IjdT9Zy05E7zodXxANmGbct6DsYyqSvxyHeH5cYsK33HA8UmrIbose2VHjGwvPI4T64LxEEla9mnWDLmN5gmLNYPglUWckJlRwXRGOyswedO7FI1P2xk+e3nByYpE+SI0KLKnth9I5PBYTwrPU7Uy2JeGM8bpZK86tRSeMvFb5pn5h0sW14TWQdzlUpaXDI8/+o1m9BrgTIC38fw3VMm5Vo/EWZXG9zm1A56hVHf7NJkWeOC2KoPsCwCAViOKLMsErCfa+xOf2E+/JzvUpS78DiMmgouuzQ59NKU6BhMUsHDBcQNP5YS8sIRYedtEfsO9O4iwx5BG3+izs5zHEiJ1vUN8ACOa3TJ0/PKbGSgZx8lmLW8dRJw9P1i1N5LSH5X/xuAd/b1HbiM4ItkCq28WKVlQRUlqO+WYcOYdbNMQ4u6Xs+8gqdC2zGwaZ7YBMr2lcXKxJtrYHx4b95WCw7iBVWwuA5zXDDiAFpvCjV/etJ+i0GplqFL1ziFZ3Nb2R7wGezak0LffSc=
+        # DISCORD_WEBHOOK_URL
+        - secure: CpGTbFJ6TmArvy5ecr0wNhEQQa9FrkgUbc3J2aV1beO2zRxceUqFICBWUyvp79MFQrXPsy0XBSU8ztAWdqhxZNdhFrXH+6XJfc+0Ls3ky9aDJd5784rkcJ+y65XiZnc4q60B87I/7WnXyWmSeoZLpt3EuvdjNMb1mtR+el7G6cOcA5gk2IJGGnJccw75zfg+VDmYDEPXnWCO5HGjnpXKWXH0rGaqDUfdgzyfWG76aGIF0OXvKlVR7fDcV5Cp5etLnx+zQUDW8DJRhvSKWiDy1coPCTEukZ5jsipqvPd+E0PKbKdgjyv0sDfyxB6WCyERiKhpJJFO+N9siDhZkldIeZd2P+06gbcGIf/RBi0Tn2Wldmno0tWeoC6wfmX6nXT70cjNGECmkvH3dwqSShrv+IcnjlEM4vJnhNdSR9xcSYkwNRV40zYlm7A1QWwq/CcSEHnaQ9MAxreneNsY8F+SUhhcbq18vGCqvx6lRQvLeD0EhxYZtjd7Fuq2kTVWLF723oO3YoOnEgR7jvraUznZ8lFX6SO2qWElICCD4RreCnuh4fhRGTYn5Ve8Kbwx06mnfuH5jRtdTfQ+1eNk6WBDnGYCsJZCd2EIIHoA5+9J8Qx16AuB649dJDjDgfucns+anN31xMdnUI6vDC93CyGcXgWx9Xc1lLUbJqUaUykNSMk=
