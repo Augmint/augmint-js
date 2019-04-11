@@ -1,5 +1,5 @@
 const assert = require("chai").assert;
-const EthereumConnection = require("EthereumConnection.js");
+const EthereumConnection = require("./EthereumConnection.js");
 const sinon = require("sinon");
 
 let ethereumConnection;

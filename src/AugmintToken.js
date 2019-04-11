@@ -1,5 +1,5 @@
-const Contract = require("Contract.js");
-const TokenAEurArtifact = require("abiniser/abis/TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5.json");
+const Contract = require("./Contract.js");
+const TokenAEurArtifact = require("./abiniser/abis/TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5.json");
 
 class AugmintToken extends Contract {
     constructor() {

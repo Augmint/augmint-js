@@ -1,7 +1,7 @@
 module.exports = setExitHandler;
 
-const log = require("helpers/log.js")("sigintHandler");
-const promiseTimeout = require("helpers/promiseTimeout.js");
+const log = require("./log.js")("sigintHandler");
+const promiseTimeout = require("./promiseTimeout.js");
 const DEFAULT_EXIT_TIMEOUT = 10000; // how much to wait before timing out disconnect (in ms)
 const SIGNALS = ["SIGINT", "SIGQUIT", "SIGTERM"];
 

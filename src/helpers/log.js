@@ -1,4 +1,4 @@
-require("helpers/env.js");
+require("./env.js");
 const ulog = require("ulog");
 const log = moduleName => ulog(moduleName);
 

@@ -1,7 +1,7 @@
 const BigNumber = require("bignumber.js");
-const { constants } = require("constants.js");
-const Contract = require("Contract.js");
-const RatesArtifact = require("abiniser/abis/Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce.json");
+const { constants } = require("./constants.js");
+const Contract = require("./Contract.js");
+const RatesArtifact = require("./abiniser/abis/Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce.json");
 
 class Rates extends Contract {
     constructor() {

@@ -1,7 +1,7 @@
 const assert = require("chai").assert;
-const Exchange = require("Exchange.js");
-const ganache = require("testHelpers/ganache.js");
-const EthereumConnection = require("EthereumConnection.js");
+const Exchange = require("./Exchange.js");
+const ganache = require("./testHelpers/ganache.js");
+const EthereumConnection = require("./EthereumConnection.js");
 
 describe("MatchMultipleOrders onchain", () => {
     const ethereumConnection = new EthereumConnection();

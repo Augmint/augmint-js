@@ -1,7 +1,7 @@
 const assert = require("chai").assert;
 const nodeAssert = require("assert");
-const Contract = require("Contract.js");
-const EthereumConnection = require("EthereumConnection.js");
+const Contract = require("./Contract.js");
+const EthereumConnection = require("./EthereumConnection.js");
 const ethereumConnection = new EthereumConnection();
 
 describe("constructor", () => {
