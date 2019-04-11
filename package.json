@@ -36,7 +36,10 @@
     "sinon": "7.3.1"
   },
   "scripts": {
-    "test": "yarn cross-env NODE_ENV=test NODE_PATH=./src yarn mocha 'src/**/*.test.js' --exit"
+    "test": "yarn cross-env NODE_ENV=test NODE_PATH=./src yarn mocha 'src/**/*.test.js' --exit",
+    "contracts:migrate": "cd augmint-contracts && yarn migrate",
+    "ganache:run": "cd augmint-contracts && yarn ganache:run",
+    "contracts:runmigrate": "cd augmint-contracts && yarn runmigrate"
   },
   "greenkeeper": {
     "ignore": [
