@@ -5,7 +5,7 @@
 
 [![Build Status](https://travis-ci.org/Augmint/augmint-js.svg?branch=staging)](https://travis-ci.org/Augmint/augmint-js)
 [![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu)
-[![license](https://img.shields.io/github/license/Augmint/augmint-js.svg)](https://github.com/Augmint/augmint-js/blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/Augmint/augmint-js.svg)](https://github.com/Augmint/augmint-js/blob/master/LICENSE) [![Greenkeeper badge](https://badges.greenkeeper.io/Augmint/augmint-js.svg)](https://greenkeeper.io/)
 
 Decentralised stable cryptocurrency on Ethereum
 
@@ -43,7 +43,7 @@ We are seeking for great minds to extend our core team. Contribution in any area
 
 Drop us an email: hello@augmint.cc
 
-Say hi on our [Discord server](https://discord.gg/PwDmsnu): [![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu) [![Greenkeeper badge](https://badges.greenkeeper.io/Augmint/augmint-js.svg)](https://greenkeeper.io/)
+Say hi on our [Discord server](https://discord.gg/PwDmsnu): [![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu)
 
 Talk to us on [Telegram](https://t.me/augmint)
 
