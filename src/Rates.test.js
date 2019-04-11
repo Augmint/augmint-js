@@ -1,7 +1,7 @@
 const { assert } = require("chai");
 const BigNumber = require("bignumber.js");
-const EthereumConnection = require("EthereumConnection.js");
-const Rates = require("Rates.js");
+const EthereumConnection = require("./EthereumConnection.js");
+const Rates = require("./Rates.js");
 
 const { takeSnapshot, revertSnapshot } = require("testHelpers/ganache.js");
 const CCY = "EUR";

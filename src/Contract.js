@@ -1,4 +1,4 @@
-const contractConnection = require("helpers/contractConnection.js");
+const contractConnection = require("./helpers/contractConnection.js");
 
 /**
  * Generic Contract super class
