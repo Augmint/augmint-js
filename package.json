@@ -45,5 +45,6 @@
     "ignore": [
       "bignumber.js"
     ]
-  }
+  },
+  "main": "src/index.js"
 }
