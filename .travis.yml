@@ -1,5 +1,7 @@
 dist: xenial # https://docs.travis-ci.com/user/reference/xenial/
 language: node_js
+services:
+    - docker
 cache:
     directories:
         - "node_modules"
@@ -16,11 +18,10 @@ install:
         else
           echo Normal build using .yarnrc and --frozen-lockfile option; yarn install --frozen-lockfile;
         fi
-    - cd augmint-contracts && yarn install && cd ..
 before_script:
     - greenkeeper-lockfile-update
-    - yarn ganache:run > ganache.out &
-    - yarn contracts:migrate
+    - yarn ganache:start > /dev/null &
+    - wait-on tcp:localhost:8545 # ganache
 script:
     - yarn test
 after_script: greenkeeper-lockfile-upload
