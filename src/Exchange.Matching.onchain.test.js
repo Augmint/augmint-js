@@ -1,3 +1,4 @@
+const loadEnv = require("./utils/env.js")();
 const assert = require("chai").assert;
 const Exchange = require("./Exchange.js");
 const ganache = require("./testHelpers/ganache.js");

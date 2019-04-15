@@ -1,3 +1,4 @@
+const loadEnv = require("./utils/env.js")();
 const expect = require("chai").expect;
 const exchange = new (require("Exchange.js"))();
 const BigNumber = require("bignumber.js");
