@@ -12,7 +12,7 @@ const fs = require("fs");
 const dotenvConfig = require("dotenv").config;
 const DOTENV_PATH = ".env";
 
-module.exports = function(NODE_ENV = process.env.NODE_ENV) {
+module.exports = (NODE_ENV = process.env.NODE_ENV) => {
     if (!NODE_ENV) {
         throw new Error("The NODE_ENV environment variable is required but was not specified.");
     }
