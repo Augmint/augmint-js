@@ -66,7 +66,7 @@ describe("MatchMultipleOrders onchain", () => {
 
         // ganache account[0] private key, generated with  mnemonic fixed in ganache launch script
         const privateKey = "0x85b3d743fbe4ec4e2b58947fa5484da7b2f5538b0ae8e655646f94c95d5fb949";
-        console.log(ethereumConnection.accounts[0]);
+
         const receipt = await exchange.signAndSendMatchMultipleOrders(
             ethereumConnection.accounts[0],
             privateKey,
