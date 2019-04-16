@@ -3,7 +3,7 @@ const EthereumConnection = require("./EthereumConnection.js");
 const sinon = require("sinon");
 const { loadEnv } = require("./utils");
 
-loadEnv()
+loadEnv();
 
 let ethereumConnection;
 const providers = [

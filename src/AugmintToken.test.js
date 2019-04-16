@@ -5,7 +5,7 @@ const AugmintToken = require("./AugmintToken.js");
 
 const CCY = "EUR";
 
-const config = loadEnv()
+const config = loadEnv();
 
 describe("AugmintToken connection", () => {
     const ethereumConnection = new EthereumConnection(config);

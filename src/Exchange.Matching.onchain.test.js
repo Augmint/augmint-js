@@ -4,7 +4,7 @@ const Exchange = require("./Exchange.js");
 const ganache = require("./testHelpers/ganache.js");
 const EthereumConnection = require("./EthereumConnection.js");
 
-const config = loadEnv()
+const config = loadEnv();
 
 describe("MatchMultipleOrders onchain", () => {
     const ethereumConnection = new EthereumConnection(config);

@@ -4,7 +4,7 @@ const nodeAssert = require("assert");
 const Contract = require("./Contract.js");
 const EthereumConnection = require("./EthereumConnection.js");
 
-const config = loadEnv()
+const config = loadEnv();
 const ethereumConnection = new EthereumConnection(config);
 
 describe("constructor", () => {
