@@ -12,7 +12,7 @@ if ! [ -x "$(command -v docker)" ] ; then
 fi
 
 function run_ganache {
-    docker run --init --name $CONTAINER_NAME -p 8545:8545 $DOCKER_IMAGE --db ./dockerLocalchaindb \
+    docker run --init --detach --name $CONTAINER_NAME -p 8545:8545 $DOCKER_IMAGE --db ./dockerLocalchaindb \
                 --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 \
                 -m "hello build tongue rack parade express shine salute glare rate spice stock"
 }
