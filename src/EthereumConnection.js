@@ -99,7 +99,7 @@ class EthereumConnection extends EventEmitter {
         let result = false;
         if (this.web3) {
             result = await promiseTimeout(this.ETHEREUM_ISLISTENING_TIMEOUT, this.web3.eth.net.isListening()).catch(
-                e => {
+                () => {
                     // Need timeout b/c listening pending forever when called after a connection.close() TODO: test if needed in newer web3 than beta 33
                     // log.debug("isConnected isListening ERROR (returning false)", e);
                     return false;
