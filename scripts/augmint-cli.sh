@@ -15,10 +15,10 @@ case "$1" in
     ganache )
         case "$2" in
             start )
-                docker start ganache || \
+                docker start $CONTAINER_NAME || \
                 docker run --init --name $CONTAINER_NAME -p 8545:8545 $DOCKER_IMAGE --db ./dockerLocalchaindb \
                 --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 \
-                -m \"hello build tongue rack parade express shine salute glare rate spice stock\"
+                -m "hello build tongue rack parade express shine salute glare rate spice stock"
             ;;
 
             stop )
