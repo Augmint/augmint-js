@@ -1,4 +1,4 @@
-const loadEnv = require("./utils/env.js")();
+require("./utils/env.js")();
 const assert = require("chai").assert;
 const nodeAssert = require("assert");
 const Contract = require("./Contract.js");

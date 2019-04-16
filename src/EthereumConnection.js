@@ -1,4 +1,4 @@
-require("./utils/env.js");
+require("./utils/env.js")();
 const log = require("./utils/log.js")("EthereumConnection");
 const EventEmitter = require("events");
 const promiseTimeout = require("./utils/promiseTimeout.js");
