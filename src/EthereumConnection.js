@@ -1,8 +1,8 @@
-require("./helpers/env.js");
-const log = require("./helpers/log.js")("EthereumConnection");
+require("./utils/env.js")();
+const log = require("./utils/log.js")("EthereumConnection");
 const EventEmitter = require("events");
-const promiseTimeout = require("./helpers/promiseTimeout.js");
-const setExitHandler = require("./helpers/sigintHandler.js");
+const promiseTimeout = require("./utils/promiseTimeout.js");
+const setExitHandler = require("./utils/sigintHandler.js");
 const Web3 = require("web3");
 
 // TODO: make these a DEFAULT_OPTIONS = {...} object and all options to EthereumConnection.options = { ...}

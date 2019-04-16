@@ -1,3 +1,4 @@
+require("./utils/env.js")();
 const { expect, assert } = require("chai");
 const BigNumber = require("bignumber.js");
 const EthereumConnection = require("EthereumConnection.js");

@@ -1,3 +1,4 @@
+require("./utils/env.js")();
 const assert = require("chai").assert;
 const EthereumConnection = require("./EthereumConnection.js");
 const sinon = require("sinon");
