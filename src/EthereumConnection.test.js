@@ -1,6 +1,11 @@
 const assert = require("chai").assert;
 const EthereumConnection = require("./EthereumConnection.js");
 const sinon = require("sinon");
+const { loadEnv } = require("./utils");
+
+loadEnv();
+
+const TEST_TIMEOUT = 10000; // infura is occasionaly slow to connect
 
 let ethereumConnection;
 const providers = [
@@ -31,7 +36,9 @@ describe("EthereumConnection", () => {
     });
 
     providers.forEach(providerOptions => {
-        describe("EthereumConnection -" + providerOptions.name, () => {
+        describe("EthereumConnection -" + providerOptions.name, function() {
+            this.timeout(TEST_TIMEOUT);
+
             it("should connect & disconnect", async () => {
                 ethereumConnection = new EthereumConnection(providerOptions);
                 const connectedSpy = sinon.spy();
