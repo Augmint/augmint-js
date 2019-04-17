@@ -1,15 +1,18 @@
-require("./utils/env.js")();
 const log = require("./utils/log.js")("EthereumConnection");
 const EventEmitter = require("events");
 const promiseTimeout = require("./utils/promiseTimeout.js");
 const setExitHandler = require("./utils/sigintHandler.js");
 const Web3 = require("web3");
 
-// TODO: make these a DEFAULT_OPTIONS = {...} object and all options to EthereumConnection.options = { ...}
-const DEFAULT_ETHEREUM_CONNECTION_TIMEOUT = 10000;
-const DEFAULT_ETHEREUM_CONNECTION_CLOSE_TIMEOUT = 10000;
-const DEFAULT_ETHEREUM_ISLISTENING_TIMEOUT = 1000; // used at isConnected() for web3.eth.net.isListening() timeout. TODO: check if we still need with newer web3 or better way?
-const DEFAULT_ETHEREUM_CONNECTION_CHECK_INTERVAL = 1000;
+const DEFAULTS = {
+    ETHEREUM_CONNECTION_TIMEOUT: 10000,
+    ETHEREUM_CONNECTION_CLOSE_TIMEOUT: 10000,
+    ETHEREUM_ISLISTENING_TIMEOUT: 1000,
+    ETHEREUM_CONNECTION_CHECK_INTERVAL: 1000,
+    PROVIDER_TYPE: "websocket",
+    PROVIDER_URL: "ws://localhost:8545/",
+    INFURA_PROJECT_ID: ""
+};
 
 /**
  * Connect to Ethereum network via web3
@@ -24,7 +27,7 @@ const DEFAULT_ETHEREUM_CONNECTION_CHECK_INTERVAL = 1000;
  * @extends EventEmitter
  */
 class EthereumConnection extends EventEmitter {
-    constructor(options = {}) {
+    constructor(runtimeOptions = {}) {
         super();
         /**
          * @namespace
@@ -52,29 +55,19 @@ class EthereumConnection extends EventEmitter {
 
         this.accounts = null;
 
-        this.ETHEREUM_CONNECTION_CHECK_INTERVAL =
-            options.ETHEREUM_CONNECTION_CHECK_INTERVAL ||
-            process.env.ETHEREUM_CONNECTION_CHECK_INTERVAL ||
-            DEFAULT_ETHEREUM_CONNECTION_CHECK_INTERVAL;
+        const options = Object.assign({}, DEFAULTS, runtimeOptions);
 
-        this.ETHEREUM_CONNECTION_TIMEOUT =
-            options.ETHEREUM_CONNECTION_TIMEOUT ||
-            process.env.ETHEREUM_CONNECTION_TIMEOUT ||
-            DEFAULT_ETHEREUM_CONNECTION_TIMEOUT;
+        this.ETHEREUM_CONNECTION_CHECK_INTERVAL = options.ETHEREUM_CONNECTION_CHECK_INTERVAL;
 
-        this.ETHEREUM_ISLISTENING_TIMEOUT =
-            options.ETHEREUM_ISLISTENING_TIMEOUT ||
-            process.env.ETHEREUM_ISLISTENING_TIMEOUT ||
-            DEFAULT_ETHEREUM_ISLISTENING_TIMEOUT;
+        this.ETHEREUM_CONNECTION_TIMEOUT = options.ETHEREUM_CONNECTION_TIMEOUT;
 
-        this.ETHEREUM_CONNECTION_CLOSE_TIMEOUT =
-            options.ETHEREUM_CONNECTION_CLOSE_TIMEOUT ||
-            process.env.ETHEREUM_CONNECTION_CLOSE_TIMEOUT ||
-            DEFAULT_ETHEREUM_CONNECTION_CLOSE_TIMEOUT;
+        this.ETHEREUM_ISLISTENING_TIMEOUT = options.ETHEREUM_ISLISTENING_TIMEOUT;
 
-        this.PROVIDER_TYPE = options.PROVIDER_TYPE || process.env.PROVIDER_TYPE;
-        this.PROVIDER_URL = options.PROVIDER_URL || process.env.PROVIDER_URL;
-        this.INFURA_PROJECT_ID = options.INFURA_PROJECT_ID || process.env.INFURA_PROJECT_ID || "";
+        this.ETHEREUM_CONNECTION_CLOSE_TIMEOUT = options.ETHEREUM_CONNECTION_CLOSE_TIMEOUT;
+
+        this.PROVIDER_TYPE = options.PROVIDER_TYPE;
+        this.PROVIDER_URL = options.PROVIDER_URL;
+        this.INFURA_PROJECT_ID = options.INFURA_PROJECT_ID;
 
         setExitHandler(this._exit.bind(this), "ethereumConnection", this.ETHEREUM_CONNECTION_CLOSE_TIMEOUT + 1000);
 

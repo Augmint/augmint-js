@@ -1,4 +1,4 @@
-require("./utils/env.js")();
+const { loadEnv } = require("./utils");
 const { expect, assert } = require("chai");
 const BigNumber = require("bignumber.js");
 const EthereumConnection = require("EthereumConnection.js");
@@ -6,10 +6,11 @@ const Exchange = require("Exchange.js");
 
 const { constants } = require("constants.js");
 const { takeSnapshot, revertSnapshot } = require("testHelpers/ganache.js");
+const config = loadEnv();
 
 describe("connection", () => {
     const CCY = "EUR";
-    const ethereumConnection = new EthereumConnection();
+    const ethereumConnection = new EthereumConnection(config);
     const exchange = new Exchange();
 
     it("should connect to latest contract", async () => {
@@ -32,7 +33,7 @@ describe("connection", () => {
 });
 
 describe("fetchOrderBook", () => {
-    const ethereumConnection = new EthereumConnection();
+    const ethereumConnection = new EthereumConnection(config);
     const exchange = new Exchange();
     let snapshotId;
 

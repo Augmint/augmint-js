@@ -1,9 +1,11 @@
-require("./utils/env.js")();
+const { loadEnv } = require("./utils");
 const assert = require("chai").assert;
 const nodeAssert = require("assert");
 const Contract = require("./Contract.js");
 const EthereumConnection = require("./EthereumConnection.js");
-const ethereumConnection = new EthereumConnection();
+
+const config = loadEnv();
+const ethereumConnection = new EthereumConnection(config);
 
 describe("constructor", () => {
     it("should be created", () => {
