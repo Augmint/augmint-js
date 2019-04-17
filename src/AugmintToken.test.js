@@ -1,12 +1,14 @@
-require("./utils/env.js")();
+const { loadEnv } = require("./utils");
 const { assert } = require("chai");
 const EthereumConnection = require("./EthereumConnection.js");
 const AugmintToken = require("./AugmintToken.js");
 
 const CCY = "EUR";
 
+const config = loadEnv();
+
 describe("AugmintToken connection", () => {
-    const ethereumConnection = new EthereumConnection();
+    const ethereumConnection = new EthereumConnection(config);
 
     it("should connect to latest contract", async () => {
         await ethereumConnection.connect();

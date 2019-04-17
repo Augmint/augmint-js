@@ -1,4 +1,4 @@
-require("./utils/env.js")();
+const { loadEnv } = require("./utils");
 const { assert } = require("chai");
 const BigNumber = require("bignumber.js");
 const EthereumConnection = require("./EthereumConnection.js");
@@ -8,9 +8,10 @@ const Errors = require("./Errors.js");
 const { takeSnapshot, revertSnapshot } = require("testHelpers/ganache.js");
 const CCY = "EUR";
 const DECIMALS_DIV = 100;
+const config = loadEnv();
 
 describe("Rates connection", () => {
-    const ethereumConnection = new EthereumConnection();
+    const ethereumConnection = new EthereumConnection(config);
     const rates = new Rates();
 
     it("should connect to latest contract", async () => {
@@ -25,7 +26,7 @@ describe("Rates connection", () => {
 });
 
 describe("Rates getters", () => {
-    const ethereumConnection = new EthereumConnection();
+    const ethereumConnection = new EthereumConnection(config);
     const rates = new Rates();
     const EXPECTED_RATE = 213.14;
     let snapshotId;
@@ -77,7 +78,7 @@ describe("Rates getters", () => {
 });
 
 describe("Rates txs", () => {
-    const ethereumConnection = new EthereumConnection();
+    const ethereumConnection = new EthereumConnection(config);
     const rates = new Rates();
     let snapshotId;
 

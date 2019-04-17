@@ -18,6 +18,9 @@
   "directories": {
     "test": "test"
   },
+  "bin": {
+    "augmint-cli": "./scripts/augmint-cli.sh"
+  },
   "engines": {
     "node": "^10.15.3",
     "yarn": "1.15.2"
@@ -38,8 +41,8 @@
   },
   "scripts": {
     "test": "yarn cross-env NODE_ENV=test NODE_PATH=./src yarn mocha 'src/**/*.test.js' --exit",
-    "ganache:start": "docker start ganache || docker run --init --name ganache -p 8545:8545 augmint/contracts:v1.0.4 --db ./dockerLocalchaindb --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 -m \"hello build tongue rack parade express shine salute glare rate spice stock\"",
-    "ganache:stop": "docker stop ganache"
+    "ganache:start": "scripts/augmint-cli.sh ganache start",
+    "ganache:stop": "scripts/augmint-cli.sh ganache stop"
   },
   "greenkeeper": {
     "ignore": [

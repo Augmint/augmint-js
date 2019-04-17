@@ -13,6 +13,26 @@ Decentralised stable cryptocurrency on Ethereum
 
 This lib is heavily under construction. Anything can happen.
 
+```
+const { Augmint, utils } = require('@augmint/js');
+// docs are coming...
+```
+
+## augmint-cli
+
+```
+$ yarn augmint-cli  # NB: if you are running from within the augmin-js repo then: ./scripts/augmint-cli.sh
+
+augmint-cli : start / stop augmint contracts. Docker image: augmint/contracts:vx.x.x
+
+    Usage: /usr/local/bin/augmint-cli ganache {start | stop | run}
+      start: tries to start container named ganache . If fails then runs (downloads, creates and starts) the container from augmint/contracts:vx.x.x
+      stop: plain docker stop augmint/contracts:vx.x.x (doesn't check if exists)
+      run: stops and removes the ganache container if exists. then runs it
+```
+
+Also recreates the container if it exists but image is not as expected (ie. there was a version upgrade)
+
 ## Concept
 
 Augmint provides digital tokens, value of each token pegged to a fiat currency.
@@ -55,8 +75,8 @@ The project was born at [DECENT Labs](http://www.decent.org)
 
 ### Concept, initial version
 
-- [szerintedmi](https://github.com/szerintedmi)
-- [Charlie](https://github.com/krosza)
+-   [szerintedmi](https://github.com/szerintedmi)
+-   [Charlie](https://github.com/krosza)
 
 Check the whole team on [augmint.org](http://www.augmint.org)
 
