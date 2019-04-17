@@ -4,7 +4,6 @@ const promiseTimeout = require("./utils/promiseTimeout.js");
 const setExitHandler = require("./utils/sigintHandler.js");
 const Web3 = require("web3");
 
-// TODO: make these a DEFAULT_OPTIONS = {...} object and all options to EthereumConnection.options = { ...}
 const DEFAULTS = {
     ETHEREUM_CONNECTION_TIMEOUT: 10000,
     ETHEREUM_CONNECTION_CLOSE_TIMEOUT: 10000,
