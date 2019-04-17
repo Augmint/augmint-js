@@ -5,6 +5,8 @@ const { loadEnv } = require("./utils");
 
 loadEnv();
 
+const TEST_TIMEOUT = 10000; // infura is occasionaly slow to connect
+
 let ethereumConnection;
 const providers = [
     { name: "local websocket", PROVIDER_URL: "ws://localhost:8545", PROVIDER_TYPE: "websocket" },
@@ -34,7 +36,9 @@ describe("EthereumConnection", () => {
     });
 
     providers.forEach(providerOptions => {
-        describe("EthereumConnection -" + providerOptions.name, () => {
+        describe("EthereumConnection -" + providerOptions.name, function() {
+            this.timeout(TEST_TIMEOUT);
+
             it("should connect & disconnect", async () => {
                 ethereumConnection = new EthereumConnection(providerOptions);
                 const connectedSpy = sinon.spy();
