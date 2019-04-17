@@ -3,6 +3,7 @@ const { assert } = require("chai");
 const BigNumber = require("bignumber.js");
 const EthereumConnection = require("./EthereumConnection.js");
 const Rates = require("./Rates.js");
+const Errors = require("./Errors.js");
 
 const { takeSnapshot, revertSnapshot } = require("testHelpers/ganache.js");
 const CCY = "EUR";
@@ -57,7 +58,11 @@ describe("Rates getters", () => {
         assert.equal(ethFiatRate, EXPECTED_RATE);
     });
 
-    it("getBnEthFiatRate - invalid ccy");
+    it("getBnEthFiatRate - invalid ccy", async () => {
+        await await rates.getEthFiatRate("INVALID").catch(error => {
+            assert(error instanceof Errors.ZeroRateError);
+        });
+    });
 
     it("getAugmintRate", async () => {
         const augmintRate = await rates.getAugmintRate(CCY);
@@ -65,7 +70,11 @@ describe("Rates getters", () => {
         assert.instanceOf(augmintRate.lastUpdated, Date);
     });
 
-    it("getAugmintRate - invalid ccy");
+    it("getAugmintRate - invalid ccy", async () => {
+        await await rates.getAugmintRate("INVALID").catch(error => {
+            assert(error instanceof Errors.ZeroRateError);
+        });
+    });
 });
 
 describe("Rates txs", () => {
@@ -87,6 +96,8 @@ describe("Rates txs", () => {
     });
 
     it("setRate");
+
+    it("setRate = 0");
 
     it("setRate - invalid ccy");
 

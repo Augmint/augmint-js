@@ -2,6 +2,7 @@ const BigNumber = require("bignumber.js");
 const { constants } = require("./constants.js");
 const Contract = require("./Contract.js");
 const RatesArtifact = require("./abiniser/abis/Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce.json");
+const Errors = require("./Errors.js");
 
 class Rates extends Contract {
     constructor() {
@@ -9,10 +10,21 @@ class Rates extends Contract {
     }
 
     async getBnEthFiatRate(currency) {
+        const rate = await this.instance.methods
+            .convertFromWei(this.web3.utils.asciiToHex(currency), constants.ONE_ETH_IN_WEI.toString())
+            .call()
+            .catch(error => {
+                if (error.message.includes("revert rates[bSymbol] must be > 0")) {
+                    throw new Errors.ZeroRateError(
+                        `getBnEthFiatRate returned zero rate for currency: ${currency}. Is it supported and has rate set in Rates contract?`
+                    );
+                } else {
+                    throw error;
+                }
+            });
+
         return new BigNumber(
-            (await this.instance.methods
-                .convertFromWei(this.web3.utils.asciiToHex(currency), constants.ONE_ETH_IN_WEI.toString())
-                .call()) / constants.DECIMALS_DIV // // TODO: change to augmintToken.decimalsDiv
+            rate / constants.DECIMALS_DIV // // TODO: change to augmintToken.decimalsDiv
         );
     }
 
