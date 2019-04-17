@@ -1,8 +1,8 @@
 const EventEmitter = require("events");
 const Web3 = require("web3");
-import loggerFactory from "./utils/log"
-import promiseTimeout from "./utils/promiseTimeout"
-import setExitHandler from "./utils/sigintHandler"
+import loggerFactory from "./utils/log";
+import promiseTimeout from "./utils/promiseTimeout";
+import setExitHandler from "./utils/sigintHandler";
 
 const log = loggerFactory("EthereumConnection");
 
@@ -289,5 +289,3 @@ export default class EthereumConnection extends EventEmitter {
         }
     }
 }
-
-module.exports = EthereumConnection;

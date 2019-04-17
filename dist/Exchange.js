@@ -405,5 +405,4 @@ var Exchange = /** @class */ (function (_super) {
     return Exchange;
 }(Contract_1.default));
 exports.default = Exchange;
-module.exports = Exchange;
 //# sourceMappingURL=Exchange.js.map

@@ -126,5 +126,4 @@ var Rates = /** @class */ (function (_super) {
     return Rates;
 }(Contract_1.default));
 exports.default = Rates;
-module.exports = Rates;
 //# sourceMappingURL=Rates.js.map

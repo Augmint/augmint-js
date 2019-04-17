@@ -88,5 +88,4 @@ var Contract = /** @class */ (function () {
     return Contract;
 }());
 exports.default = Contract;
-module.exports = Contract;
 //# sourceMappingURL=Contract.js.map

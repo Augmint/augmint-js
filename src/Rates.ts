@@ -49,5 +49,3 @@ export default class Rates extends Contract {
         return await super.connect(ethereumConnection, RatesArtifact, ratesAddress);
     }
 }
-
-module.exports = Rates;

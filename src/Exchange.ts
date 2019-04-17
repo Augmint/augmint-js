@@ -338,5 +338,3 @@ export default class Exchange extends Contract {
         return { buyIds, sellIds, gasEstimate };
     }
 }
-
-module.exports = Exchange;

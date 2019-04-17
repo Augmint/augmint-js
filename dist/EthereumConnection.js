@@ -375,5 +375,4 @@ var EthereumConnection = /** @class */ (function (_super) {
     return EthereumConnection;
 }(EventEmitter));
 exports.default = EthereumConnection;
-module.exports = EthereumConnection;
 //# sourceMappingURL=EthereumConnection.js.map
