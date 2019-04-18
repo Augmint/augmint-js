@@ -1,5 +1,5 @@
 import { connectLatest } from "./utils/contractConnection";
-import EthereumConnection from "./EthereumConnection"
+import EthereumConnection from "./EthereumConnection";
 /**
  * Generic Contract super class
  */
@@ -7,17 +7,8 @@ export default class Contract {
     ethereumConnection: EthereumConnection;
     web3: any;
     instance: any;
-    constructor() {
-        /**
-         * @prop    {object}   ethereumConnection the EthereumConnection instance this contract instance is connected to
-         * @prop    {object}   web3 shorthand for ethereumConnection.web3
-         * @prop    {string}   [address]  Ethereum address of the contract instance
-         */
-        this.web3 = null;
-        this.instance = null;
-    }
 
-    get address() {
+    get address(): string {
         return this.instance ? this.instance._address : null;
     }
 

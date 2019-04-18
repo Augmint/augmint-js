@@ -3,7 +3,7 @@ import * as cost from "./gas";
 import Contract from "./Contract";
 import AugmintToken from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV, TOKEN_BUY, TOKEN_SELL } from "./constants";
-import Rates from "./Rates"
+import Rates from "./Rates";
 const BigNumber = require("bignumber.js");
 
 const ExchangeArtifact = require("../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json");
@@ -16,13 +16,10 @@ const ExchangeArtifact = require("../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9
 export default class Exchange extends Contract {
     rates: any;
     augmintToken: AugmintToken;
-    tokenPeggedSymbol: any;
-    tokenSymbol: any;
+    tokenPeggedSymbol: string; /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
+    tokenSymbol: string; /** token symbol this exchange contract instance is linked to  */
     constructor() {
         super();
-        this.rates = null;
-        this.tokenPeggedSymbol = null; /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
-        this.tokenSymbol = null; /** token symbol this exchange contract instance is linked to  */
     }
 
     async connect(ethereumConnection: EthereumConnection, exchangeAddress) {
@@ -152,7 +149,7 @@ export default class Exchange extends Contract {
                         bn_amount,
                         price: 0,
                         direction: 0,
-                        bn_ethAmount: '',
+                        bn_ethAmount: "",
                         amount: 0
                     };
 
@@ -200,7 +197,10 @@ export default class Exchange extends Contract {
     async matchMultipleOrders(account, matchingOrders) {
         const matchMultipleOrdersTx = this.getMatchMultipleOrdersTx(matchingOrders.buyIds, matchingOrders.sellIds);
 
-        return matchMultipleOrdersTx.send({ from: account, gas: matchingOrders.gasEstimate });
+        return matchMultipleOrdersTx.send({
+            from: account,
+            gas: matchingOrders.gasEstimate
+        });
     }
 
     /**
@@ -269,7 +269,11 @@ export default class Exchange extends Contract {
             .map(o => ({ id: o.id, price: o.price, bn_ethAmount: o.bn_ethAmount }));
         const sellOrders = _sellOrders
             .filter(o => o.price <= highestBuyPrice)
-            .map(o => ({ id: o.id, price: o.price, bn_tokenAmount: new BigNumber(o.amount) }));
+            .map(o => ({
+                id: o.id,
+                price: o.price,
+                bn_tokenAmount: new BigNumber(o.amount)
+            }));
 
         let buyIdx = 0;
         let sellIdx = 0;
