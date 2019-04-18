@@ -1,18 +1,22 @@
-const { loadEnv } = require("./utils");
 const assert = require("chai").assert;
 const nodeAssert = require("assert");
-const Contract = require("./Contract.js");
-const EthereumConnection = require("./EthereumConnection.js");
+const { Augmint, utils } = require("../dist/index.js");
+const { Contract, EthereumConnection } = Augmint;
 
-const config = loadEnv();
+const config = utils.loadEnv();
+
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
+
 const ethereumConnection = new EthereumConnection(config);
 
 describe("constructor", () => {
     it("should be created", () => {
         const contract = new Contract();
-        assert.isNull(contract.instance);
-        assert.isNull(contract.web3);
-        assert.isNull(contract.ethereumConnection);
+        assert.isUndefined(contract.instance);
+        assert.isUndefined(contract.web3);
+        assert.isUndefined(contract.ethereumConnection);
         assert.isNull(contract.address);
     });
 

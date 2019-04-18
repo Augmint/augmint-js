@@ -1,11 +1,14 @@
-const { loadEnv } = require("./utils");
 const { assert } = require("chai");
-const EthereumConnection = require("./EthereumConnection.js");
-const AugmintToken = require("./AugmintToken.js");
+const { Augmint, utils } = require("../dist/index.js");
+const { EthereumConnection, AugmintToken } = Augmint;
 
 const CCY = "EUR";
 
-const config = loadEnv();
+const config = utils.loadEnv();
+
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
 
 describe("AugmintToken connection", () => {
     const ethereumConnection = new EthereumConnection(config);
@@ -14,13 +17,13 @@ describe("AugmintToken connection", () => {
         await ethereumConnection.connect();
         const tokenAEur = new AugmintToken();
 
-        assert.isNull(tokenAEur.peggedSymbol);
-        assert.isNull(tokenAEur.symbol);
-        assert.isNull(tokenAEur.name);
+        assert.isUndefined(tokenAEur.peggedSymbol);
+        assert.isUndefined(tokenAEur.symbol);
+        assert.isUndefined(tokenAEur.name);
+        assert.isUndefined(tokenAEur.decimals);
+        assert.isUndefined(tokenAEur.decimalsDiv);
+        assert.isUndefined(tokenAEur.feeAccountAddress);
         assert.isNull(tokenAEur.address);
-        assert.isNull(tokenAEur.decimals);
-        assert.isNull(tokenAEur.decimalsDiv);
-        assert.isNull(tokenAEur.feeAccountAddress);
 
         await tokenAEur.connect(ethereumConnection);
 

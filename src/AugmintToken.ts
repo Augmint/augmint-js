@@ -1,22 +1,22 @@
-const Contract = require("./Contract.js");
-const TokenAEurArtifact = require("./abiniser/abis/TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5.json");
+import { Contract } from "./Contract";
+import { EthereumConnection } from "./EthereumConnection";
 
-class AugmintToken extends Contract {
+const TokenAEurArtifact = require("../abiniser/abis/TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5.json");
+
+export class AugmintToken extends Contract {
+    peggedSymbol: string;
+    symbol: string;
+    name: string;
+    decimals: number;
+    decimalsDiv: number;
+    feeAccountAddress: string;
+    readonly contractArtifact = TokenAEurArtifact;
+
     constructor() {
         super();
-
-        this.peggedSymbol = null;
-        this.symbol = null;
-        this.name = null;
-        this.decimals = null;
-        this.decimalsDiv = null;
-
-        this.feeAccountAddress = null;
-
-        this.contractArtifact = TokenAEurArtifact;
     }
 
-    async connect(ethereumConnection, augmintTokenAddress) {
+    async connect(ethereumConnection: EthereumConnection, augmintTokenAddress?: any) {
         await super.connect(ethereumConnection, this.contractArtifact, augmintTokenAddress);
 
         const [bytes32PeggedSymbol, symbol, name, decimals, feeAccountAddress] = await Promise.all([
@@ -31,12 +31,11 @@ class AugmintToken extends Contract {
         this.peggedSymbol = peggedSymbolWithTrailing.substr(0, peggedSymbolWithTrailing.indexOf("\0"));
 
         this.name = name;
-        (this.symbol = symbol), (this.decimals = decimals);
+        this.symbol = symbol;
+        this.decimals = decimals;
         this.decimalsDiv = 10 ** decimals;
         this.feeAccountAddress = feeAccountAddress;
 
         return this.instance;
     }
 }
-
-module.exports = AugmintToken;
