@@ -1,10 +1,10 @@
 import EthereumConnection from "./EthereumConnection";
-import * as cost from "./gas";
 import Contract from "./Contract";
 import AugmintToken from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV, TOKEN_BUY, TOKEN_SELL } from "./constants";
 import Rates from "./Rates";
 import BigNumber from "bignumber.js";
+import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
 
 const ExchangeArtifact = require("../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json");
 
@@ -289,7 +289,7 @@ export default class Exchange extends Contract {
         let buyIdx = 0;
         let sellIdx = 0;
         let gasEstimate = 0;
-        let nextGasEstimate = cost.MATCH_MULTIPLE_FIRST_MATCH_GAS;
+        let nextGasEstimate = MATCH_MULTIPLE_FIRST_MATCH_GAS;
 
         while (buyIdx < buyOrders.length && sellIdx < sellOrders.length && nextGasEstimate <= gasLimit) {
             const sellOrder = sellOrders[sellIdx];
@@ -347,7 +347,7 @@ export default class Exchange extends Contract {
             }
 
             gasEstimate = nextGasEstimate;
-            nextGasEstimate += cost.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS;
+            nextGasEstimate += MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS;
         }
 
         return { buyIds, sellIds, gasEstimate };

@@ -1,5 +1,5 @@
 const fs = require("fs");
-const dotenvConfig = require("dotenv").config;
+import {config as dotenvConfig} from "dotenv"
 const DOTENV_PATH = ".env";
 
 export default (NODE_ENV = process.env.NODE_ENV) => {

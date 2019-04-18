@@ -1,7 +1,7 @@
-const setExitHandler = require("./sigintHandler.js");
-const promiseTimeout = require("./promiseTimeout.js");
-const logger = require("./log.js");
-const loadEnv = require("./env.js");
+import setExitHandler from "./sigintHandler"
+import promiseTimeout from "./promiseTimeout"
+import logger from "./log"
+import loadEnv from "./env"
 
 export default {
     setExitHandler,
