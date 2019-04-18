@@ -2,25 +2,38 @@ import { Contract } from "./Contract";
 import { DECIMALS, DECIMALS_DIV, ONE_ETH_IN_WEI } from "./constants";
 import BigNumber from "bignumber.js";
 const RatesArtifact = require("../abiniser/abis/Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce.json");
+import { ZeroRateError, AugmintJsError } from "./Errors";
+import { EthereumConnection } from "./EthereumConnection";
 
 export class Rates extends Contract {
     constructor() {
         super();
     }
 
-    async getBnEthFiatRate(currency) {
+    async getBnEthFiatRate(currency: string): Promise<any> {
+        const rate = await this.instance.methods
+            .convertFromWei(this.web3.utils.asciiToHex(currency), ONE_ETH_IN_WEI.toString())
+            .call()
+            .catch(error => {
+                if (error.message.includes("revert rates[bSymbol] must be > 0")) {
+                    throw new ZeroRateError(
+                        `getBnEthFiatRate returned zero rate for currency: ${currency}. Is it supported and has rate set in Rates contract?`
+                    );
+                } else {
+                    throw error;
+                }
+            });
+
         return new BigNumber(
-            (await this.instance.methods
-                .convertFromWei(this.web3.utils.asciiToHex(currency), ONE_ETH_IN_WEI.toString())
-                .call()) / DECIMALS_DIV // // TODO: change to augmintToken.decimalsDiv
+            rate / DECIMALS_DIV // // TODO: change to augmintToken.decimalsDiv
         );
     }
 
-    async getEthFiatRate(currency) {
+    async getEthFiatRate(currency: string): Promise<number> {
         return parseFloat((await this.getBnEthFiatRate(currency)).toString());
     }
 
-    async getAugmintRate(currency) {
+    async getAugmintRate(currency: string): Promise<{ rate: Number; lastUpdated: Date }> {
         const bytesCCY = this.web3.utils.asciiToHex(currency);
         const storedRateInfo = await this.instance.methods.rates(bytesCCY).call();
         return {
@@ -29,7 +42,7 @@ export class Rates extends Contract {
         };
     }
 
-    getSetRateTx(currency, price) {
+    getSetRateTx(currency: string, price: number): Promise<any> {
         const rateToSend = price * DECIMALS_DIV;
         if (Math.round(rateToSend) !== rateToSend) {
             throw new Error(
@@ -42,7 +55,7 @@ export class Rates extends Contract {
         return tx;
     }
 
-    async connect(ethereumConnection) {
+    async connect(ethereumConnection: EthereumConnection): Promise<any> {
         return await super.connect(ethereumConnection, RatesArtifact);
     }
 }
