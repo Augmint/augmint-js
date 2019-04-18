@@ -1,7 +1,7 @@
 import EthereumConnection from "./EthereumConnection";
 import Contract from "./Contract";
 import AugmintToken from "./AugmintToken";
-import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV, TOKEN_BUY, TOKEN_SELL } from "./constants";
+import { CHUNK_SIZE, EXCHANGE_DIRECTION, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
 import Rates from "./Rates";
 import BigNumber from "bignumber.js";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
@@ -14,7 +14,7 @@ interface Parsed {
     bn_price: BigNumber;
     bn_amount;
     price: BigNumber;
-    direction: number;
+    direction: EXCHANGE_DIRECTION;
     bn_ethAmount: BigNumber;
     amount: number;
 }
@@ -25,7 +25,7 @@ interface Parsed {
  * @extends Contract
  */
 export default class Exchange extends Contract {
-    rates: any;
+    rates: Rates;
     augmintToken: AugmintToken;
     tokenPeggedSymbol: string; /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
     tokenSymbol: string; /** token symbol this exchange contract instance is linked to  */
@@ -33,7 +33,7 @@ export default class Exchange extends Contract {
         super();
     }
 
-    async connect(ethereumConnection: EthereumConnection, exchangeAddress) {
+    async connect(ethereumConnection: EthereumConnection, exchangeAddress: string) {
         await super.connect(ethereumConnection, ExchangeArtifact, exchangeAddress);
 
         this.rates = new Rates();
@@ -114,14 +114,14 @@ export default class Exchange extends Contract {
         let queryCount = Math.ceil(buyCount / LEGACY_CONTRACTS_CHUNK_SIZE);
 
         for (let i = 0; i < queryCount; i++) {
-            const fetchedOrders = await this.getOrders(TOKEN_BUY, i * chunkSize);
+            const fetchedOrders = await this.getOrders(EXCHANGE_DIRECTION.TOKEN_BUY, i * chunkSize);
             buyOrders = buyOrders.concat(fetchedOrders.buyOrders);
         }
 
         let sellOrders = [];
         queryCount = Math.ceil(sellCount / chunkSize);
         for (let i = 0; i < queryCount; i++) {
-            const fetchedOrders = await this.getOrders(TOKEN_SELL, i * chunkSize);
+            const fetchedOrders = await this.getOrders(EXCHANGE_DIRECTION.TOKEN_SELL, i * chunkSize);
             sellOrders = sellOrders.concat(fetchedOrders.sellOrders);
         }
 
@@ -131,14 +131,14 @@ export default class Exchange extends Contract {
         return { buyOrders, sellOrders };
     }
 
-    async getOrders(orderDirection, offset) {
+    async getOrders(orderDirection: EXCHANGE_DIRECTION, offset) {
         const blockGasLimit = this.ethereumConnection.safeGasLimit;
 
         const isLegacyExchangeContract = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
 
         let result;
-        if (orderDirection === TOKEN_BUY) {
+        if (orderDirection === EXCHANGE_DIRECTION.TOKEN_BUY) {
             result = isLegacyExchangeContract
                 ? await this.instance.methods.getActiveBuyOrders(offset).call({ gas: blockGasLimit })
                 : await this.instance.methods.getActiveBuyOrders(offset, chunkSize).call({ gas: blockGasLimit });
@@ -166,14 +166,14 @@ export default class Exchange extends Contract {
 
                     parsed.price = parsed.bn_price.div(PPM_DIV);
 
-                    if (orderDirection === TOKEN_BUY) {
-                        parsed.direction = TOKEN_BUY;
+                    if (orderDirection === EXCHANGE_DIRECTION.TOKEN_BUY) {
+                        parsed.direction = EXCHANGE_DIRECTION.TOKEN_BUY;
                         parsed.bn_ethAmount = parsed.bn_amount.div(ONE_ETH_IN_WEI);
                         parsed.amount = parseFloat(parsed.bn_ethAmount.toString(10));
 
                         res.buyOrders.push(parsed);
                     } else {
-                        parsed.direction = TOKEN_SELL;
+                        parsed.direction = EXCHANGE_DIRECTION.TOKEN_SELL;
                         parsed.amount = parseFloat((parsed.bn_amount / this.augmintToken.decimalsDiv).toFixed(2));
 
                         res.sellOrders.push(parsed);
@@ -192,7 +192,7 @@ export default class Exchange extends Contract {
             throw new Error("isOrderBetter(): order directions must be the same" + o1 + o2);
         }
 
-        const dir = o1.direction === TOKEN_SELL ? 1 : -1;
+        const dir = o1.direction === EXCHANGE_DIRECTION.TOKEN_SELL ? 1 : -1;
 
         return o1.price * dir > o2.price * dir || (o1.price === o2.price && o1.id > o2.id) ? 1 : -1;
     }

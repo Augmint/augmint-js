@@ -20,7 +20,7 @@ export default class Contract {
      * @param  {string}  address            contract address if y (not yet implemented)
      * @return {Promise}                    the web3 contract instance
      */
-    async connect(ethereumConnection: EthereumConnection, abiFile: string, address: string) {
+    async connect(ethereumConnection: EthereumConnection, abiFile: string, address?: string) {
         if (address) {
             throw new Error(
                 "Connecting to a contract at arbitary address is not supported yet. Pass no address to connect latest contract deployment at network"

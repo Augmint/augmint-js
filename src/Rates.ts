@@ -44,7 +44,7 @@ export default class Rates extends Contract {
         return tx;
     }
 
-    async connect(ethereumConnection, ratesAddress) {
-        return await super.connect(ethereumConnection, RatesArtifact, ratesAddress);
+    async connect(ethereumConnection) {
+        return await super.connect(ethereumConnection, RatesArtifact);
     }
 }
