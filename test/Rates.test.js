@@ -1,14 +1,17 @@
-const { loadEnv } = require("./utils");
 const { assert } = require("chai");
 const BigNumber = require("bignumber.js");
-const EthereumConnection = require("./EthereumConnection.js");
-const Rates = require("./Rates.js");
-const Errors = require("./Errors.js");
+const { Augmint, utils } = require("../dist/index.js");
+const { EthereumConnection, Rates } = Augmint;
+const { ZeroRateError, AugmintJsError } = require("../dist/Errors.js");
 
-const { takeSnapshot, revertSnapshot } = require("testHelpers/ganache.js");
+const config = utils.loadEnv();
+const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const CCY = "EUR";
 const DECIMALS_DIV = 100;
-const config = loadEnv();
+
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
 
 describe("Rates connection", () => {
     const ethereumConnection = new EthereumConnection(config);
@@ -59,8 +62,9 @@ describe("Rates getters", () => {
     });
 
     it("getBnEthFiatRate - invalid ccy", async () => {
-        await await rates.getEthFiatRate("INVALID").catch(error => {
-            assert(error instanceof Errors.ZeroRateError);
+        await rates.getEthFiatRate("INVALID").catch(error => {
+            assert.instanceOf(error, AugmintJsError);
+            assert.instanceOf(error, ZeroRateError);
         });
     });
 
@@ -71,8 +75,9 @@ describe("Rates getters", () => {
     });
 
     it("getAugmintRate - invalid ccy", async () => {
-        await await rates.getAugmintRate("INVALID").catch(error => {
-            assert(error instanceof Errors.ZeroRateError);
+        await rates.getAugmintRate("INVALID").catch(error => {
+            assert.instanceOf(error, AugmintJsError);
+            assert.instanceOf(error, ZeroRateError);
         });
     });
 });

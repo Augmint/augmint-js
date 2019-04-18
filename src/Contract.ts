@@ -1,21 +1,14 @@
-const contractConnection = require("./utils/contractConnection.js");
-
+import { connectLatest } from "./utils/contractConnection";
+import { EthereumConnection } from "./EthereumConnection";
 /**
  * Generic Contract super class
  */
-class Contract {
-    constructor() {
-        /**
-         * @prop    {object}   ethereumConnection the EthereumConnection instance this contract instance is connected to
-         * @prop    {object}   web3 shorthand for ethereumConnection.web3
-         * @prop    {string}   [address]  Ethereum address of the contract instance
-         */
-        this.ethereumConnection = null;
-        this.web3 = null;
-        this.instance = null;
-    }
+export class Contract {
+    ethereumConnection: EthereumConnection;
+    web3: any;
+    instance: any;
 
-    get address() {
+    get address(): string {
         return this.instance ? this.instance._address : null;
     }
 
@@ -27,7 +20,7 @@ class Contract {
      * @param  {string}  address            contract address if y (not yet implemented)
      * @return {Promise}                    the web3 contract instance
      */
-    async connect(ethereumConnection, abiFile, address) {
+    async connect(ethereumConnection: EthereumConnection, abiFile: string, address?: string) {
         if (address) {
             throw new Error(
                 "Connecting to a contract at arbitary address is not supported yet. Pass no address to connect latest contract deployment at network"
@@ -43,10 +36,8 @@ class Contract {
         this.ethereumConnection = ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
 
-        this.instance = contractConnection.connectLatest(this.ethereumConnection, abiFile);
+        this.instance = connectLatest(this.ethereumConnection, abiFile);
 
         return this.instance;
     }
 }
-
-module.exports = Contract;

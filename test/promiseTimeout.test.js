@@ -1,5 +1,6 @@
 const expect = require("chai").expect;
-const promiseTimeout = require("./promiseTimeout.js");
+const { utils } = require("../dist/index.js");
+const promiseTimeout = utils.promiseTimeout;
 
 describe("promiseTimeout", () => {
     it("should handle throw", async () => {
