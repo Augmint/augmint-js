@@ -13,13 +13,13 @@ describe("AugmintToken connection", () => {
         await ethereumConnection.connect();
         const tokenAEur = new AugmintToken();
 
-        assert.isNull(tokenAEur.peggedSymbol);
-        assert.isNull(tokenAEur.symbol);
-        assert.isNull(tokenAEur.name);
+        assert.isUndefined(tokenAEur.peggedSymbol);
+        assert.isUndefined(tokenAEur.symbol);
+        assert.isUndefined(tokenAEur.name);
+        assert.isUndefined(tokenAEur.decimals);
+        assert.isUndefined(tokenAEur.decimalsDiv);
+        assert.isUndefined(tokenAEur.feeAccountAddress);
         assert.isNull(tokenAEur.address);
-        assert.isNull(tokenAEur.decimals);
-        assert.isNull(tokenAEur.decimalsDiv);
-        assert.isNull(tokenAEur.feeAccountAddress);
 
         await tokenAEur.connect(ethereumConnection);
 

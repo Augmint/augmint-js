@@ -1,7 +1,7 @@
 const assert = require("chai").assert;
 const nodeAssert = require("assert");
 const { Augmint, utils } = require("../dist/index.js");
-const {Contract,EthereumConnection } = Augmint;
+const { Contract, EthereumConnection } = Augmint;
 
 const config = utils.loadEnv();
 const ethereumConnection = new EthereumConnection(config);
@@ -9,9 +9,9 @@ const ethereumConnection = new EthereumConnection(config);
 describe("constructor", () => {
     it("should be created", () => {
         const contract = new Contract();
-        assert.isNull(contract.instance);
-        assert.isNull(contract.web3);
-        assert.isNull(contract.ethereumConnection);
+        assert.isUndefined(contract.instance);
+        assert.isUndefined(contract.web3);
+        assert.isUndefined(contract.ethereumConnection);
         assert.isNull(contract.address);
     });
 
