@@ -1,8 +1,6 @@
-module.exports = {
-    connectLatest
-};
+import { EthereumConnection } from "../EthereumConnection";
 
-function connectLatest(ethereumConnection, abiFile) {
+export function connectLatest(ethereumConnection: EthereumConnection, abiFile) {
     const contractName = abiFile.contractName;
     const abiVersionHash = abiFile.abiHash;
 
@@ -21,12 +19,12 @@ function connectLatest(ethereumConnection, abiFile) {
 }
 
 function getDeploysFile(networkId, contractName) {
-    const deploysFileName = `../abiniser/deployments/${networkId}/${contractName}_DEPLOYS.json`;
+    const deploysFileName = `../../abiniser/deployments/${networkId}/${contractName}_DEPLOYS.json`;
     let deploysFile;
 
     try {
         /* must provide fileName string again for webpack (needs to be statically analysable) */
-        deploysFile = require(`../abiniser/deployments/${networkId}/${contractName}_DEPLOYS.json`);
+        deploysFile = require(deploysFileName);
     } catch (error) {
         throw new Error(`Couldn't import deployment file ${deploysFileName} for ${contractName}\n${error}`);
     }

@@ -1,10 +1,15 @@
-const { loadEnv } = require("./utils");
 const expect = require("chai").expect;
-const exchange = new (require("Exchange.js"))();
 const BigNumber = require("bignumber.js");
-const { cost } = require("gas.js");
+const { Augmint, utils } = require("../dist/index.js");
+const { gas, Exchange } = Augmint;
 
-loadEnv();
+const exchange = new Exchange();
+
+const config = utils.loadEnv();
+
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
 
 describe("getMatchMultipleOrdersTx", () => {
     it("should match orders on chain");
@@ -55,7 +60,7 @@ describe("calculateMatchingOrders", () => {
 
         expect(matches.buyIds).to.deep.equal([2]);
         expect(matches.sellIds).to.deep.equal([4]);
-        expect(matches.gasEstimate).to.be.equal(cost.MATCH_MULTIPLE_FIRST_MATCH_GAS);
+        expect(matches.gasEstimate).to.be.equal(gas.MATCH_MULTIPLE_FIRST_MATCH_GAS);
     });
 
     it("should return matching orders (1 buy filled w/ 2 sells)", () => {
@@ -75,7 +80,7 @@ describe("calculateMatchingOrders", () => {
         expect(matches.buyIds).to.deep.equal([2, 2]);
         expect(matches.sellIds).to.deep.equal([4, 5]);
         expect(matches.gasEstimate).to.be.equal(
-            cost.MATCH_MULTIPLE_FIRST_MATCH_GAS + cost.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS
+            gas.MATCH_MULTIPLE_FIRST_MATCH_GAS + gas.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS
         );
     });
 
@@ -98,7 +103,7 @@ describe("calculateMatchingOrders", () => {
         expect(matches.buyIds).to.deep.equal([11, 3, 3]);
         expect(matches.sellIds).to.deep.equal([9, 4, 2]);
         expect(matches.gasEstimate).to.be.equal(
-            cost.MATCH_MULTIPLE_FIRST_MATCH_GAS + 2 * cost.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS
+            gas.MATCH_MULTIPLE_FIRST_MATCH_GAS + 2 * gas.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS
         );
     });
 
@@ -115,7 +120,7 @@ describe("calculateMatchingOrders", () => {
             { id: 7, price: 1, amount: 500 }
         ];
 
-        const gasLimit = cost.MATCH_MULTIPLE_FIRST_MATCH_GAS + cost.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS;
+        const gasLimit = gas.MATCH_MULTIPLE_FIRST_MATCH_GAS + gas.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS;
 
         const matches = exchange.calculateMatchingOrders(buyOrders, sellOrders, ETHEUR_RATE, gasLimit);
 
@@ -137,14 +142,14 @@ describe("calculateMatchingOrders", () => {
             { id: 7, price: 1, amount: 500 }
         ];
 
-        const gasLimit = cost.MATCH_MULTIPLE_FIRST_MATCH_GAS + 2 * cost.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS - 1;
+        const gasLimit = gas.MATCH_MULTIPLE_FIRST_MATCH_GAS + 2 * gas.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS - 1;
 
         const matches = exchange.calculateMatchingOrders(buyOrders, sellOrders, ETHEUR_RATE, gasLimit);
 
         expect(matches.buyIds).to.deep.equal([1, 2]);
         expect(matches.sellIds).to.deep.equal([5, 6]);
         expect(matches.gasEstimate).to.be.equal(
-            cost.MATCH_MULTIPLE_FIRST_MATCH_GAS + cost.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS
+            gas.MATCH_MULTIPLE_FIRST_MATCH_GAS + gas.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS
         );
     });
 });

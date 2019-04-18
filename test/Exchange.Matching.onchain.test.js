@@ -1,10 +1,13 @@
-const { loadEnv } = require("./utils");
 const assert = require("chai").assert;
-const Exchange = require("./Exchange.js");
 const ganache = require("./testHelpers/ganache.js");
-const EthereumConnection = require("./EthereumConnection.js");
+const { Augmint, utils } = require("../dist/index.js");
+const {Exchange,EthereumConnection } = Augmint;
 
-const config = loadEnv();
+const config = utils.loadEnv();
+
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
 
 describe("MatchMultipleOrders onchain", () => {
     const ethereumConnection = new EthereumConnection(config);

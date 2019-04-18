@@ -1,8 +1,9 @@
-const log = require("./utils/log.js")("EthereumConnection");
+import { logger, promiseTimeout, setExitHandler } from "./utils/index";
+
 const EventEmitter = require("events");
-const promiseTimeout = require("./utils/promiseTimeout.js");
-const setExitHandler = require("./utils/sigintHandler.js");
 const Web3 = require("web3");
+
+const log = logger("EthereumConnection");
 
 const DEFAULTS = {
     ETHEREUM_CONNECTION_TIMEOUT: 10000,
@@ -26,7 +27,7 @@ const DEFAULTS = {
  * @fires   EthereumConnection#connectionLost
  * @extends EventEmitter
  */
-class EthereumConnection extends EventEmitter {
+export class EthereumConnection extends EventEmitter {
     constructor(runtimeOptions = {}) {
         super();
         /**
@@ -248,7 +249,7 @@ class EthereumConnection extends EventEmitter {
     }
 
     async _exit(signal) {
-        await this.stop(signal);
+        await this.stop();
     }
 
     async _checkConnection() {
@@ -287,5 +288,3 @@ class EthereumConnection extends EventEmitter {
         }
     }
 }
-
-module.exports = EthereumConnection;
