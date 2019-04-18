@@ -4,9 +4,20 @@ import Contract from "./Contract";
 import AugmintToken from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV, TOKEN_BUY, TOKEN_SELL } from "./constants";
 import Rates from "./Rates";
-const BigNumber = require("bignumber.js");
+import BigNumber from "bignumber.js";
 
 const ExchangeArtifact = require("../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json");
+
+interface Parsed {
+    id: number;
+    maker: string;
+    bn_price: BigNumber;
+    bn_amount;
+    price: BigNumber;
+    direction: number;
+    bn_ethAmount: BigNumber;
+    amount: number;
+}
 
 /**
  * Augmint Exchange contract class
@@ -142,23 +153,23 @@ export default class Exchange extends Contract {
             (res, order) => {
                 const bn_amount = new BigNumber(order[3]);
                 if (!bn_amount.eq(0)) {
-                    const parsed = {
+                    const parsed: Parsed = {
                         id: parseInt(order[0], 10),
-                        maker: "0x" + new BigNumber(order[1]).toString(16).padStart(40, "0"), // leading 0s if address starts with 0
+                        maker: `0x${new BigNumber(order[1]).toString(16).padStart(40, "0")}`, // leading 0s if address starts with 0
                         bn_price: new BigNumber(order[2]),
                         bn_amount,
-                        price: 0,
+                        price: new BigNumber(0),
                         direction: 0,
-                        bn_ethAmount: "",
+                        bn_ethAmount: new BigNumber(0),
                         amount: 0
                     };
 
-                    parsed.price = parsed.bn_price / PPM_DIV;
+                    parsed.price = parsed.bn_price.div(PPM_DIV);
 
                     if (orderDirection === TOKEN_BUY) {
                         parsed.direction = TOKEN_BUY;
                         parsed.bn_ethAmount = parsed.bn_amount.div(ONE_ETH_IN_WEI);
-                        parsed.amount = parseFloat(parsed.bn_ethAmount);
+                        parsed.amount = parseFloat(parsed.bn_ethAmount.toString(10));
 
                         res.buyOrders.push(parsed);
                     } else {

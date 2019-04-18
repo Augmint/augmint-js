@@ -1,7 +1,6 @@
-const BigNumber = require("bignumber.js");
 import Contract from "./Contract";
 import { DECIMALS, DECIMALS_DIV, ONE_ETH_IN_WEI } from "./constants";
-
+import BigNumber from "bignumber.js"
 const RatesArtifact = require("../abiniser/abis/Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce.json");
 
 export default class Rates extends Contract {
