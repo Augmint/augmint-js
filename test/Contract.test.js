@@ -1,10 +1,9 @@
-const { loadEnv } = require("../dist/utils");
 const assert = require("chai").assert;
 const nodeAssert = require("assert");
-const Contract = require("../dist/Contract.js");
-const EthereumConnection = require("../dist/EthereumConnection.js");
+const { Augmint, utils } = require("../dist/index.js");
+const {Contract,EthereumConnection } = Augmint;
 
-const config = loadEnv();
+const config = utils.loadEnv();
 const ethereumConnection = new EthereumConnection(config);
 
 describe("constructor", () => {

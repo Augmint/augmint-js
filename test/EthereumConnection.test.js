@@ -1,9 +1,9 @@
 const assert = require("chai").assert;
-const EthereumConnection = require("../dist/EthereumConnection.js");
 const sinon = require("sinon");
-const { loadEnv } = require("../dist/utils");
+const { Augmint, utils } = require("../dist/index.js");
+const { EthereumConnection } = Augmint;
 
-loadEnv();
+utils.loadEnv();
 
 const TEST_TIMEOUT = 10000; // infura is occasionaly slow to connect
 

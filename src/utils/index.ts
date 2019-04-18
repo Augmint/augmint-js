@@ -1,11 +1,6 @@
-import setExitHandler from "./sigintHandler"
-import promiseTimeout from "./promiseTimeout"
-import logger from "./log"
-import loadEnv from "./env"
+export * from "./sigintHandler";
+export * from "./promiseTimeout";
+export * from "./env";
+import logger = require("ulog");
 
-export default {
-    setExitHandler,
-    promiseTimeout,
-    logger,
-    loadEnv
-}
+export { logger };

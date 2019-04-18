@@ -1,15 +1,8 @@
-import Token from "./AugmintToken"
-import Contract from "./Contract"
-import EthereumConnection from "./EthereumConnection"
-import * as gas from "./gas.js"
-import Exchange from "./Exchange"
-import Rates from "./Rates"
-
-export default {
-    Token,
-    Contract,
-    EthereumConnection,
-    Exchange,
-    Rates,
-    gas
-}
+export * from "./AugmintToken";
+export * from "./Contract";
+export * from "./EthereumConnection";
+export * from "./Exchange";
+export * from "./Rates";
+import * as constants from "./constants"
+import * as gas from "./gas";
+export { gas, constants };

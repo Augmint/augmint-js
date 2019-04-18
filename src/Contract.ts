@@ -1,9 +1,9 @@
 import { connectLatest } from "./utils/contractConnection";
-import EthereumConnection from "./EthereumConnection";
+import { EthereumConnection } from "./EthereumConnection";
 /**
  * Generic Contract super class
  */
-export default class Contract {
+export class Contract {
     ethereumConnection: EthereumConnection;
     web3: any;
     instance: any;

@@ -1,9 +1,9 @@
-import Contract from "./Contract";
+import { Contract } from "./Contract";
 import { DECIMALS, DECIMALS_DIV, ONE_ETH_IN_WEI } from "./constants";
-import BigNumber from "bignumber.js"
+import BigNumber from "bignumber.js";
 const RatesArtifact = require("../abiniser/abis/Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce.json");
 
-export default class Rates extends Contract {
+export class Rates extends Contract {
     constructor() {
         super();
     }
@@ -33,9 +33,7 @@ export default class Rates extends Contract {
         const rateToSend = price * DECIMALS_DIV;
         if (Math.round(rateToSend) !== rateToSend) {
             throw new Error(
-                ` getSetRateTx error: provided price of ${price} has more decimals than allowed by AugmintToken decimals of ${
-                    DECIMALS
-                }`
+                ` getSetRateTx error: provided price of ${price} has more decimals than allowed by AugmintToken decimals of ${DECIMALS}`
             );
         }
         const bytesCCY = this.web3.utils.asciiToHex(currency);

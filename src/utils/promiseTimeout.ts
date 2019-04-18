@@ -1,4 +1,4 @@
-export default function promiseTimeout(ms, promise) {
+export function promiseTimeout(ms, promise) {
     let id;
     let timeout = new Promise((resolve, reject) => {
         id = setTimeout(() => {

@@ -1,12 +1,10 @@
-const { loadEnv } = require("../dist/utils");
 const { expect, assert } = require("chai");
 const BigNumber = require("bignumber.js");
-const EthereumConnection = require("../dist/EthereumConnection.js");
-const Exchange = require("../dist/Exchange.js");
-
-const { constants } = require("../dist/constants.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
-const config = loadEnv();
+const { Augmint, utils } = require("../dist/index.js");
+const { Exchange, EthereumConnection, constants } = Augmint;
+
+const config = utils.loadEnv();
 
 describe("connection", () => {
     const CCY = "EUR";

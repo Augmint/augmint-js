@@ -1,11 +1,10 @@
 const { assert } = require("chai");
-const { loadEnv } = require("../dist/utils/index.js");
-const EthereumConnection = require("../dist/EthereumConnection.js");
-const AugmintToken = require("../dist/AugmintToken.js");
+const { Augmint, utils } = require("../dist/index.js");
+const { EthereumConnection, AugmintToken } = Augmint;
 
 const CCY = "EUR";
 
-const config = loadEnv();
+const config = utils.loadEnv();
 
 describe("AugmintToken connection", () => {
     const ethereumConnection = new EthereumConnection(config);

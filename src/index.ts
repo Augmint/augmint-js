@@ -1,8 +1,3 @@
-import Augmint from "./Augmint"
-import utils from "./utils/index"
-
-export default {
-    Augmint,
-    utils
-}
-
+import * as Augmint from "./Augmint";
+import * as utils from "./utils/index";
+export { Augmint, utils };

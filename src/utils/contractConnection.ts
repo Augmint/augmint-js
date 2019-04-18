@@ -1,4 +1,4 @@
-import EthereumConnection from "../EthereumConnection"
+import { EthereumConnection } from "../EthereumConnection";
 
 export function connectLatest(ethereumConnection: EthereumConnection, abiFile) {
     const contractName = abiFile.contractName;

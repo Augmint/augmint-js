@@ -1,9 +1,9 @@
-import Contract from "./Contract";
-import EthereumConnection from "./EthereumConnection";
+import { Contract } from "./Contract";
+import { EthereumConnection } from "./EthereumConnection";
 
 const TokenAEurArtifact = require("../abiniser/abis/TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5.json");
 
-export default class AugmintToken extends Contract {
+export class AugmintToken extends Contract {
     peggedSymbol: string;
     symbol: string;
     name: string;

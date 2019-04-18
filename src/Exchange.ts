@@ -1,8 +1,8 @@
-import EthereumConnection from "./EthereumConnection";
-import Contract from "./Contract";
-import AugmintToken from "./AugmintToken";
+import { EthereumConnection } from "./EthereumConnection";
+import { Contract } from "./Contract";
+import { AugmintToken } from "./AugmintToken";
 import { CHUNK_SIZE, ORDER_DIRECTION, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
-import Rates from "./Rates";
+import { Rates } from "./Rates";
 import BigNumber from "bignumber.js";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
 
@@ -24,7 +24,7 @@ interface Parsed {
  * @class Exchange
  * @extends Contract
  */
-export default class Exchange extends Contract {
+export class Exchange extends Contract {
     rates: Rates;
     augmintToken: AugmintToken;
     tokenPeggedSymbol: string; /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */

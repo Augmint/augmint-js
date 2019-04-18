@@ -1,13 +1,13 @@
-const { loadEnv } = require("../dist/utils");
 const { assert } = require("chai");
 const BigNumber = require("bignumber.js");
-const EthereumConnection = require("../dist/EthereumConnection.js");
-const Rates = require("../dist/Rates.js");
+const { Augmint, utils } = require("../dist/index.js");
+const { EthereumConnection, Rates } = Augmint;
+
+const config = utils.loadEnv();
 
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const CCY = "EUR";
 const DECIMALS_DIV = 100;
-const config = loadEnv();
 
 describe("Rates connection", () => {
     const ethereumConnection = new EthereumConnection(config);
