@@ -15,8 +15,8 @@ describe("connection", () => {
         await ethereumConnection.connect();
 
         assert.isNull(exchange.address);
-        assert.isNull(exchange.tokenPeggedSymbol);
-        assert.isNull(exchange.tokenSymbol);
+        assert.isUndefined(exchange.tokenPeggedSymbol);
+        assert.isUndefined(exchange.tokenSymbol);
 
         await exchange.connect(ethereumConnection);
 
@@ -56,15 +56,16 @@ describe("fetchOrderBook", () => {
     it("should return orderbook with orders", async () => {
         const buyMaker = ethereumConnection.accounts[1];
         const sellMaker = ethereumConnection.accounts[0];
-        const buyPrice = 1.01;
+        const buyPrice = new BigNumber(1.01);
         const bn_buyPrice = new BigNumber(buyPrice * constants.PPM_DIV);
-        const sellPrice = 1.05;
+        const sellPrice = new BigNumber(1.05);
         const bn_sellPrice = new BigNumber(sellPrice * constants.PPM_DIV);
 
         const bn_buyEthAmount = new BigNumber(0.1);
         const bn_buyWeiAmount = new BigNumber(ethereumConnection.web3.utils.toWei(bn_buyEthAmount.toString()));
         const sellTokenAmount = 10;
         const bn_sellTokenAmount = new BigNumber(sellTokenAmount * constants.DECIMALS_DIV);
+        const bn_sellEthAmount = new BigNumber(0);
 
         await exchange.instance.methods
             .placeBuyTokenOrder(bn_buyPrice.toString())
@@ -84,7 +85,7 @@ describe("fetchOrderBook", () => {
                     bn_price: bn_buyPrice,
                     bn_amount: bn_buyWeiAmount,
                     price: buyPrice,
-                    direction: constants.TOKEN_BUY,
+                    direction: constants.OrderDirection.TOKEN_BUY,
                     bn_ethAmount: bn_buyEthAmount,
                     amount: bn_buyEthAmount.toNumber()
                 }
@@ -96,7 +97,8 @@ describe("fetchOrderBook", () => {
                     bn_price: bn_sellPrice,
                     bn_amount: bn_sellTokenAmount,
                     price: sellPrice,
-                    direction: constants.TOKEN_SELL,
+                    direction: constants.OrderDirection.TOKEN_SELL,
+                    bn_ethAmount: bn_sellEthAmount,
                     amount: sellTokenAmount
                 }
             ]
@@ -107,44 +109,44 @@ describe("fetchOrderBook", () => {
 describe("isOrderBetter", () => {
     const exchange = new Exchange();
     it("o2 should be better (SELL price)", () => {
-        const o1 = { direction: constants.TOKEN_SELL, price: 2, id: 1 };
-        const o2 = { direction: constants.TOKEN_SELL, price: 1, id: 2 };
+        const o1 = { direction: constants.OrderDirection.TOKEN_SELL, price: 2, id: 1 };
+        const o2 = { direction: constants.OrderDirection.TOKEN_SELL, price: 1, id: 2 };
         const result = exchange.isOrderBetter(o1, o2);
         expect(result).to.be.equal(1);
     });
 
     it("o1 should be better (BUY price)", () => {
-        const o1 = { direction: constants.TOKEN_BUY, price: 2, id: 2 };
-        const o2 = { direction: constants.TOKEN_BUY, price: 1, id: 1 };
+        const o1 = { direction: constants.OrderDirection.TOKEN_BUY, price: 2, id: 2 };
+        const o2 = { direction: constants.OrderDirection.TOKEN_BUY, price: 1, id: 1 };
         const result = exchange.isOrderBetter(o1, o2);
         expect(result).to.be.equal(-1);
     });
 
     it("o2 should be better (SELL id)", () => {
-        const o1 = { direction: constants.TOKEN_SELL, price: 1, id: 2 };
-        const o2 = { direction: constants.TOKEN_SELL, price: 1, id: 1 };
+        const o1 = { direction: constants.OrderDirection.TOKEN_SELL, price: 1, id: 2 };
+        const o2 = { direction: constants.OrderDirection.TOKEN_SELL, price: 1, id: 1 };
         const result = exchange.isOrderBetter(o1, o2);
         expect(result).to.be.equal(1);
     });
 
     it("o2 should be better (BUY id)", () => {
-        const o1 = { direction: constants.TOKEN_BUY, price: 1, id: 2 };
-        const o2 = { direction: constants.TOKEN_BUY, price: 1, id: 1 };
+        const o1 = { direction: constants.OrderDirection.TOKEN_BUY, price: 1, id: 2 };
+        const o2 = { direction: constants.OrderDirection.TOKEN_BUY, price: 1, id: 1 };
         const result = exchange.isOrderBetter(o1, o2);
         expect(result).to.be.equal(1);
     });
 
     it("o1 should be better when o1 same as o2", () => {
         // same id for two orders, it shouldn't happen
-        const o1 = { direction: constants.TOKEN_SELL, price: 1, id: 1 };
-        const o2 = { direction: constants.TOKEN_SELL, price: 1, id: 1 };
+        const o1 = { direction: constants.OrderDirection.TOKEN_SELL, price: 1, id: 1 };
+        const o2 = { direction: constants.OrderDirection.TOKEN_SELL, price: 1, id: 1 };
         const result = exchange.isOrderBetter(o1, o2);
         expect(result).to.be.equal(-1);
     });
 
     it("the direction of the two orders should be same", () => {
-        const o1 = { direction: constants.TOKEN_SELL, price: 2, id: 2 };
-        const o2 = { direction: constants.TOKEN_BUY, price: 1, id: 1 };
+        const o1 = { direction: constants.OrderDirection.TOKEN_SELL, price: 2, id: 2 };
+        const o2 = { direction: constants.OrderDirection.TOKEN_BUY, price: 1, id: 1 };
         expect(() => exchange.isOrderBetter(o1, o2)).to.throw(/order directions must be the same/);
     });
 });
