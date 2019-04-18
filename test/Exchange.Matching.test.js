@@ -5,7 +5,11 @@ const { gas, Exchange } = Augmint;
 
 const exchange = new Exchange();
 
-utils.loadEnv();
+const config = utils.loadEnv();
+
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
 
 describe("getMatchMultipleOrdersTx", () => {
     it("should match orders on chain");

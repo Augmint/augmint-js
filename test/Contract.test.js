@@ -4,6 +4,11 @@ const { Augmint, utils } = require("../dist/index.js");
 const { Contract, EthereumConnection } = Augmint;
 
 const config = utils.loadEnv();
+
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
+
 const ethereumConnection = new EthereumConnection(config);
 
 describe("constructor", () => {

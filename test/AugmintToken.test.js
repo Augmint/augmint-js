@@ -6,6 +6,10 @@ const CCY = "EUR";
 
 const config = utils.loadEnv();
 
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
+
 describe("AugmintToken connection", () => {
     const ethereumConnection = new EthereumConnection(config);
 

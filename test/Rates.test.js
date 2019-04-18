@@ -4,10 +4,13 @@ const { Augmint, utils } = require("../dist/index.js");
 const { EthereumConnection, Rates } = Augmint;
 
 const config = utils.loadEnv();
-
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const CCY = "EUR";
 const DECIMALS_DIV = 100;
+
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
 
 describe("Rates connection", () => {
     const ethereumConnection = new EthereumConnection(config);

@@ -3,7 +3,11 @@ const sinon = require("sinon");
 const { Augmint, utils } = require("../dist/index.js");
 const { EthereumConnection } = Augmint;
 
-utils.loadEnv();
+const config = utils.loadEnv();
+
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
 
 const TEST_TIMEOUT = 10000; // infura is occasionaly slow to connect
 

@@ -5,6 +5,10 @@ const {Exchange,EthereumConnection } = Augmint;
 
 const config = utils.loadEnv();
 
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
+
 describe("MatchMultipleOrders onchain", () => {
     const ethereumConnection = new EthereumConnection(config);
     let exchange;

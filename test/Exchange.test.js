@@ -6,6 +6,10 @@ const { Exchange, EthereumConnection, constants } = Augmint;
 
 const config = utils.loadEnv();
 
+if (config.LOG) {
+    utils.logger.level = config.LOG;
+}
+
 describe("connection", () => {
     const CCY = "EUR";
     const ethereumConnection = new EthereumConnection(config);
