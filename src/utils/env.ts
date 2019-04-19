@@ -23,9 +23,6 @@ export const loadEnv = (NODE_ENV = process.env.NODE_ENV) => {
             dotenvConfig({
                 path: dotenvFile
             });
-            // require("dotenv").config({
-            //     path: dotenvFile
-            // });
         }
     });
 

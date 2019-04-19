@@ -75,8 +75,7 @@ export class Exchange extends Contract {
      *  if no gasLimit provided then ethereumConnection.safeBlockGasLimit is used
      * The returned matchingOrders can be passed to signAndSendMatchMultiple or matchMultiple functions
      * @param  {number}  [gasLimit=EthereumConnection.safeBlockGasLimit]   return as many matches as it fits to gasLimit based on gas cost estimate.
-     * @return {Promise}            pairs of matching order id , ordered by execution sequence
-                                   { buyIds: [], sellIds: [], gasEstimate }
+     * @return {Promise}            pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
      */
     public async getMatchingOrders(gasLimit = this.ethereumConnection.safeBlockGasLimit) {
         const [orderBook, bnEthFiatRate] = await Promise.all([

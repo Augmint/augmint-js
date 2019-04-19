@@ -129,8 +129,8 @@ export class EthereumConnection extends EventEmitter {
         switch (this.PROVIDER_TYPE) {
             case "http": {
                 // provider.on is not a function with web3js beta 33 - maybe newer release? or shall we make it work without it?
-                //this.provider = new Web3.providers.HttpProvider(this.PROVIDER_URL + this.INFURA_PROJECT_ID);
-                //break;
+                // this.provider = new Web3.providers.HttpProvider(this.PROVIDER_URL + this.INFURA_PROJECT_ID);
+                // break;
                 throw new Error(this.PROVIDER_TYPE + " is not supported yet");
             }
             case "websocket": {

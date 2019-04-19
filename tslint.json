@@ -17,6 +17,12 @@
             "check-format",
             "allow-leading-underscore"
         ],
+        "comment-format": {
+            "severity": "warn",
+            "options": [
+                "check-space"
+            ]
+        },
         "object-literal-sort-keys": false,
         "radix": false,
         "no-console": {
