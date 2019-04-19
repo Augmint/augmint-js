@@ -1,6 +1,6 @@
-export function promiseTimeout(ms, promise) {
-    let id;
-    let timeout = new Promise((resolve, reject) => {
+export function promiseTimeout(ms: number, promise: Promise<any>): any {
+    let id: ReturnType<typeof setTimeout>;
+    const timeout = new Promise((resolve, reject) => {
         id = setTimeout(() => {
             reject("Timed out in " + ms + "ms.");
         }, ms);

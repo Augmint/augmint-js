@@ -5,10 +5,16 @@ const SIGNALS = ["SIGINT", "SIGQUIT", "SIGTERM"] as const;
 import * as logger from "ulog";
 const log = logger("sigintHandler");
 
-export function setExitHandler(exitHandler, name, exitTimeout = DEFAULT_EXIT_TIMEOUT) {
+type ExitHandlerFunction = (signal: string) => Promise<any>;
+
+export function setExitHandler(
+    exitHandlerCb: ExitHandlerFunction,
+    name: string,
+    exitTimeout = DEFAULT_EXIT_TIMEOUT
+): void {
     SIGNALS.forEach(signal => {
         process.on(signal, async _signal => {
-            await promiseTimeout(exitTimeout, exitHandler(_signal))
+            await promiseTimeout(exitTimeout, exitHandlerCb(signal))
                 .then(() => {
                     log.debug(`${name} exit (${_signal}) success`);
                 })

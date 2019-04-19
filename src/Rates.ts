@@ -33,7 +33,7 @@ export class Rates extends Contract {
         return parseFloat((await this.getBnEthFiatRate(currency)).toString());
     }
 
-    public async getAugmintRate(currency: string): Promise<{ rate: Number; lastUpdated: Date }> {
+    public async getAugmintRate(currency: string): Promise<{ rate: number; lastUpdated: Date }> {
         const bytesCCY = this.web3.utils.asciiToHex(currency);
         const storedRateInfo = await this.instance.methods.rates(bytesCCY).call();
         return {

@@ -266,8 +266,8 @@ export class Exchange extends Contract {
      * @return {object}                pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
      */
     public calculateMatchingOrders(_buyOrders, _sellOrders, bnEthFiatRate, gasLimit) {
-        const sellIds: Array<string> = [];
-        const buyIds: Array<string> = [];
+        const sellIds: string[] = [];
+        const buyIds: string[] = [];
 
         if (_buyOrders.length === 0 || _sellOrders.length === 0) {
             return { buyIds, sellIds, gasEstimate: 0 };
