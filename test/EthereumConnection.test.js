@@ -26,17 +26,17 @@ describe("EthereumConnection", () => {
     it("should have an initial state", async () => {
         const ethereumConnection = new EthereumConnection();
 
-        assert.isNull(ethereumConnection.web3);
-        assert.isNull(ethereumConnection.provider);
+        assert.isUndefined(ethereumConnection.web3);
+        assert.isUndefined(ethereumConnection.provider);
 
         assert(!(await ethereumConnection.isConnected()));
         assert(!ethereumConnection.isStopping);
         assert(!ethereumConnection.isTryingToReconnect);
 
-        assert.isNull(ethereumConnection.networkId);
-        assert.isNull(ethereumConnection.blockGasLimit);
-        assert.isNull(ethereumConnection.safeBlockGasLimit);
-        assert.isNull(ethereumConnection.accounts);
+        assert.isUndefined(ethereumConnection.networkId);
+        assert.isUndefined(ethereumConnection.blockGasLimit);
+        assert.isUndefined(ethereumConnection.safeBlockGasLimit);
+        assert.isUndefined(ethereumConnection.accounts);
     });
 
     providers.forEach(providerOptions => {
