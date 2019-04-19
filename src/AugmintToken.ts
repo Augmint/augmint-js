@@ -1,7 +1,7 @@
 import { Contract } from "./Contract";
 import { EthereumConnection } from "./EthereumConnection";
 
-import * as TokenAEurArtifact from "../abiniser/abis/TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5.json";
+import * as TokenAEurAbi from "../abiniser/abis/TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5.json";
 
 export class AugmintToken extends Contract {
     public peggedSymbol: string;
@@ -10,14 +10,13 @@ export class AugmintToken extends Contract {
     public decimals: number;
     public decimalsDiv: number;
     public feeAccountAddress: string;
-    public readonly contractArtifact = TokenAEurArtifact;
 
     constructor() {
         super();
     }
 
     public async connect(ethereumConnection: EthereumConnection, augmintTokenAddress?: any) {
-        await super.connect(ethereumConnection, this.contractArtifact, augmintTokenAddress);
+        await super.connect(ethereumConnection, TokenAEurAbi, augmintTokenAddress);
 
         const [bytes32PeggedSymbol, symbol, name, decimals, feeAccountAddress] = await Promise.all([
             this.instance.methods.peggedSymbol().call(),

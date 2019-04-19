@@ -1,7 +1,7 @@
 import { logger, promiseTimeout, setExitHandler } from "./utils/index";
 
 import { EventEmitter } from "events";
-import Web3 from "web3";
+import * as Web3 from "web3";
 
 const log = logger("EthereumConnection");
 

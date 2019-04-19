@@ -6,7 +6,7 @@ import { EthereumConnection } from "./EthereumConnection";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
 import { Rates } from "./Rates";
 
-import * as ExchangeArtifact from "../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json";
+import * as ExchangeAbi from "../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json";
 
 interface IParsed {
     id: number;
@@ -33,8 +33,8 @@ export class Exchange extends Contract {
         super();
     }
 
-    public async connect(ethereumConnection: EthereumConnection, exchangeAddress: string) {
-        await super.connect(ethereumConnection, ExchangeArtifact, exchangeAddress);
+    public async connect(ethereumConnection: EthereumConnection) {
+        await super.connect(ethereumConnection, ExchangeAbi);
 
         this.rates = new Rates();
         await this.rates.connect(this.ethereumConnection);
