@@ -6,7 +6,7 @@ import { Rates } from "./Rates";
 import BigNumber from "bignumber.js";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
 
-const ExchangeArtifact = require("../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json");
+import * as ExchangeArtifact from "../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json";
 
 interface Parsed {
     id: number;

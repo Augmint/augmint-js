@@ -9,6 +9,12 @@
         "declaration": true,
         "moduleResolution": "Node"
     },
-    "include": ["./src/"],
-    "exclude": ["node_modules", "**/*.spec.ts"]
+    "include": [
+        "./src/",
+        "./abiniser/"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts"
+    ]
 }

@@ -1,6 +1,6 @@
 export * from "./sigintHandler";
 export * from "./promiseTimeout";
 export * from "./env";
-import logger = require("ulog");
+import logger from "ulog";
 
 export { logger };
