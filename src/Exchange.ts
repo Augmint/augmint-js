@@ -132,7 +132,7 @@ export class Exchange extends Contract {
     }
 
     public async getOrders(orderDirection: OrderDirection, offset) {
-        const blockGasLimit = this.ethereumConnection.safeGasLimit;
+        const blockGasLimit = this.ethereumConnection.safeBlockGasLimit;
 
         const isLegacyExchangeContract = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;

@@ -28,8 +28,31 @@ const DEFAULTS = {
  * @extends EventEmitter
  */
 export class EthereumConnection extends EventEmitter {
+    public web3: Web3;
+    public provider: Web3.Provider;
+    public networkId: number;
+    public blockGasLimit: number;
+    public safeBlockGasLimit: number;
+    public accounts: string[];
+
+    public isStopping: boolean = false; /**  flag to avoid retrying connection when stop() called intentionally  */
+    public isTryingToReconnect: boolean = false; /** flag to avoid  trying to reconnect if already */
+
+    public ETHEREUM_CONNECTION_CHECK_INTERVAL: number;
+    public ETHEREUM_CONNECTION_TIMEOUT: number;
+    public ETHEREUM_ISLISTENING_TIMEOUT: number;
+    public ETHEREUM_CONNECTION_CLOSE_TIMEOUT: number;
+    public PROVIDER_TYPE: string;
+    public PROVIDER_URL: string;
+    public INFURA_PROJECT_ID: string;
+
+    private wasConnected: boolean = false; /** internal flag used to supress repeating connection lost logging */
+
+    private connectionCheckTimer: ReturnType<typeof setTimeout>; /** NodeJs vs. browser setTimeout returns diff. */
+
     constructor(runtimeOptions = {}) {
         super();
+
         /**
          * @namespace
          * @prop {object}   web3    web3.js object
@@ -42,19 +65,6 @@ export class EthereumConnection extends EventEmitter {
          * @prop {boolean}  isStopping      true when shutting down because stop() has been called (e.g. SIGTERM/SIGSTOP/SIGINT
          * @prop {boolean}  isTryingToReconnect  true while trying to reconnect because of connection loss detected
          */
-        this.web3 = null;
-        this.provider = null;
-
-        this.isStopping = false; /** internal flag to avoid retrying connection when stop() called intentionally  */
-        this.isTryingToReconnect = false; /** internal flag to avoid  */
-        this.wasConnected = false; /** internal flag used to supress repeating connection lost logging */
-        this.connectionCheckTimer = null;
-
-        this.networkId = null;
-        this.blockGasLimit = null;
-        this.safeBlockGasLimit = null;
-
-        this.accounts = null;
 
         const options = Object.assign({}, DEFAULTS, runtimeOptions);
 
