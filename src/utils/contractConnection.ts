@@ -1,6 +1,7 @@
 import { EthereumConnection } from "../EthereumConnection";
+import { AbiniserAbi } from "./EthereumAbi";
 
-export function connectLatest(ethereumConnection: EthereumConnection, abiFile) {
+export function connectLatest(ethereumConnection: EthereumConnection, abiFile: AbiniserAbi) {
     const contractName = abiFile.contractName;
     const abiVersionHash = abiFile.abiHash;
 
