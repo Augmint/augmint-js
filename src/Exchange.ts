@@ -1,10 +1,10 @@
-import { EthereumConnection } from "./EthereumConnection";
-import { Contract } from "./Contract";
-import { AugmintToken } from "./AugmintToken";
-import { CHUNK_SIZE, OrderDirection, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
-import { Rates } from "./Rates";
 import BigNumber from "bignumber.js";
+import { AugmintToken } from "./AugmintToken";
+import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, OrderDirection, PPM_DIV } from "./constants";
+import { Contract } from "./Contract";
+import { EthereumConnection } from "./EthereumConnection";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
+import { Rates } from "./Rates";
 
 import * as ExchangeArtifact from "../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json";
 

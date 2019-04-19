@@ -1,5 +1,5 @@
-import { connectLatest } from "./utils/contractConnection";
 import { EthereumConnection } from "./EthereumConnection";
+import { connectLatest } from "./utils/contractConnection";
 /**
  * Generic Contract super class
  */
