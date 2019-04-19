@@ -7,14 +7,14 @@ const log = logger("sigintHandler");
 
 export function setExitHandler(exitHandler, name, exitTimeout = DEFAULT_EXIT_TIMEOUT) {
     SIGNALS.forEach(signal => {
-        process.on(signal, async signal => {
-            await promiseTimeout(exitTimeout, exitHandler(signal))
+        process.on(signal, async _signal => {
+            await promiseTimeout(exitTimeout, exitHandler(_signal))
                 .then(() => {
-                    log.debug(`${name} exit (${signal}) success`);
+                    log.debug(`${name} exit (${_signal}) success`);
                 })
                 .catch(error => {
                     // most likely timeout
-                    log.warn(`${name} exit (${signal}) failed with Error:`, error);
+                    log.warn(`${name} exit (${_signal}) failed with Error:`, error);
                     process.exitCode = 999;
                 });
         });

@@ -8,7 +8,7 @@ import { Rates } from "./Rates";
 
 import * as ExchangeArtifact from "../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json";
 
-interface Parsed {
+interface IParsed {
     id: number;
     maker: string;
     bn_price: BigNumber;
@@ -79,7 +79,7 @@ export class Exchange extends Contract {
                                    { buyIds: [], sellIds: [], gasEstimate }
      */
     public async getMatchingOrders(gasLimit = this.ethereumConnection.safeBlockGasLimit) {
-        const [orderBook, bn_ethFiatRate] = await Promise.all([
+        const [orderBook, bnEthFiatRate] = await Promise.all([
             this.fetchOrderBook(),
             this.rates.getBnEthFiatRate(this.tokenPeggedSymbol)
         ]);
@@ -87,7 +87,7 @@ export class Exchange extends Contract {
         const matches = this.calculateMatchingOrders(
             orderBook.buyOrders,
             orderBook.sellOrders,
-            bn_ethFiatRate,
+            bnEthFiatRate,
             gasLimit
         );
 
@@ -151,13 +151,13 @@ export class Exchange extends Contract {
         // result format: [id, maker, price, amount]
         const orders = result.reduce(
             (res, order) => {
-                const bn_amount = new BigNumber(order[3]);
-                if (!bn_amount.eq(0)) {
-                    const parsed: Parsed = {
+                const bnAmount = new BigNumber(order[3]);
+                if (!bnAmount.eq(0)) {
+                    const parsed: IParsed = {
                         id: parseInt(order[0], 10),
                         maker: `0x${new BigNumber(order[1]).toString(16).padStart(40, "0")}`, // leading 0s if address starts with 0
                         bn_price: new BigNumber(order[2]),
-                        bn_amount,
+                        bn_amount: bnAmount,
                         price: new BigNumber(0),
                         direction: 0,
                         bn_ethAmount: new BigNumber(0),
@@ -261,11 +261,11 @@ export class Exchange extends Contract {
      * calculate matching pairs from ordered ordebook for sending in Exchange.matchMultipleOrders ethereum tx
      * @param  {object} _buyOrders     must be ordered by price descending then by id ascending
      * @param  {array} _sellOrders    must be ordered by price ascending then by id ascending
-     * @param  {BigNumber} bn_ethFiatRate current ETHFiat rate to use for calculation
+     * @param  {BigNumber} bnEthFiatRate current ETHFiat rate to use for calculation
      * @param  {number} gasLimit       return as many matches as it fits to gasLimit based on gas cost estimate.
      * @return {object}                pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
      */
-    public calculateMatchingOrders(_buyOrders, _sellOrders, bn_ethFiatRate, gasLimit) {
+    public calculateMatchingOrders(_buyOrders, _sellOrders, bnEthFiatRate, gasLimit) {
         const sellIds: Array<string> = [];
         const buyIds: Array<string> = [];
 
@@ -303,14 +303,14 @@ export class Exchange extends Contract {
 
             const matchPrice = buyOrder.id > sellOrder.id ? sellOrder.price : buyOrder.price;
 
-            buyOrder.bn_tokenValue = bn_ethFiatRate
+            buyOrder.bn_tokenValue = bnEthFiatRate
                 .div(matchPrice)
                 .mul(buyOrder.bn_ethAmount)
                 .round(2);
 
             sellOrder.bn_ethValue = sellOrder.bn_tokenAmount
                 .mul(matchPrice)
-                .div(bn_ethFiatRate)
+                .div(bnEthFiatRate)
                 .round(18);
 
             if (sellOrder.bn_tokenAmount.lt(buyOrder.bn_tokenValue)) {
