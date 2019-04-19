@@ -25,15 +25,15 @@ interface Parsed {
  * @extends Contract
  */
 export class Exchange extends Contract {
-    rates: Rates;
-    augmintToken: AugmintToken;
-    tokenPeggedSymbol: string; /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
-    tokenSymbol: string; /** token symbol this exchange contract instance is linked to  */
+    public rates: Rates;
+    public augmintToken: AugmintToken;
+    public tokenPeggedSymbol: string; /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
+    public tokenSymbol: string; /** token symbol this exchange contract instance is linked to  */
     constructor() {
         super();
     }
 
-    async connect(ethereumConnection: EthereumConnection, exchangeAddress: string) {
+    public async connect(ethereumConnection: EthereumConnection, exchangeAddress: string) {
         await super.connect(ethereumConnection, ExchangeArtifact, exchangeAddress);
 
         this.rates = new Rates();
@@ -78,7 +78,7 @@ export class Exchange extends Contract {
      * @return {Promise}            pairs of matching order id , ordered by execution sequence
                                    { buyIds: [], sellIds: [], gasEstimate }
      */
-    async getMatchingOrders(gasLimit = this.ethereumConnection.safeBlockGasLimit) {
+    public async getMatchingOrders(gasLimit = this.ethereumConnection.safeBlockGasLimit) {
         const [orderBook, bn_ethFiatRate] = await Promise.all([
             this.fetchOrderBook(),
             this.rates.getBnEthFiatRate(this.tokenPeggedSymbol)
@@ -100,7 +100,7 @@ export class Exchange extends Contract {
      *                  { buyOrders: [{id, maker, direction, bn_amount (in Wei), bn_ethAmount, amount (in eth), bn_price (in PPM)],
      *                  sellOrders: [{id, maker, direction, bn_amount (without decimals), amount (in AEUR), bn_price (in PPM)}]
      */
-    async fetchOrderBook() {
+    public async fetchOrderBook() {
         // TODO: handle when order changes while iterating
         const isLegacyExchangeContract = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
@@ -131,7 +131,7 @@ export class Exchange extends Contract {
         return { buyOrders, sellOrders };
     }
 
-    async getOrders(orderDirection: OrderDirection, offset) {
+    public async getOrders(orderDirection: OrderDirection, offset) {
         const blockGasLimit = this.ethereumConnection.safeGasLimit;
 
         const isLegacyExchangeContract = typeof this.instance.methods.CHUNK_SIZE === "function";
@@ -187,7 +187,7 @@ export class Exchange extends Contract {
         return orders;
     }
 
-    isOrderBetter(o1, o2) {
+    public isOrderBetter(o1, o2) {
         if (o1.direction !== o2.direction) {
             throw new Error("isOrderBetter(): order directions must be the same" + o1 + o2);
         }
@@ -205,7 +205,7 @@ export class Exchange extends Contract {
      * @returns {Promise}     A web3.js Promi event object sent to the network. Resolves when mined and you can subscribe to events, eg. .on("confirmation")
      * @memberof Exchange
      */
-    async matchMultipleOrders(account, matchingOrders) {
+    public async matchMultipleOrders(account, matchingOrders) {
         const matchMultipleOrdersTx = this.getMatchMultipleOrdersTx(matchingOrders.buyIds, matchingOrders.sellIds);
 
         return matchMultipleOrdersTx.send({
@@ -223,7 +223,7 @@ export class Exchange extends Contract {
      * @return {Promise}           A web3.js Promi event object sent to the network. Resolves when mined and you can subscribe to events, eg. .on("confirmation")
      * @memberof Exchange
      */
-    async signAndSendMatchMultipleOrders(account, privateKey, matchingOrders) {
+    public async signAndSendMatchMultipleOrders(account, privateKey, matchingOrders) {
         const matchMultipleOrdersTx = this.getMatchMultipleOrdersTx(matchingOrders.buyIds, matchingOrders.sellIds);
 
         const encodedABI = matchMultipleOrdersTx.encodeABI();
@@ -247,7 +247,7 @@ export class Exchange extends Contract {
      * @return {Promise}         web3 transaction which can be executed with .send({account, gas})
      * @memberof Exchange
      */
-    getMatchMultipleOrdersTx(buyIds, sellIds) {
+    public getMatchMultipleOrdersTx(buyIds, sellIds) {
         if (sellIds.length === 0 || sellIds.length !== buyIds.length) {
             throw new Error("invalid buyIds/sellIds recevied - no ids or the the params are not equal.");
         }
@@ -265,7 +265,7 @@ export class Exchange extends Contract {
      * @param  {number} gasLimit       return as many matches as it fits to gasLimit based on gas cost estimate.
      * @return {object}                pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
      */
-    calculateMatchingOrders(_buyOrders, _sellOrders, bn_ethFiatRate, gasLimit) {
+    public calculateMatchingOrders(_buyOrders, _sellOrders, bn_ethFiatRate, gasLimit) {
         const sellIds: Array<string> = [];
         const buyIds: Array<string> = [];
 

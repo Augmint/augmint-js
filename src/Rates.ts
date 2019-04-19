@@ -10,7 +10,7 @@ export class Rates extends Contract {
         super();
     }
 
-    async getBnEthFiatRate(currency: string): Promise<any> {
+    public async getBnEthFiatRate(currency: string): Promise<any> {
         const rate = await this.instance.methods
             .convertFromWei(this.web3.utils.asciiToHex(currency), ONE_ETH_IN_WEI.toString())
             .call()
@@ -29,11 +29,11 @@ export class Rates extends Contract {
         );
     }
 
-    async getEthFiatRate(currency: string): Promise<number> {
+    public async getEthFiatRate(currency: string): Promise<number> {
         return parseFloat((await this.getBnEthFiatRate(currency)).toString());
     }
 
-    async getAugmintRate(currency: string): Promise<{ rate: Number; lastUpdated: Date }> {
+    public async getAugmintRate(currency: string): Promise<{ rate: Number; lastUpdated: Date }> {
         const bytesCCY = this.web3.utils.asciiToHex(currency);
         const storedRateInfo = await this.instance.methods.rates(bytesCCY).call();
         return {
@@ -42,7 +42,7 @@ export class Rates extends Contract {
         };
     }
 
-    getSetRateTx(currency: string, price: number): Promise<any> {
+    public getSetRateTx(currency: string, price: number): Promise<any> {
         const rateToSend = price * DECIMALS_DIV;
         if (Math.round(rateToSend) !== rateToSend) {
             throw new Error(
@@ -55,7 +55,7 @@ export class Rates extends Contract {
         return tx;
     }
 
-    async connect(ethereumConnection: EthereumConnection): Promise<any> {
+    public async connect(ethereumConnection: EthereumConnection): Promise<any> {
         return await super.connect(ethereumConnection, RatesArtifact);
     }
 }

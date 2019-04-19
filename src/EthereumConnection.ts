@@ -89,7 +89,7 @@ export class EthereumConnection extends EventEmitter {
      * Get connection state
      * @return {Promise} result from  web3.eth.net.isListening()
      */
-    async isConnected() {
+    public async isConnected() {
         let result = false;
         if (this.web3) {
             result = await promiseTimeout(this.ETHEREUM_ISLISTENING_TIMEOUT, this.web3.eth.net.isListening()).catch(
@@ -109,11 +109,11 @@ export class EthereumConnection extends EventEmitter {
      * @param  {string}  account Ethereum account with leading 0x
      * @return {Promise}         The result web3.eth.getTransactionCount(account) which is essentially the nonce for the next tx
      */
-    async getAccountNonce(account) {
+    public async getAccountNonce(account) {
         return await this.web3.eth.getTransactionCount(account);
     }
 
-    async connect() {
+    public async connect() {
         this.isStopping = false;
 
         switch (this.PROVIDER_TYPE) {
@@ -175,7 +175,24 @@ export class EthereumConnection extends EventEmitter {
         await promiseTimeout(this.ETHEREUM_CONNECTION_TIMEOUT, connectedEventPromise);
     }
 
-    async onProviderConnect() {
+    public async stop(/*signal*/) {
+        this.isStopping = true;
+        clearTimeout(this.connectionCheckTimer);
+
+        if (this.web3 && (await this.isConnected())) {
+            const disconnectedEventPromise = new Promise(resolve => {
+                this.once("disconnected", () => {
+                    resolve();
+                });
+            });
+
+            await this.web3.currentProvider.connection.close();
+
+            await promiseTimeout(this.ETHEREUM_CONNECTION_CLOSE_TIMEOUT, disconnectedEventPromise);
+        }
+    }
+
+    private async onProviderConnect() {
         clearTimeout(this.connectionCheckTimer);
 
         let lastBlock;
@@ -205,7 +222,7 @@ export class EthereumConnection extends EventEmitter {
         this.emit("connected", this);
     }
 
-    onProviderEnd(e) {
+    private onProviderEnd(e) {
         if (e.code === 1000) {
             // Normal connection closure (currentProvider.close() was called from stop())
             log.debug(" EthereumConnection - Websocket ended with normal end code:", e.code, e.reason);
@@ -219,7 +236,7 @@ export class EthereumConnection extends EventEmitter {
         }
     }
 
-    onProviderError(event) {
+    private onProviderError(event) {
         // NB: This is triggered with every isConnected() call too when not connected
         //  Supressing repeating logs while reconnecting - common due to infura dropping web3 connection ca. in every 1-2 hours)
         //       TODO: check if we should implement web3 keepalive pings or if newever versions on web3js are supporting it
@@ -231,28 +248,11 @@ export class EthereumConnection extends EventEmitter {
         }
     }
 
-    async stop(/*signal*/) {
-        this.isStopping = true;
-        clearTimeout(this.connectionCheckTimer);
-
-        if (this.web3 && (await this.isConnected())) {
-            const disconnectedEventPromise = new Promise(resolve => {
-                this.once("disconnected", () => {
-                    resolve();
-                });
-            });
-
-            await this.web3.currentProvider.connection.close();
-
-            await promiseTimeout(this.ETHEREUM_CONNECTION_CLOSE_TIMEOUT, disconnectedEventPromise);
-        }
-    }
-
-    async _exit(signal) {
+    private async _exit(signal) {
         await this.stop();
     }
 
-    async _checkConnection() {
+    private async _checkConnection() {
         // subscriptions are starting not to arrive on Infura websocket after a while and provider end is not always triggered
         //  TODO: - check if newer versions of web3 (newer than beta33) are handling webscoket connection drops correclty
         if (!this.isStopping && !(await this.isConnected())) {
@@ -269,7 +269,7 @@ export class EthereumConnection extends EventEmitter {
         }
     }
 
-    async _tryToReconnect() {
+    private async _tryToReconnect() {
         if (!this.isStopping && !this.isTryingToReconnect) {
             // we won't try to reconnect if previous is still running (this.isTryingToReconnect)
             //    i.e the prev connect() will errror or worst case timeout in ETHEREUM_CONNECTION_TIMEOUT ms and _checkConnection is called in every x ms

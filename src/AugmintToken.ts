@@ -4,19 +4,19 @@ import { EthereumConnection } from "./EthereumConnection";
 const TokenAEurArtifact = require("../abiniser/abis/TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5.json");
 
 export class AugmintToken extends Contract {
-    peggedSymbol: string;
-    symbol: string;
-    name: string;
-    decimals: number;
-    decimalsDiv: number;
-    feeAccountAddress: string;
-    readonly contractArtifact = TokenAEurArtifact;
+    public peggedSymbol: string;
+    public symbol: string;
+    public name: string;
+    public decimals: number;
+    public decimalsDiv: number;
+    public feeAccountAddress: string;
+    public readonly contractArtifact = TokenAEurArtifact;
 
     constructor() {
         super();
     }
 
-    async connect(ethereumConnection: EthereumConnection, augmintTokenAddress?: any) {
+    public async connect(ethereumConnection: EthereumConnection, augmintTokenAddress?: any) {
         await super.connect(ethereumConnection, this.contractArtifact, augmintTokenAddress);
 
         const [bytes32PeggedSymbol, symbol, name, decimals, feeAccountAddress] = await Promise.all([

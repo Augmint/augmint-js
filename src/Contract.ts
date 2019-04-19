@@ -4,9 +4,9 @@ import { EthereumConnection } from "./EthereumConnection";
  * Generic Contract super class
  */
 export class Contract {
-    ethereumConnection: EthereumConnection;
-    web3: any;
-    instance: any;
+    public ethereumConnection: EthereumConnection;
+    public web3: any;
+    public instance: any;
 
     get address(): string {
         return this.instance ? this.instance._address : null;
@@ -20,7 +20,7 @@ export class Contract {
      * @param  {string}  address            contract address if y (not yet implemented)
      * @return {Promise}                    the web3 contract instance
      */
-    async connect(ethereumConnection: EthereumConnection, abiFile: string, address?: string) {
+    public async connect(ethereumConnection: EthereumConnection, abiFile: string, address?: string) {
         if (address) {
             throw new Error(
                 "Connecting to a contract at arbitary address is not supported yet. Pass no address to connect latest contract deployment at network"
