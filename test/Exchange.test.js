@@ -34,7 +34,7 @@ describe("connection", () => {
     it("should connect to legacy Excahnge contract");
 });
 
-describe("fetchOrderBook", () => {
+describe("getOrderBook", () => {
     const ethereumConnection = new EthereumConnection(config);
     const exchange = new Exchange();
     let snapshotId;
@@ -53,7 +53,7 @@ describe("fetchOrderBook", () => {
     });
 
     it("should return empty orderbook when no orders", async () => {
-        const orderBook = await exchange.fetchOrderBook();
+        const orderBook = await exchange.getOrderBook();
         assert.deepEqual(orderBook, { buyOrders: [], sellOrders: [] });
     });
 
@@ -79,7 +79,7 @@ describe("fetchOrderBook", () => {
             .transferAndNotify(exchange.address, bn_sellTokenAmount.toString(), bn_sellPrice.toString())
             .send({ from: sellMaker, gas: 1000000 });
 
-        const orderBook = await exchange.fetchOrderBook();
+        const orderBook = await exchange.getOrderBook();
 
         assert.deepEqual(orderBook, {
             buyOrders: [

@@ -79,7 +79,7 @@ export class Exchange extends Contract {
      */
     public async getMatchingOrders(gasLimit = this.ethereumConnection.safeBlockGasLimit) {
         const [orderBook, bnEthFiatRate] = await Promise.all([
-            this.fetchOrderBook(),
+            this.getOrderBook(),
             this.rates.getBnEthFiatRate(this.tokenPeggedSymbol)
         ]);
 
@@ -99,7 +99,7 @@ export class Exchange extends Contract {
      *                  { buyOrders: [{id, maker, direction, bn_amount (in Wei), bn_ethAmount, amount (in eth), bn_price (in PPM)],
      *                  sellOrders: [{id, maker, direction, bn_amount (without decimals), amount (in AEUR), bn_price (in PPM)}]
      */
-    public async fetchOrderBook() {
+    public async getOrderBook() {
         // TODO: handle when order changes while iterating
         const isLegacyExchangeContract = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
