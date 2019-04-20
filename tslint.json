@@ -49,6 +49,9 @@
                 "object-destructuring",
                 "array-destructuring"
             ]
+        },
+        "object-literal-shorthand": {
+            "severity": "warn"
         }
     }
 }
