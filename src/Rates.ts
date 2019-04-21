@@ -5,13 +5,24 @@ import { Contract } from "./Contract";
 import { ZeroRateError } from "./Errors";
 import { EthereumConnection } from "./EthereumConnection";
 
+export interface IRateInfo {
+    bnRate: BigNumber /** The rate without decimals */;
+    rate: number /** rate with token decimals */;
+    lastUpdated: Date;
+}
+
+interface IRawRateInfo {
+    rate: BigNumber;
+    lastUpdated: string /** as unix timestamp */;
+}
+
 export class Rates extends Contract {
     constructor() {
         super();
     }
 
-    public async getBnEthFiatRate(currency: string): Promise<any> {
-        const rate = await this.instance.methods
+    public async getBnEthFiatRate(currency: string): Promise<BigNumber> {
+        const rate: BigNumber = await this.instance.methods
             .convertFromWei(this.web3.utils.asciiToHex(currency), ONE_ETH_IN_WEI.toString())
             .call()
             .catch(error => {
@@ -24,32 +35,32 @@ export class Rates extends Contract {
                 }
             });
 
-        return new BigNumber(
-            rate / DECIMALS_DIV // // TODO: change to augmintToken.decimalsDiv
-        );
+        return new BigNumber(rate);
     }
 
     public async getEthFiatRate(currency: string): Promise<number> {
-        return parseFloat((await this.getBnEthFiatRate(currency)).toString());
+        const bnEthFiatRate: BigNumber = await this.getBnEthFiatRate(currency);
+        return parseFloat(bnEthFiatRate.div(DECIMALS_DIV).toFixed(DECIMALS));
     }
 
-    public async getAugmintRate(currency: string): Promise<{ rate: number; lastUpdated: Date }> {
-        const bytesCCY = this.web3.utils.asciiToHex(currency);
-        const storedRateInfo = await this.instance.methods.rates(bytesCCY).call();
+    public async getAugmintRate(currency: string): Promise<IRateInfo> {
+        const bytesCCY: string = this.web3.utils.asciiToHex(currency);
+        const storedRateInfo: IRawRateInfo = await this.instance.methods.rates(bytesCCY).call();
         return {
-            rate: parseInt(storedRateInfo.rate) / DECIMALS_DIV, // TODO: change to augmintToken.decimalsDiv
+            bnRate: storedRateInfo.rate,
+            rate: parseInt(storedRateInfo.rate.toString()) / DECIMALS_DIV, // TODO: change to augmintToken.decimalsDiv
             lastUpdated: new Date(parseInt(storedRateInfo.lastUpdated) * 1000)
         };
     }
 
     public getSetRateTx(currency: string, price: number): Promise<any> {
-        const rateToSend = price * DECIMALS_DIV;
+        const rateToSend: number = price * DECIMALS_DIV;
         if (Math.round(rateToSend) !== rateToSend) {
             throw new Error(
                 ` getSetRateTx error: provided price of ${price} has more decimals than allowed by AugmintToken decimals of ${DECIMALS}`
             );
         }
-        const bytesCCY = this.web3.utils.asciiToHex(currency);
+        const bytesCCY: string = this.web3.utils.asciiToHex(currency);
         const tx = this.instance.methods.setRate(bytesCCY, rateToSend);
 
         return tx;
