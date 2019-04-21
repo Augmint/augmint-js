@@ -45,7 +45,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha 'test/**/*.test.js' --exit",
+    "test": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha 'test/**/*.test.js' --exit --timeout 5000",
     "ganache:start": "scripts/augmint-cli.sh ganache start",
     "ganache:stop": "scripts/augmint-cli.sh ganache stop"
   },
