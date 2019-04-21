@@ -101,15 +101,18 @@ describe("EthereumConnection", () => {
                 ethereumConnection = new EthereumConnection(options);
 
                 assert(
-                    ethereumConnection.ETHEREUM_CONNECTION_CHECK_INTERVAL,
+                    ethereumConnection.options.ETHEREUM_CONNECTION_CHECK_INTERVAL,
                     options.ETHEREUM_CONNECTION_CHECK_INTERVAL
                 );
-                assert.equal(ethereumConnection.PROVIDER_TYPE, options.PROVIDER_TYPE);
-                assert.equal(ethereumConnection.PROVIDER_URL, options.PROVIDER_URL);
-                assert.equal(ethereumConnection.INFURA_PROJECT_ID, options.INFURA_PROJECT_ID);
-                assert.equal(ethereumConnection.ETHEREUM_CONNECTION_TIMEOUT, options.ETHEREUM_CONNECTION_TIMEOUT);
+                assert.equal(ethereumConnection.options.PROVIDER_TYPE, options.PROVIDER_TYPE);
+                assert.equal(ethereumConnection.options.PROVIDER_URL, options.PROVIDER_URL);
+                assert.equal(ethereumConnection.options.INFURA_PROJECT_ID, options.INFURA_PROJECT_ID);
                 assert.equal(
-                    ethereumConnection.ETHEREUM_CONNECTION_CLOSE_TIMEOUT,
+                    ethereumConnection.options.ETHEREUM_CONNECTION_TIMEOUT,
+                    options.ETHEREUM_CONNECTION_TIMEOUT
+                );
+                assert.equal(
+                    ethereumConnection.options.ETHEREUM_CONNECTION_CLOSE_TIMEOUT,
                     options.ETHEREUM_CONNECTION_CLOSE_TIMEOUT
                 );
             });
