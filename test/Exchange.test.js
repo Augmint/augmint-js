@@ -60,23 +60,22 @@ describe("getOrderBook", () => {
     it("should return orderbook with orders", async () => {
         const buyMaker = ethereumConnection.accounts[1];
         const sellMaker = ethereumConnection.accounts[0];
-        const buyPrice = new BigNumber(1.01);
-        const bn_buyPrice = new BigNumber(buyPrice * constants.PPM_DIV);
-        const sellPrice = new BigNumber(1.05);
-        const bn_sellPrice = new BigNumber(sellPrice * constants.PPM_DIV);
+        const buyPrice = 1.01;
+        const bnBuyPrice = new BigNumber(buyPrice * constants.PPM_DIV);
+        const sellPrice = 1.05;
+        const bnSellPrice = new BigNumber(sellPrice * constants.PPM_DIV);
 
-        const bn_buyEthAmount = new BigNumber(0.1);
-        const bn_buyWeiAmount = new BigNumber(ethereumConnection.web3.utils.toWei(bn_buyEthAmount.toString()));
+        const buyEthAmount = 0.1;
+        const bn_buyWeiAmount = new BigNumber(ethereumConnection.web3.utils.toWei(buyEthAmount.toString()));
         const sellTokenAmount = 10;
         const bn_sellTokenAmount = new BigNumber(sellTokenAmount * constants.DECIMALS_DIV);
-        const bn_sellEthAmount = new BigNumber(0);
 
         await exchange.instance.methods
-            .placeBuyTokenOrder(bn_buyPrice.toString())
+            .placeBuyTokenOrder(bnBuyPrice.toString())
             .send({ from: buyMaker, value: bn_buyWeiAmount.toString(), gas: 1000000 });
 
         await exchange.augmintToken.instance.methods
-            .transferAndNotify(exchange.address, bn_sellTokenAmount.toString(), bn_sellPrice.toString())
+            .transferAndNotify(exchange.address, bn_sellTokenAmount.toString(), bnSellPrice.toString())
             .send({ from: sellMaker, gas: 1000000 });
 
         const orderBook = await exchange.getOrderBook();
@@ -86,23 +85,22 @@ describe("getOrderBook", () => {
                 {
                     id: 1,
                     maker: buyMaker.toLowerCase(),
-                    bn_price: bn_buyPrice,
-                    bn_amount: bn_buyWeiAmount,
+                    bnPrice: bnBuyPrice,
+                    bnAmount: bn_buyWeiAmount,
                     price: buyPrice,
                     direction: constants.OrderDirection.TOKEN_BUY,
-                    bn_ethAmount: bn_buyEthAmount,
-                    amount: bn_buyEthAmount.toNumber()
+                    bnEthAmount: new BigNumber(buyEthAmount),
+                    amount: buyEthAmount
                 }
             ],
             sellOrders: [
                 {
                     id: 2,
                     maker: sellMaker.toLowerCase(),
-                    bn_price: bn_sellPrice,
-                    bn_amount: bn_sellTokenAmount,
+                    bnPrice: bnSellPrice,
+                    bnAmount: bn_sellTokenAmount,
                     price: sellPrice,
                     direction: constants.OrderDirection.TOKEN_SELL,
-                    bn_ethAmount: bn_sellEthAmount,
                     amount: sellTokenAmount
                 }
             ]
