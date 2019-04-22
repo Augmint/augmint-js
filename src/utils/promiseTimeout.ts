@@ -1,17 +1,19 @@
-export function promiseTimeout(ms: number, promise: Promise<any>): any {
+export async function promiseTimeout<T>(ms: number, promise: Promise<T>): Promise<T | never> {
     let id: ReturnType<typeof setTimeout>;
-    const timeout = new Promise((resolve, reject) => {
-        id = setTimeout(() => {
-            reject("Timed out in " + ms + "ms.");
-        }, ms);
-    });
+    const timeout: Promise<never> = new Promise(
+        (resolve: () => never, reject: (reason?: any) => void): void => {
+            id = setTimeout(() => {
+                reject("Timed out in " + ms + "ms.");
+            }, ms);
+        }
+    );
 
     return Promise.race([promise, timeout])
-        .then(result => {
+        .then((result: T) => {
             clearTimeout(id);
             return result;
         })
-        .catch(error => {
+        .catch((error: any) => {
             clearTimeout(id);
             throw error;
         });
