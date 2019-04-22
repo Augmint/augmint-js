@@ -1,5 +1,7 @@
 import BigNumber from "bignumber.js";
 import * as ExchangeAbi from "../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json";
+import { Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd as ExchangeContract } from "../abiniser/types/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd";
+import { TransactionObject } from "../abiniser/types/types.js";
 import { AugmintToken } from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
 import { Contract } from "./Contract";
@@ -58,6 +60,9 @@ export class Exchange extends Contract {
     public augmintToken: AugmintToken;
     public tokenPeggedSymbol: string; /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
     public tokenSymbol: string; /** token symbol this exchange contract instance is linked to  */
+    // overwrite Contract's  property to have typings
+    public instance: ExchangeContract; /** web3.js Exchange contract instance  */
+
     constructor() {
         super();
     }
@@ -123,6 +128,7 @@ export class Exchange extends Contract {
      */
     public async getOrderBook(): Promise<IOrderBook> {
         // TODO: handle when order changes while iterating
+        // @ts-ignore  TODO: remove ts - ignore and handle properly when legacy contract support added
         const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
 
@@ -158,16 +164,21 @@ export class Exchange extends Contract {
     public async getOrders(orderDirection: OrderDirection, offset: number): Promise<IOrderBook> {
         const blockGasLimit: number = this.ethereumConnection.safeBlockGasLimit;
 
+        // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
         const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
 
         let result: IOrderTuple[];
         if (orderDirection === OrderDirection.TOKEN_BUY) {
+            // prettier-ignore
             result = isLegacyExchangeContract
+                // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
                 ? await this.instance.methods.getActiveBuyOrders(offset).call({ gas: blockGasLimit })
                 : await this.instance.methods.getActiveBuyOrders(offset, chunkSize).call({ gas: blockGasLimit });
         } else {
+            // prettier-ignore
             result = isLegacyExchangeContract
+                // @ts-ignore  TODO: remove ts - ignore and handle properly when legacy contract support added
                 ? await this.instance.methods.getActiveSellOrders(offset).call({ gas: blockGasLimit })
                 : await this.instance.methods.getActiveSellOrders(offset, chunkSize).call({ gas: blockGasLimit });
         }
@@ -221,9 +232,9 @@ export class Exchange extends Contract {
 
     /**
      * Sends a matchMultipleOrders transaction
-     * Intended to use when account wallet is available (e.g. MetamMask)  * @param {string} account    tx sender account
-     * @param {string} account    tx sender account
-     * @param  {*} matchingOrders
+     * Intended to use when account wallet is available (e.g. MetamMask)
+     * @param {string} account
+     * @param {IMatchingOrders} matchingOrders
      * @returns {Promise}     A web3.js Promi event object sent to the network. Resolves when mined and you can subscribe to events, eg. .on("confirmation")
      * @memberof Exchange
      */
@@ -246,7 +257,10 @@ export class Exchange extends Contract {
      * @memberof Exchange
      */
     public async signAndSendMatchMultipleOrders(account: string, privateKey: string, matchingOrders: IMatchingOrders) {
-        const matchMultipleOrdersTx = this.getMatchMultipleOrdersTx(matchingOrders.buyIds, matchingOrders.sellIds);
+        const matchMultipleOrdersTx: TransactionObject<string> = this.getMatchMultipleOrdersTx(
+            matchingOrders.buyIds,
+            matchingOrders.sellIds
+        );
 
         const encodedABI: string = matchMultipleOrdersTx.encodeABI();
 
@@ -269,12 +283,12 @@ export class Exchange extends Contract {
      * @return {Promise}         web3 transaction which can be executed with .send({account, gas})
      * @memberof Exchange
      */
-    public getMatchMultipleOrdersTx(buyIds: number[], sellIds: number[]) {
+    public getMatchMultipleOrdersTx(buyIds: number[], sellIds: number[]): TransactionObject<string> {
         if (sellIds.length === 0 || sellIds.length !== buyIds.length) {
             throw new Error("invalid buyIds/sellIds recevied - no ids or the the params are not equal.");
         }
 
-        const tx = this.instance.methods.matchMultipleOrders(buyIds, sellIds);
+        const tx: TransactionObject<string> = this.instance.methods.matchMultipleOrders(buyIds, sellIds);
 
         return tx;
     }

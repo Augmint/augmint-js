@@ -71,7 +71,7 @@ describe("Rates getters", () => {
     it("getAugmintRate", async () => {
         const augmintRate = await rates.getAugmintRate(CCY);
         assert.equal(augmintRate.rate, EXPECTED_RATE);
-        assert.equal(augmintRate.bnRate, new BigNumber(EXPECTED_RATE * DECIMALS_DIV));
+        assert.deepEqual(augmintRate.bnRate, new BigNumber(EXPECTED_RATE * DECIMALS_DIV));
         assert.instanceOf(augmintRate.lastUpdated, Date);
     });
 
