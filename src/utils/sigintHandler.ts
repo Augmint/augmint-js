@@ -1,8 +1,9 @@
+import { logger } from "./logger";
 import { promiseTimeout } from "./promiseTimeout";
 
 const DEFAULT_EXIT_TIMEOUT = 10000; // how much to wait before timing out disconnect (in ms)
 const SIGNALS = ["SIGINT", "SIGQUIT", "SIGTERM"] as const;
-import * as logger from "ulog";
+
 const log = logger("sigintHandler");
 
 type ExitHandlerFunction = (signal: string) => Promise<any>;
