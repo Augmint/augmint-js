@@ -71,7 +71,11 @@ export class Rates extends Contract {
 
         const web3Tx: TransactionObject<void> = this.instance.methods.setRate(bytesCCY, rateToSend);
         const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
-            gasLimit: SET_RATE_GAS_LIMIT
+            gasLimit: SET_RATE_GAS_LIMIT,
+            // setting to: in case it's going to be signed
+            // NB: signing/sending this particular tx works without it somehow
+            // but others are throwing unhandled rejection errors (web3 beta36) so setting a good example
+            to: this.address
         });
 
         return transaction;
