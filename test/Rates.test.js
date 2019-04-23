@@ -82,30 +82,3 @@ describe("Rates getters", () => {
         });
     });
 });
-
-describe("Rates txs", () => {
-    const ethereumConnection = new EthereumConnection(config);
-    const rates = new Rates();
-    let snapshotId;
-
-    before(async () => {
-        await ethereumConnection.connect();
-        await rates.connect(ethereumConnection);
-    });
-
-    beforeEach(async () => {
-        snapshotId = await takeSnapshot(ethereumConnection.web3);
-    });
-
-    afterEach(async () => {
-        await revertSnapshot(ethereumConnection.web3, snapshotId);
-    });
-
-    it("setRate");
-
-    it("setRate = 0");
-
-    it("setRate - invalid ccy");
-
-    it("setRate - invalid price");
-});
