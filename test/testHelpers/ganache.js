@@ -1,6 +1,7 @@
 module.exports = {
     takeSnapshot,
-    revertSnapshot
+    revertSnapshot,
+    mine
 };
 
 //let snapshotCount = 0;
@@ -50,4 +51,28 @@ function revertSnapshot(web3, snapshotId) {
             }
         );
     });
+}
+
+async function mine(web3, blocksToMine = 1) {
+    const getOneMinePromise = () =>
+        new Promise(function(resolve, reject) {
+            web3.currentProvider.sendAsync(
+                {
+                    method: "evm_mine",
+                    jsonrpc: "2.0",
+                    id: new Date().getTime()
+                },
+                function(error, res) {
+                    if (error) {
+                        reject(new Error("evm_mine error::\n" + error));
+                    } else {
+                        resolve(res);
+                    }
+                }
+            );
+        });
+
+    for (let i = 0; i < blocksToMine; i++) {
+        await getOneMinePromise(); // Promise.all confuses ganache
+    }
 }
