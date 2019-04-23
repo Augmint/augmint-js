@@ -168,10 +168,11 @@ describe("Transaction", () => {
             })
             .getTxHash()
             .catch(error => {
-                assert.instanceOf(tx.sendError, TransactionSendError);
-                assert.instanceOf(tx.sendError, AugmintJsError);
-                assert.instanceOf(tx.sendError, TransactionError);
+                assert.instanceOf(error, TransactionSendError);
+                assert.instanceOf(error, AugmintJsError);
+                assert.instanceOf(error, TransactionError);
                 assert.match(error.message, /base fee exceeds gas limit/); // test sanity check
+                assert.deepEqual(tx.sendError, error);
             });
 
         assert.isUndefined(txHash);
