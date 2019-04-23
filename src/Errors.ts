@@ -8,6 +8,7 @@ export class AugmintJsError extends Error {
     }
 }
 
+// tslint:disable-next-line:max-classes-per-file
 export class ZeroRateError extends AugmintJsError {
     constructor(message: string) {
         super(message);

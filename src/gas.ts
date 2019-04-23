@@ -5,7 +5,7 @@ export const COLLECT_BASE_GAS: number = 90000; // as of now on testRpc: 1 loan =
 export const COLLECT_ONE_GAS: number = 20000; // as of now: ca. 10000
 
 export const TRANSFER_AUGMINT_TOKEN_GAS: number = 100000; // on testrpc: first: 75189 - 75405, rinkeby first: 76629
-//consecutive : no narr: 45405 - 60405 (higher when sent to account which never received)
+// consecutive : no narr: 45405 - 60405 (higher when sent to account which never received)
 // w narrative: 46733 - 56693
 
 export const PLACE_ORDER_GAS: number = 200000;

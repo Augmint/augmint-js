@@ -1,5 +1,5 @@
-const fs = require("fs");
 import { config as dotenvConfig } from "dotenv";
+import * as fs from "fs";
 const DOTENV_PATH = ".env";
 
 export const loadEnv = (NODE_ENV = process.env.NODE_ENV) => {
@@ -8,13 +8,13 @@ export const loadEnv = (NODE_ENV = process.env.NODE_ENV) => {
     }
 
     // https://github.com/bkeepers/dotenv#what-other-env-files-can-i-use
-    const dotenvFiles = [
+    const dotenvFiles: fs.PathLike[] = [
         `${DOTENV_PATH}.${NODE_ENV}.local`,
         `${DOTENV_PATH}.${NODE_ENV}`,
         // Don't include `.env.local` for `test` environment since normally you expect tests to produce the same results for everyone
         NODE_ENV !== "test" && `${DOTENV_PATH}.local`,
         DOTENV_PATH // the base .env
-    ].filter(Boolean);
+    ].filter((x): x is string => x !== null);
 
     // Load environment variables from .env* files. Suppress warnings using silent if this file is missing.
     // dotenv will never modify any environment variables that have already been set. https://github.com/motdotla/dotenv
@@ -23,9 +23,6 @@ export const loadEnv = (NODE_ENV = process.env.NODE_ENV) => {
             dotenvConfig({
                 path: dotenvFile
             });
-            // require("dotenv").config({
-            //     path: dotenvFile
-            // });
         }
     });
 

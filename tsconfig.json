@@ -7,8 +7,15 @@
         "target": "ES5", // specify ECMAScript target version
         "allowJs": false, // allow a partial TypeScript and JavaScript codebase
         "declaration": true,
-        "moduleResolution": "Node"
+        "moduleResolution": "Node",
+        "noUnusedLocals": true
     },
-    "include": ["./src/"],
-    "exclude": ["node_modules", "**/*.spec.ts"]
+    "include": [
+        "./src/",
+        "./abiniser/"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts"
+    ]
 }

@@ -32,18 +32,22 @@
     "web3": "1.0.0-beta.36"
   },
   "devDependencies": {
-    "@types/node": "11.13.4",
+    "@types/node": "^10.14.5",
     "chai": "4.2.0",
     "cross-env": "5.2",
     "eslint": "5.16.0",
     "mocha": "6.1.4",
     "sinon": "7.3.2",
+    "tslint": "5.16.0",
+    "tslint-config-prettier": "1.18.0",
+    "typechain": "0.3.14",
     "typescript": "3.4.3",
     "wait-on": "3.2.0"
   },
   "scripts": {
     "build": "tsc",
-    "test": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha 'test/**/*.test.js' --exit",
+    "build:typings": "ts-generator ./ts-generator.json",
+    "test": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha 'test/**/*.test.js' --exit --timeout 5000",
     "ganache:start": "scripts/augmint-cli.sh ganache start",
     "ganache:stop": "scripts/augmint-cli.sh ganache stop"
   },

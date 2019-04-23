@@ -1,6 +1,7 @@
 import { EthereumConnection } from "../EthereumConnection";
+import { AbiniserAbi } from "./EthereumAbi";
 
-export function connectLatest(ethereumConnection: EthereumConnection, abiFile) {
+export function connectLatest(ethereumConnection: EthereumConnection, abiFile: AbiniserAbi) {
     const contractName = abiFile.contractName;
     const abiVersionHash = abiFile.abiHash;
 
@@ -18,7 +19,7 @@ export function connectLatest(ethereumConnection: EthereumConnection, abiFile) {
     return new ethereumConnection.web3.eth.Contract(abiFile.abi, contractAddress);
 }
 
-function getDeploysFile(networkId, contractName) {
+function getDeploysFile(networkId: number, contractName: string) {
     const deploysFileName = `../../abiniser/deployments/${networkId}/${contractName}_DEPLOYS.json`;
     let deploysFile;
 
