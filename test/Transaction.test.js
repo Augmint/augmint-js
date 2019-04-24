@@ -120,7 +120,15 @@ describe("Transaction", () => {
             .send({
                 from: accounts[1]
             })
-            .getTxHash();
+            .getTxHash()
+            .catch(error => {
+                // --noVMErrorsOnRPCResponse flag needed to this test to past.
+                // Ganache doesn't return txHash for reverting tx-s without --noVMErrorsOnRPCResponse
+                throw new Error(
+                    "TEST ERROR: getTxHash rejected with Error. Are you running ganache with --noVMErrorsOnRPCResponse flag? Error received:\n" +
+                        error
+                );
+            });
 
         const txHash2 = await tx.getTxHash();
         const receipt = await tx.getTxReceipt();
