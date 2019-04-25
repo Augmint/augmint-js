@@ -90,7 +90,7 @@ export class EthereumConnection extends EventEmitter {
                 throw new AugmintJsError(
                     "EthereumConnection error. Invalid PROVIDER_TYPE: " +
                         this.options.PROVIDER_TYPE +
-                        "Only websocket is supported at the moment. You can pass custom provider using provider using provider option"
+                        " Only websocket is supported at the moment. You can pass custom provider using provider using provider option"
                 );
             }
             if (!this.options.PROVIDER_URL) {
@@ -182,7 +182,6 @@ export class EthereumConnection extends EventEmitter {
         }
         this.provider.on("error", this.onProviderError.bind(this));
         this.provider.on("end", this.onProviderEnd.bind(this));
-        this.provider.on("connect", this.onProviderConnect.bind(this));
 
         if (this.web3) {
             // it's  a reconnect
@@ -194,12 +193,13 @@ export class EthereumConnection extends EventEmitter {
         const connectedEventPromise: Promise<void> = new Promise(
             async (resolve: () => void, reject: any): Promise<void> => {
                 if (await this.isConnected()) {
+                    await this.initAfterProviderConnect();
                     resolve();
-                }
-
-                const tempOnConnected: () => void = (): void => {
+                } else {
+                    const tempOnConnected: () => void = async (): Promise<void> => {
                     this.removeListener("providerError", tempOnproviderError);
                     this.removeListener("connectionLost", tempOnConnectionLost);
+                        await this.initAfterProviderConnect();
                     resolve(); // we wait for our custom setup to finish before we resolve connect()
                 };
 
@@ -251,7 +251,7 @@ export class EthereumConnection extends EventEmitter {
         }
     }
 
-    private async onProviderConnect(): Promise<void> {
+    private async initAfterProviderConnect(): Promise<void> {
         clearTimeout(this.connectionCheckTimer);
 
         let lastBlock;

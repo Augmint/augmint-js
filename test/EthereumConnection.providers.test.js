@@ -60,7 +60,7 @@ const testProviders = [
                 assert(!ethereumConnection.isStopping);
                 assert(!ethereumConnection.isTryingToReconnect);
 
-                sinon.assert.calledOnce(connectedSpy);
+            assert.equal(connectedSpy.callCount, 1);
                 sinon.assert.notCalled(disconnectedSpy);
                 sinon.assert.notCalled(connectionLostSpy);
 
