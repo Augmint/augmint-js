@@ -156,7 +156,7 @@ export class EthereumConnection extends EventEmitter {
     public async connect(): Promise<void> {
         this.isStopping = false;
 
-        if (this.options.PROVIDER_TYPE && this.options.PROVIDER_URL) {
+        if (!this.options.provider && this.options.PROVIDER_TYPE && this.options.PROVIDER_URL) {
             switch (this.options.PROVIDER_TYPE) {
                 case "http": {
                     // provider.on is not a function with web3js beta 33 - maybe newer release? or shall we make it work without it?
@@ -173,13 +173,10 @@ export class EthereumConnection extends EventEmitter {
                 default:
                     throw new AugmintJsError(this.options.PROVIDER_TYPE + " is not supported yet");
             }
-        } else if (this.options.provider) {
-            this.provider = this.options.provider;
         } else {
-            throw new AugmintJsError(
-                "EthereumConnection connect error: Neither PROVIDER_TYPE+PROVIDER_URL or provider specified. Can't connect"
-            );
+            this.provider = this.options.provider;
         }
+
         this.provider.on("error", this.onProviderError.bind(this));
         this.provider.on("end", this.onProviderEnd.bind(this));
 
@@ -197,33 +194,36 @@ export class EthereumConnection extends EventEmitter {
                     resolve();
                 } else {
                     const tempOnConnected: () => void = async (): Promise<void> => {
-                    this.removeListener("providerError", tempOnproviderError);
-                    this.removeListener("connectionLost", tempOnConnectionLost);
+                        this.removeListener("providerError", tempOnproviderError);
+                        this.removeListener("connectionLost", tempOnConnectionLost);
                         await this.initAfterProviderConnect();
-                    resolve(); // we wait for our custom setup to finish before we resolve connect()
-                };
+                        resolve(); // we wait for our custom setup to finish before we resolve connect()
+                    };
 
-                const tempOnproviderError: () => void = (): void => {
-                    this.removeListener("connected", tempOnConnected);
-                    this.removeListener("connectionLost", tempOnConnectionLost);
-                    reject(new Error("EthereumConnection connect failed. Provider error received instead of connect"));
-                };
+                    const tempOnproviderError: () => void = (): void => {
+                        this.removeListener("connected", tempOnConnected);
+                        this.removeListener("connectionLost", tempOnConnectionLost);
+                        reject(
+                            new Error("EthereumConnection connect failed. Provider error received instead of connect")
+                        );
+                    };
 
-                const tempOnConnectionLost: (e: any) => void = (e: any): void => {
-                    this.removeListener("connected", tempOnConnected);
-                    this.removeListener("providerError", tempOnproviderError);
-                    reject(
-                        new Error(
-                            `EthereumConnection connect failed. connectionLost received instead of connect. Code: ${
-                                e.code
-                            } Reason: ${e.reason}`
-                        )
-                    );
-                };
+                    const tempOnConnectionLost: (e: any) => void = (e: any): void => {
+                        this.removeListener("connected", tempOnConnected);
+                        this.removeListener("providerError", tempOnproviderError);
+                        reject(
+                            new Error(
+                                `EthereumConnection connect failed. connectionLost received instead of connect. Code: ${
+                                    e.code
+                                } Reason: ${e.reason}`
+                            )
+                        );
+                    };
 
-                this.once("connectionLost", tempOnConnectionLost);
-                this.once("connected", tempOnConnected);
-                this.once("providerError", tempOnproviderError); // this would be better: this.provider.once("end", e => { .. but web3js has a bug subscrbuing the same event multiple times.
+                    this.once("connectionLost", tempOnConnectionLost);
+                    this.once("connected", tempOnConnected);
+                    this.once("providerError", tempOnproviderError); // this would be better: this.provider.once("end", e => { .. but web3js has a bug subscrbuing the same event multiple times.
+                }
             }
         );
 
