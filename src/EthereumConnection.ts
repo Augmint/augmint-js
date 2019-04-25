@@ -2,6 +2,7 @@ import { logger, promiseTimeout, setExitHandler } from "./utils/index";
 
 import { EventEmitter } from "events";
 import * as Web3 from "web3";
+import { AugmintJsError } from "./Errors";
 
 const log = logger("EthereumConnection");
 
@@ -11,9 +12,14 @@ export interface IOptions {
     ETHEREUM_ISLISTENING_TIMEOUT: number;
     ETHEREUM_CONNECTION_CLOSE_TIMEOUT: number;
     LOG_AS_SUCCESS_AFTER_N_CONFIRMATION: number;
-    PROVIDER_TYPE: string;
-    PROVIDER_URL: string;
-    INFURA_PROJECT_ID: string;
+
+    /** provider options in case connectiong via websocket provider */
+    PROVIDER_TYPE?: string;
+    PROVIDER_URL?: string;
+    INFURA_PROJECT_ID?: string;
+
+    /** in case web3 is available via window in browser TODO: use proper web3 typing here */
+    provider?: any;
 }
 
 const DEFAULTS: IOptions = {
@@ -22,8 +28,7 @@ const DEFAULTS: IOptions = {
     ETHEREUM_ISLISTENING_TIMEOUT: 1000,
     ETHEREUM_CONNECTION_CHECK_INTERVAL: 1000,
     LOG_AS_SUCCESS_AFTER_N_CONFIRMATION: 3,
-    PROVIDER_TYPE: "websocket",
-    PROVIDER_URL: "ws://localhost:8545/",
+
     INFURA_PROJECT_ID: ""
 };
 
@@ -74,6 +79,27 @@ export class EthereumConnection extends EventEmitter {
 
         this.options = Object.assign({}, DEFAULTS, runtimeOptions);
 
+        if (this.options.provider && (this.options.PROVIDER_URL || this.options.PROVIDER_TYPE)) {
+            throw new AugmintJsError(
+                "EthereumConnection error. Both provider and PROVIDER_TYPE or PROVIDER_URL passed as option. Use either provider or PROVIDER_TYPE + PROVIDER_URL not both  "
+            );
+        }
+
+        if (!this.options.provider) {
+            if (this.options.PROVIDER_TYPE !== "websocket") {
+                throw new AugmintJsError(
+                    "EthereumConnection error. Invalid PROVIDER_TYPE: " +
+                        this.options.PROVIDER_TYPE +
+                        "Only websocket is supported at the moment. You can pass custom provider using provider using provider option"
+                );
+            }
+            if (!this.options.PROVIDER_URL) {
+                throw new AugmintJsError(
+                    "EthereumConnection error. No PROVIDER_URL specified while PROVIDER_TYPE is provided."
+                );
+            }
+        }
+
         setExitHandler(
             this._exit.bind(this),
             "ethereumConnection",
@@ -83,6 +109,7 @@ export class EthereumConnection extends EventEmitter {
         log.info(
             // IMPORTANT: NEVER expose keys even not in logs!
             `** EthereumConnection loaded with settings:
+            provider: ${this.options.provider ? "set" : "not set"}
             PROVIDER_TYPE: ${this.options.PROVIDER_TYPE}
             PROVIDER_URL: ${this.options.PROVIDER_URL}
             INFURA_PROJECT_ID: ${
@@ -129,23 +156,30 @@ export class EthereumConnection extends EventEmitter {
     public async connect(): Promise<void> {
         this.isStopping = false;
 
-        switch (this.options.PROVIDER_TYPE) {
-            case "http": {
-                // provider.on is not a function with web3js beta 33 - maybe newer release? or shall we make it work without it?
-                // this.provider = new Web3.providers.HttpProvider(this.PROVIDER_URL + this.INFURA_PROJECT_ID);
-                // break;
-                throw new Error(this.options.PROVIDER_TYPE + " is not supported yet");
+        if (this.options.PROVIDER_TYPE && this.options.PROVIDER_URL) {
+            switch (this.options.PROVIDER_TYPE) {
+                case "http": {
+                    // provider.on is not a function with web3js beta 33 - maybe newer release? or shall we make it work without it?
+                    // this.provider = new Web3.providers.HttpProvider(this.PROVIDER_URL + this.INFURA_PROJECT_ID);
+                    // break;
+                    throw new AugmintJsError(this.options.PROVIDER_TYPE + " is not supported yet");
+                }
+                case "websocket": {
+                    this.provider = new Web3.providers.WebsocketProvider(
+                        this.options.PROVIDER_URL + this.options.INFURA_PROJECT_ID
+                    );
+                    break;
+                }
+                default:
+                    throw new AugmintJsError(this.options.PROVIDER_TYPE + " is not supported yet");
             }
-            case "websocket": {
-                this.provider = new Web3.providers.WebsocketProvider(
-                    this.options.PROVIDER_URL + this.options.INFURA_PROJECT_ID
-                );
-                break;
-            }
-            default:
-                throw new Error(this.options.PROVIDER_TYPE + " is not supported yet");
+        } else if (this.options.provider) {
+            this.provider = this.options.provider;
+        } else {
+            throw new AugmintJsError(
+                "EthereumConnection connect error: Neither PROVIDER_TYPE+PROVIDER_URL or provider specified. Can't connect"
+            );
         }
-
         this.provider.on("error", this.onProviderError.bind(this));
         this.provider.on("end", this.onProviderEnd.bind(this));
         this.provider.on("connect", this.onProviderConnect.bind(this));
@@ -158,7 +192,11 @@ export class EthereumConnection extends EventEmitter {
         }
 
         const connectedEventPromise: Promise<void> = new Promise(
-            (resolve: () => void, reject: any): void => {
+            async (resolve: () => void, reject: any): Promise<void> => {
+                if (await this.isConnected()) {
+                    resolve();
+                }
+
                 const tempOnConnected: () => void = (): void => {
                     this.removeListener("providerError", tempOnproviderError);
                     this.removeListener("connectionLost", tempOnConnectionLost);
@@ -189,7 +227,9 @@ export class EthereumConnection extends EventEmitter {
             }
         );
 
-        await promiseTimeout(this.options.ETHEREUM_CONNECTION_TIMEOUT, connectedEventPromise);
+        await promiseTimeout(this.options.ETHEREUM_CONNECTION_TIMEOUT, connectedEventPromise).catch(error => {
+            throw new AugmintJsError("EthereumConnection connect error. " + error);
+        });
     }
 
     public async stop(/*signal*/): Promise<void> {

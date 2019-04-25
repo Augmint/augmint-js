@@ -1,6 +1,7 @@
-const assert = require("chai").assert;
+const { assert, expect } = require("chai");
 const sinon = require("sinon");
 const { Augmint, utils } = require("../dist/index.js");
+const { AugmintJsError } = require("../dist/Errors.js");
 const { EthereumConnection } = Augmint;
 
 const config = utils.loadEnv();
@@ -22,16 +23,45 @@ const testProviders = [
         name: "infura websocket",
         nonceTestAcc: "0x4A7F6EcbE8B324A55b85adcc45313A412957B8ea", // an account with txs to test getAccountNonce
         options: {
-        PROVIDER_URL: "wss://rinkeby.infura.io/ws/v3/",
-        PROVIDER_TYPE: "websocket",
-        INFURA_PROJECT_ID: "cb1b0d436be24b0fa654ca34ae6a3645"
-    }
+            PROVIDER_URL: "wss://rinkeby.infura.io/ws/v3/",
+            PROVIDER_TYPE: "websocket",
+            INFURA_PROJECT_ID: "cb1b0d436be24b0fa654ca34ae6a3645"
+        }
     }
 ];
 
 describe("EthereumConnection", () => {
-    it("should have an initial state", async () => {
-        const ethereumConnection = new EthereumConnection();
+    it("should check constructor params", () => {
+        const invalidProviderType = () =>
+            new EthereumConnection({ PROVIDER_TYPE: "blahblah", PROVIDER_URL: "something" });
+        expect(invalidProviderType).throws(AugmintJsError, /Invalid PROVIDER_TYPE/);
+
+        const noProviderURL = () => new EthereumConnection({ PROVIDER_TYPE: "websocket", PROVIDER_URL: "" });
+        expect(noProviderURL).throws(AugmintJsError, /No PROVIDER_URL specified/);
+
+        const bothProviderTypeAndProvider = () =>
+            new EthereumConnection({ provider: { mock: true }, PROVIDER_TYPE: "websocket", PROVIDER_URL: "" });
+        expect(bothProviderTypeAndProvider).throws(AugmintJsError, /Both provider and PROVIDER_TYPE/);
+    });
+
+    it("should have an initial state - given provider", async () => {
+        const ethereumConnection = new EthereumConnection({ provider: { mock: true } });
+
+        assert.isUndefined(ethereumConnection.web3);
+        assert.isUndefined(ethereumConnection.provider);
+
+        assert(!(await ethereumConnection.isConnected()));
+        assert(!ethereumConnection.isStopping);
+        assert(!ethereumConnection.isTryingToReconnect);
+
+        assert.isUndefined(ethereumConnection.networkId);
+        assert.isUndefined(ethereumConnection.blockGasLimit);
+        assert.isUndefined(ethereumConnection.safeBlockGasLimit);
+        assert.isUndefined(ethereumConnection.accounts);
+    });
+
+    it("should have an initial state - websocket provider", async () => {
+        const ethereumConnection = new EthereumConnection({ PROVIDER_URL: "mock", PROVIDER_TYPE: "websocket" });
 
         assert.isUndefined(ethereumConnection.web3);
         assert.isUndefined(ethereumConnection.provider);
