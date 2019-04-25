@@ -3,11 +3,11 @@
         "outDir": "./dist/", // path to output directory
         "sourceMap": true, // allow sourcemap support
         "strictNullChecks": true, // enable strict null checks as a best practice
-        "module": "UMD", // specify module code generation
+        "module": "commonjs", // Required for augmint-web to work (with UMD we get: Critical dependency: require function is used in a way in which dependencies cannot be statically extracted)
         "target": "ES5", // specify ECMAScript target version
         "allowJs": false, // allow a partial TypeScript and JavaScript codebase
         "declaration": true,
-        "moduleResolution": "Node",
+        "moduleResolution": "node",
         "noUnusedLocals": true
     },
     "include": [
