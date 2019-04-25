@@ -12,13 +12,20 @@ if (config.LOG) {
 const TEST_TIMEOUT = 10000; // infura is occasionaly slow to connect
 
 let ethereumConnection;
-const providers = [
-    { name: "local websocket", PROVIDER_URL: "ws://localhost:8545", PROVIDER_TYPE: "websocket" },
+const testProviders = [
+    {
+        name: "local websocket",
+        nonceTestAcc: "0x76e7a0aec3e43211395bbbb6fa059bd6750f83c3", // an account with txs to test getAccountNonce
+        options: { PROVIDER_URL: "ws://localhost:8545", PROVIDER_TYPE: "websocket" }
+    },
     {
         name: "infura websocket",
+        nonceTestAcc: "0x4A7F6EcbE8B324A55b85adcc45313A412957B8ea", // an account with txs to test getAccountNonce
+        options: {
         PROVIDER_URL: "wss://rinkeby.infura.io/ws/v3/",
         PROVIDER_TYPE: "websocket",
         INFURA_PROJECT_ID: "cb1b0d436be24b0fa654ca34ae6a3645"
+    }
     }
 ];
 
@@ -39,12 +46,12 @@ describe("EthereumConnection", () => {
         assert.isUndefined(ethereumConnection.accounts);
     });
 
-    providers.forEach(providerOptions => {
-        describe("EthereumConnection -" + providerOptions.name, function() {
+    testProviders.forEach(testProvider => {
+        describe("EthereumConnection -" + testProvider.name, function() {
             this.timeout(TEST_TIMEOUT);
 
             it("should connect & disconnect", async () => {
-                ethereumConnection = new EthereumConnection(providerOptions);
+                ethereumConnection = new EthereumConnection(testProvider.options);
                 const connectedSpy = sinon.spy();
                 const disconnectedSpy = sinon.spy();
                 const connectionLostSpy = sinon.spy();
@@ -86,17 +93,15 @@ describe("EthereumConnection", () => {
             });
 
             it("should get options as constructor parameters too", async () => {
-                const options = {
+                const options = Object.assign({}, testProvider.options, {
                     ETHEREUM_CONNECTION_CHECK_INTERVAL: 9999,
                     ETHEREUM_CONNECTION_TIMEOUT: 99,
                     ETHEREUM_ISLISTENING_TIMEOUT: 99,
                     ETHEREUM_CONNECTION_CLOSE_TIMEOUT: 99,
-                    PROVIDER_TYPE: "test",
+                    PROVIDER_TYPE: "websocket",
                     PROVIDER_URL: "hoops",
                     INFURA_PROJECT_ID: "bingo"
-                };
-
-                Object.assign(options, providerOptions);
+                });
 
                 ethereumConnection = new EthereumConnection(options);
 
@@ -118,18 +123,18 @@ describe("EthereumConnection", () => {
             });
 
             it("should return account nonce", async () => {
-                const ethereumConnection = new EthereumConnection();
+                const ethereumConnection = new EthereumConnection(testProvider.options);
                 await ethereumConnection.connect();
-                const expectedNonce = await ethereumConnection.web3.eth.getTransactionCount(
-                    ethereumConnection.accounts[0]
-                );
 
-                let nonce = await ethereumConnection.getAccountNonce(ethereumConnection.accounts[0]);
+                const expectedNonce = await ethereumConnection.web3.eth.getTransactionCount(testProvider.nonceTestAcc);
+
+                let nonce = await ethereumConnection.getAccountNonce(testProvider.nonceTestAcc);
+                assert(nonce > 0); // test data sanity check
 
                 assert.equal(nonce, expectedNonce);
 
-                // with a zero nonce acc, assuming randomAcc has no tx-s from migration subscriptions
-                const randomAccount = "0x107af532e6f828da6fe79699123c9a5ea0123d16";
+                // with a zero nonce acc, assuming randomAcc has no tx-s with neither provider we test against
+                const randomAccount = "0x51f9f5173450aef0b37b1a139fcd4edea67cc972";
                 nonce = await ethereumConnection.getAccountNonce(randomAccount);
                 assert.equal(nonce, 0);
             });
@@ -138,11 +143,11 @@ describe("EthereumConnection", () => {
                 const connectionLostSpy = sinon.spy();
                 const disconnectedSpy = sinon.spy();
                 const checkInterval = 100;
-                const options = {
+
+                const options = Object.assign({}, testProvider.options, {
                     ETHEREUM_CONNECTION_CHECK_INTERVAL: checkInterval,
                     ETHEREUM_CONNECTION_TIMEOUT: 10000
-                };
-                Object.assign(options, providerOptions);
+                });
 
                 ethereumConnection = new EthereumConnection(options);
 
