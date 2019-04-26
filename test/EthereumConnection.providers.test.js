@@ -115,7 +115,7 @@ testProviders.forEach(testProvider => {
             } else {
                 const connectionLostSpy = sinon.spy();
                 const disconnectedSpy = sinon.spy();
-                const checkInterval = 100;
+                const checkInterval = 500;
 
                 const options = Object.assign({}, testProvider.options, {
                     ETHEREUM_CONNECTION_CHECK_INTERVAL: checkInterval,
@@ -131,7 +131,12 @@ testProviders.forEach(testProvider => {
 
                 const onConnected = async () => {
                     // this is only set up for the reconnection we expect
-                    assert(await ethereumConnection.isConnected());
+                    assert(
+                        await ethereumConnection.isConnected().catch(error => {
+                            console.error("isConnected failed with error: ", error);
+                            assert.fail(error);
+                        })
+                    );
                     assert(connectionLostSpy.calledOnce);
                     assert(disconnectedSpy.calledOnce);
                     done();
@@ -144,13 +149,14 @@ testProviders.forEach(testProvider => {
 
                         ethereumConnection.on("disconnected", disconnectedSpy);
                         ethereumConnection.on("connectionLost", onConnectionLoss);
+
                         ethereumConnection.once("connected", onConnected); // we only setup connected here
 
                         await ethereumConnection.web3.currentProvider.connection.close(); // simulate connection drop
                         assert(!(await ethereumConnection.isConnected()));
                     })
                     .catch(error => {
-                        throw error;
+                        assert.fail(error);
                     });
             }
         });
