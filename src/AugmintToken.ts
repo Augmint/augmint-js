@@ -1,18 +1,18 @@
 import { TokenAEur } from "../abiniser/index";
 import { Augmint } from "./Augmint";
+import { ContractWrapper } from "./ContractWrapper";
+import { DeployedContract } from "../abiniser/DeployedContract";
 
-export class AugmintToken {
+export class AugmintToken extends ContractWrapper{
     public instance: TokenAEur;
     private _peggedSymbol: Promise<string>;
     private _symbol: Promise<string>;
     private _name: Promise<string>;
     private _decimals: Promise<number>;
     private _feeAccountAddress: Promise<string>;
-    private augmint: Augmint;
 
-    constructor(instance: TokenAEur, augmint: Augmint) {
-        this.augmint = augmint;
-        this.instance = instance;
+    constructor(deployedContract: DeployedContract<TokenAEur>, augmint: Augmint) {
+        super(deployedContract, augmint)
     }
 
     get peggedSymbol(): Promise<string> {

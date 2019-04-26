@@ -16,6 +16,8 @@ import { EthereumConnection, IOptions } from "./EthereumConnection";
 import * as gas from "./gas";
 import { AugmintToken } from "./AugmintToken";
 import { AugmintContracts } from "../abiniser/index";
+import { Rates } from "./Rates";
+import { Exchange } from "./Exchange";
 
 interface IDeployedContracts {
     [propName: string]: DeployedContractList;
@@ -27,10 +29,10 @@ interface ILatestContracts {
 
 export class Augmint {
     public static instance: Augmint;
-    public static connect(connectionOptions: IOptions) {
+    public static connect(connectionOptions: IOptions):Augmint {
         if(!Augmint.instance) {
-            const etherConecction = new EthereumConnection(connectionOptions);
-            Augmint.instance = new Augmint(etherConecction);
+            const etherConnection:EthereumConnection = new EthereumConnection(connectionOptions);
+            Augmint.instance = new Augmint(etherConnection);
         }
         return Augmint.instance;
     }
@@ -41,11 +43,13 @@ export class Augmint {
     public web3: any;
 
     private _token: AugmintToken;
+    private _rates: Rates;
+    private _exchange: Exchange;
 
     private constructor(ethereumConnection: EthereumConnection) {
         this.ethereumConnection = ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
-        const networkId = this.ethereumConnection.networkId;
+        const networkId:number = this.ethereumConnection.networkId;
 
         switch (networkId) {
             case 1:
@@ -61,7 +65,7 @@ export class Augmint {
 
         if (this.deployedContracts) {
             this.latestContracts = {};
-            Object.keys(this.deployedContracts).forEach(contractName => {
+            Object.keys(this.deployedContracts).forEach((contractName:string) => {
                 this.latestContracts[contractName] = this.deployedContracts[contractName].getCurrentContract();
             });
         }
@@ -77,10 +81,26 @@ export class Augmint {
 
     get token():AugmintToken {
         if(!this._token) {
-            const tokenContractInstance = this.latestContracts[AugmintContracts.TokenAEur].connect(this.web3)
-            this._token = new AugmintToken(tokenContractInstance, this)
+            const tokenContract = this.latestContracts[AugmintContracts.TokenAEur];
+            this._token = new AugmintToken(tokenContract, this)
         }
         return this._token;
+    }
+
+    get rates():Rates {
+        if(!this._rates) {
+            const ratesContract = this.latestContracts[AugmintContracts.Rates].connect(this.web3);
+            this._rates = new Rates(ratesContract, this)
+        }
+        return this._rates;
+    }
+
+    get exchange():Exchange {
+        if(!this._exchange) {
+            const exchangeContract = this.latestContracts[AugmintContracts.Exchange].connect(this.web3);
+            this._exchange = new Exchange(exchangeContract, this);
+        }
+        return this._exchange
     }
 
 

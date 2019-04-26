@@ -3,6 +3,8 @@ import { Rates as RatesInstance } from "../abiniser/index";
 import { TransactionObject } from "../abiniser/types/types";
 import { ZeroRateError } from "./Errors";
 import { Augmint } from "./Augmint";
+import { ContractWrapper } from "./ContractWrapper";
+import { DeployedContract } from "../abiniser/DeployedContract";
 
 export interface IRateInfo {
     bnRate: BigNumber /** The rate without decimals */;
@@ -10,14 +12,12 @@ export interface IRateInfo {
     lastUpdated: Date;
 }
 
-export class Rates {
+export class Rates extends ContractWrapper {
     // overwrite Contract's  property to have typings
     public instance: RatesInstance; /** web3.js Rates contract instance  */
-    private augmint: Augmint;
 
-    constructor(instance: RatesInstance, augmint: Augmint) {
-        this.instance = instance;
-        this.augmint = augmint;
+    constructor(deployedContract: DeployedContract<RatesInstance>, augmint: Augmint) {
+        super(deployedContract, augmint)
     }
 
     public async getBnEthFiatRate(currency: string): Promise<BigNumber> {
