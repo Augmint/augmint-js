@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-DOCKER_IMAGE=augmint/contracts:v1.0.4
+DOCKER_IMAGE=augmint/contracts:v1.0.9
 CONTAINER_NAME=ganache
 
 echo ""
