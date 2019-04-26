@@ -23,15 +23,6 @@ interface ILatestContracts {
 }
 
 export class Augmint {
-    public static instance: Augmint;
-    public static connect(connectionOptions: IOptions):Augmint {
-        if(!Augmint.instance) {
-            const etherConnection:EthereumConnection = new EthereumConnection(connectionOptions);
-            Augmint.instance = new Augmint(etherConnection);
-        }
-        return Augmint.instance;
-    }
-
     public ethereumConnection: EthereumConnection;
     public deployedContracts: IDeployedContracts;
     public latestContracts: ILatestContracts;
@@ -41,10 +32,10 @@ export class Augmint {
     private _rates: Rates;
     private _exchange: Exchange;
 
-    private constructor(ethereumConnection: EthereumConnection) {
-        this.ethereumConnection = ethereumConnection;
+    constructor(connectionOptions: IOptions) {
+        this.ethereumConnection = new EthereumConnection(connectionOptions);
         this.web3 = this.ethereumConnection.web3;
-        const networkId:number = this.ethereumConnection.networkId;
+        const networkId: number = this.ethereumConnection.networkId;
 
         switch (networkId) {
             case 1:
@@ -60,7 +51,7 @@ export class Augmint {
 
         if (this.deployedContracts) {
             this.latestContracts = {};
-            Object.keys(this.deployedContracts).forEach((contractName:string) => {
+            Object.keys(this.deployedContracts).forEach((contractName: string) => {
                 this.latestContracts[contractName] = this.deployedContracts[contractName].getCurrentContract();
             });
         }
@@ -74,44 +65,44 @@ export class Augmint {
         return gas;
     }
 
-    get token():AugmintToken {
-        if(!this._token) {
-            const tokenContract:DeployedContract<TokenAEur> = this.latestContracts[AugmintContracts.TokenAEur];
-            this._token = new AugmintToken(tokenContract, this)
+    get token(): AugmintToken {
+        if (!this._token) {
+            const tokenContract: DeployedContract<TokenAEur> = this.latestContracts[AugmintContracts.TokenAEur];
+            this._token = new AugmintToken(tokenContract, this);
         }
         return this._token;
     }
 
-    get rates():Rates {
-        if(!this._rates) {
-            const ratesContract:DeployedContract<RatesInstance> = this.latestContracts[AugmintContracts.Rates];
-            this._rates = new Rates(ratesContract, this)
+    get rates(): Rates {
+        if (!this._rates) {
+            const ratesContract: DeployedContract<RatesInstance> = this.latestContracts[AugmintContracts.Rates];
+            this._rates = new Rates(ratesContract, this);
         }
         return this._rates;
     }
 
-    get exchange():Exchange {
-        if(!this._exchange) {
-            const exchangeContract:DeployedContract<ExchangeInstance> = this.latestContracts[AugmintContracts.Exchange];
+    get exchange(): Exchange {
+        if (!this._exchange) {
+            const exchangeContract: DeployedContract<ExchangeInstance> = this.latestContracts[
+                AugmintContracts.Exchange
+            ];
             this._exchange = new Exchange(exchangeContract, this);
         }
-        return this._exchange
+        return this._exchange;
     }
 
-//  myaugmint.getLegacyExchanges(Augmint.constants.SUPPORTED_LEGACY_EXCHANGES)
-    
-    public getLegacyExchanges(addresses:string[] = []):Exchange[] {
-        let legacyContracts:Array<DeployedContract<ExchangeInstance>> = [];
-        if(addresses.length === 0) {
-            legacyContracts = this.deployedContracts[AugmintContracts.Exchange].getLegacyContracts()
+    //  myaugmint.getLegacyExchanges(Augmint.constants.SUPPORTED_LEGACY_EXCHANGES)
+
+    public getLegacyExchanges(addresses: string[] = []): Exchange[] {
+        let legacyContracts: Array<DeployedContract<ExchangeInstance>> = [];
+        if (addresses.length === 0) {
+            legacyContracts = this.deployedContracts[AugmintContracts.Exchange].getLegacyContracts();
         } else {
             legacyContracts = this.deployedContracts[AugmintContracts.Exchange].getContractFromAddresses(addresses);
-            if(legacyContracts.length !== addresses.length) {
-                throw new Error('legacy contracts length mismatch!')
+            if (legacyContracts.length !== addresses.length) {
+                throw new Error("legacy contracts length mismatch!");
             }
         }
-        return legacyContracts.map((contract:DeployedContract<ExchangeInstance>) => new Exchange(contract, this))
+        return legacyContracts.map((contract: DeployedContract<ExchangeInstance>) => new Exchange(contract, this));
     }
 }
-
-
