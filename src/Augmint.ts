@@ -15,9 +15,11 @@ import * as constants from "./constants";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
 import * as gas from "./gas";
 import { AugmintToken } from "./AugmintToken";
-import { AugmintContracts } from "../abiniser/index";
+import { AugmintContracts, TokenAEur } from "../abiniser/index";
 import { Rates } from "./Rates";
 import { Exchange } from "./Exchange";
+import { Rates as RatesInstance } from "../abiniser/index";
+import { Exchange as ExchangeInstance } from "../abiniser/index";
 
 interface IDeployedContracts {
     [propName: string]: DeployedContractList;
@@ -81,7 +83,7 @@ export class Augmint {
 
     get token():AugmintToken {
         if(!this._token) {
-            const tokenContract = this.latestContracts[AugmintContracts.TokenAEur];
+            const tokenContract:DeployedContract<TokenAEur> = this.latestContracts[AugmintContracts.TokenAEur];
             this._token = new AugmintToken(tokenContract, this)
         }
         return this._token;
@@ -89,7 +91,7 @@ export class Augmint {
 
     get rates():Rates {
         if(!this._rates) {
-            const ratesContract = this.latestContracts[AugmintContracts.Rates].connect(this.web3);
+            const ratesContract:DeployedContract<RatesInstance> = this.latestContracts[AugmintContracts.Rates];
             this._rates = new Rates(ratesContract, this)
         }
         return this._rates;
@@ -97,7 +99,7 @@ export class Augmint {
 
     get exchange():Exchange {
         if(!this._exchange) {
-            const exchangeContract = this.latestContracts[AugmintContracts.Exchange].connect(this.web3);
+            const exchangeContract:DeployedContract<ExchangeInstance> = this.latestContracts[AugmintContracts.Exchange];
             this._exchange = new Exchange(exchangeContract, this);
         }
         return this._exchange
