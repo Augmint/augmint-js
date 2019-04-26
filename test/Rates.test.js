@@ -1,8 +1,8 @@
 const { assert } = require("chai");
 const BigNumber = require("bignumber.js");
-const { Augmint, utils } = require("../dist/index.js");
+const { Augmint, utils } = require("../dist/src/index.js");
 const { EthereumConnection, Rates } = Augmint;
-const { ZeroRateError, AugmintJsError } = require("../dist/Errors.js");
+const { ZeroRateError, AugmintJsError } = require("../dist/src/Errors.js");
 
 const config = utils.loadEnv();
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");

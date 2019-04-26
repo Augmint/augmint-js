@@ -1,5 +1,5 @@
 const { assert } = require("chai");
-const { Augmint, utils } = require("../dist/index.js");
+const { Augmint, utils } = require("../dist/src/index.js");
 const { EthereumConnection, AugmintToken } = Augmint;
 
 const CCY = "EUR";

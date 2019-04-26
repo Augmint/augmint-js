@@ -1,6 +1,6 @@
 const assert = require("chai").assert;
 const sinon = require("sinon");
-const { Augmint, utils } = require("../dist/index.js");
+const { Augmint, utils } = require("../dist/src/index.js");
 const { EthereumConnection } = Augmint;
 
 const config = utils.loadEnv();

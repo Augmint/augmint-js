@@ -1,6 +1,6 @@
 const assert = require("chai").assert;
 const ganache = require("./testHelpers/ganache.js");
-const { Augmint, utils } = require("../dist/index.js");
+const { Augmint, utils } = require("../dist/src/index.js");
 const {Exchange,EthereumConnection } = Augmint;
 
 const config = utils.loadEnv();

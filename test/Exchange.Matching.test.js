@@ -1,6 +1,6 @@
 const expect = require("chai").expect;
 const BigNumber = require("bignumber.js");
-const { Augmint, utils } = require("../dist/index.js");
+const { Augmint, utils } = require("../dist/src/index.js");
 const { gas, Exchange } = Augmint;
 
 const exchange = new Exchange();
