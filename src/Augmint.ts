@@ -1,10 +1,3 @@
-/*
-import { AugmintToken } from "./AugmintToken";
-import * as constants from "./constants";
-import * as gas from "./gas";
-import { IOptions } from "./EthereumConnection";
-export { gas, constants };
-*/
 import { Contract } from "web3-eth-contract";
 import { DeployedContract } from "../abiniser/DeployedContract";
 import { DeployedContractList } from "../abiniser/DeployedContractList";
@@ -105,5 +98,20 @@ export class Augmint {
         return this._exchange
     }
 
-
+//  myaugmint.getLegacyExchanges(Augmint.constants.SUPPORTED_LEGACY_EXCHANGES)
+    
+    public getLegacyExchanges(addresses:string[] = []):Exchange[] {
+        let legacyContracts:Array<DeployedContract<ExchangeInstance>> = [];
+        if(addresses.length === 0) {
+            legacyContracts = this.deployedContracts[AugmintContracts.Exchange].getLegacyContracts()
+        } else {
+            legacyContracts = this.deployedContracts[AugmintContracts.Exchange].getContractFromAddresses(addresses);
+            if(legacyContracts.length !== addresses.length) {
+                throw new Error('legacy contracts length mismatch!')
+            }
+        }
+        return legacyContracts.map((contract:DeployedContract<ExchangeInstance>) => new Exchange(contract, this))
+    }
 }
+
+
