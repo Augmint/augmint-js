@@ -4,5 +4,29 @@
         "files": "./abiniser/abis/*.json",
         "target": "web3-1.0.0",
         "outDir": "./abiniser/types"
+    },
+    {
+        "generator": "./scripts/make-abis.js",
+        "files": "./abiniser/abis/*.json",
+        "outDir": "./abiniser",
+        "outFile": "abis.ts"
+    },
+    {
+        "generator": "./scripts/make-deploymentlist.js",
+        "files": "./abiniser/deployments/1/*.json",
+        "outDir": "./abiniser",
+        "outFile": "deployments.mainnet.ts"
+    },
+    {
+        "generator": "./scripts/make-deploymentlist.js",
+        "files": "./abiniser/deployments/4/*.json",
+        "outDir": "./abiniser",
+        "outFile": "deployments.rinkeby.ts"
+    },
+    {
+        "generator": "./scripts/make-deploymentlist.js",
+        "files": "./abiniser/deployments/999/*.json",
+        "outDir": "./abiniser",
+        "outFile": "deployments.local.ts"
     }
 ]

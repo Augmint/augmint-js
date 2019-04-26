@@ -1,11 +1,8 @@
 import BigNumber from "bignumber.js";
-import * as RatesAbi from "../abiniser/abis/Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce.json";
-import { Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce as RatesContract } from "../abiniser/types/Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce";
-import { TransactionObject } from "../abiniser/types/types.js";
-import { DECIMALS, DECIMALS_DIV, ONE_ETH_IN_WEI } from "./constants";
-import { Contract } from "./Contract";
+import { Rates as RatesInstance } from "../abiniser/index";
+import { TransactionObject } from "../abiniser/types/types";
 import { ZeroRateError } from "./Errors";
-import { EthereumConnection } from "./EthereumConnection";
+import { Augmint } from "./Augmint";
 
 export interface IRateInfo {
     bnRate: BigNumber /** The rate without decimals */;
@@ -13,17 +10,19 @@ export interface IRateInfo {
     lastUpdated: Date;
 }
 
-export class Rates extends Contract {
+export class Rates {
     // overwrite Contract's  property to have typings
-    public instance: RatesContract; /** web3.js Rates contract instance  */
+    public instance: RatesInstance; /** web3.js Rates contract instance  */
+    private augmint: Augmint;
 
-    constructor() {
-        super();
+    constructor(instance: RatesInstance, augmint: Augmint) {
+        this.instance = instance;
+        this.augmint = augmint;
     }
 
     public async getBnEthFiatRate(currency: string): Promise<BigNumber> {
         const rate: string = await this.instance.methods
-            .convertFromWei(this.web3.utils.asciiToHex(currency), ONE_ETH_IN_WEI.toString())
+            .convertFromWei(this.augmint.web3.utils.asciiToHex(currency), Augmint.constants.ONE_ETH_IN_WEI.toString())
             .call()
             .catch((error: Error) => {
                 if (error.message.includes("revert rates[bSymbol] must be > 0")) {
@@ -40,36 +39,35 @@ export class Rates extends Contract {
 
     public async getEthFiatRate(currency: string): Promise<number> {
         const bnEthFiatRate: BigNumber = await this.getBnEthFiatRate(currency);
-        return parseFloat(bnEthFiatRate.div(DECIMALS_DIV).toFixed(DECIMALS));
+        return parseFloat(bnEthFiatRate.div(Augmint.constants.DECIMALS_DIV).toFixed(Augmint.constants.DECIMALS));
     }
 
     public async getAugmintRate(currency: string): Promise<IRateInfo> {
-        const bytesCCY: string = this.web3.utils.asciiToHex(currency);
+        const decimalsDiv = await this.augmint.token.decimalsDiv;
+        const bytesCCY: string = this.augmint.web3.utils.asciiToHex(currency);
         const storedRateInfo: { rate: string; lastUpdated: string } = await this.instance.methods
             .rates(bytesCCY)
             .call();
 
         return {
             bnRate: new BigNumber(storedRateInfo.rate),
-            rate: parseInt(storedRateInfo.rate) / DECIMALS_DIV, // TODO: change to augmintToken.decimalsDiv
+            rate: parseInt(storedRateInfo.rate) / decimalsDiv, // TODO: change to augmintToken.decimalsDiv
             lastUpdated: new Date(parseInt(storedRateInfo.lastUpdated) * 1000)
         };
     }
 
-    public getSetRateTx(currency: string, price: number): TransactionObject<void> {
-        const rateToSend: number = price * DECIMALS_DIV;
+    public async getSetRateTx(currency: string, price: number): Promise<TransactionObject<void>> {
+        const decimals = await this.augmint.token.decimals;
+        const decimalsDiv = await this.augmint.token.decimalsDiv;
+        const rateToSend: number = price * decimalsDiv;
         if (Math.round(rateToSend) !== rateToSend) {
             throw new Error(
-                ` getSetRateTx error: provided price of ${price} has more decimals than allowed by AugmintToken decimals of ${DECIMALS}`
+                ` getSetRateTx error: provided price of ${price} has more decimals than allowed by AugmintToken decimals of ${decimals}`
             );
         }
-        const bytesCCY: string = this.web3.utils.asciiToHex(currency);
+        const bytesCCY: string = this.augmint.web3.utils.asciiToHex(currency);
         const tx: TransactionObject<void> = this.instance.methods.setRate(bytesCCY, rateToSend);
 
         return tx;
-    }
-
-    public async connect(ethereumConnection: EthereumConnection): Promise<any> {
-        return await super.connect(ethereumConnection, RatesAbi);
     }
 }
