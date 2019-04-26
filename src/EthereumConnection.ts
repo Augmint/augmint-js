@@ -204,7 +204,9 @@ export class EthereumConnection extends EventEmitter {
                         this.removeListener("connected", tempOnConnected);
                         this.removeListener("connectionLost", tempOnConnectionLost);
                         reject(
-                            new Error("EthereumConnection connect failed. Provider error received instead of connect")
+                            new AugmintJsError(
+                                "EthereumConnection connect failed. Provider error received instead of connect"
+                            )
                         );
                     };
 
@@ -212,7 +214,7 @@ export class EthereumConnection extends EventEmitter {
                         this.removeListener("connected", tempOnConnected);
                         this.removeListener("providerError", tempOnproviderError);
                         reject(
-                            new Error(
+                            new AugmintJsError(
                                 `EthereumConnection connect failed. connectionLost received instead of connect. Code: ${
                                     e.code
                                 } Reason: ${e.reason}`
