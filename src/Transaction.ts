@@ -40,18 +40,55 @@ type ITransactionReceipt = any; // TODO: use Web3's type
 /**
  * Transaction class to manage Ethereum transactions thourgh it's lifecycle.
  *
- * @example
- *      const testTx = rates.instance.methods.setRate(CCY, 100)
- *      const tx = new Transaction(ethereumConnection, testTx);
- *      tx.on("confirmation", (confirmationNumber, receipt) => {
- *              console.log("confirmation number", confirmationNumber, "recevied.",
- *                          "Tx status:", receipt ? : receipt.status : "No receipt")} );
- *      const txReceipt = await tx.send().getTxConfirmation(5);
+ * Recommended use:
+ *  @example
+ *     const ethereumConnection = new EthereumConnection(config);
+ *     const rates = new Rates();
+ *     await rates.connect()
+ *     rates.setRate
+ *       .[sign(privatekey, {from: acc, to:rates.address})]  // optionally you can sign
+ *       .send([{from: acc}]) // from only needed if it's not signed
+ *       .onceTxHash( txHash => {.. })
+ *       .onceReceipt( receipt => { ...})
+ *       .onConfirmation( (confirmationNumber, receipt) => {...}
+ *       .onceReceiptConfirmed(5, receipt => {...})
+ *       .onceTxRevert( (error, receipt) => { ....})
+ *       .catch(error => {
+ *             // any error while signing/sending
+ *         })
+ *
+ *  // Getting txHash / confirmation / receipt these promises can be also used:
+ *  try {
+ *    const txHash = await tx.getTxHash()
+ *    const txReceipt = await tx.getReceipt() // receipt as soon as got it (even with 0 confirmation)
+ *    const confirmedReceipt = await tx.getConfirmedReceipt(12) // receipt after x confirmation.
+ *    // receipt you need to check for receipt.status if tx was Reverted or not.
+ *    if (confirmedReceipt.status) {
+ *      // all good
+ *    } else {
+ *      // this tx was reverted
+ *    }
+ *  } catch (error) {
+ *     // These Promises are rejecting with sending errors or when txhash / receipt times out.
+ * }
+ *
+ * // Deprecated and discouraged but kept for backward compatibility  with web3js style events:
+ *  tx.on[ce]("transactionHash" | "receipt" | "confirmation" | "error")]
+ * // This way it can be easily plugged into dapps which are handling web3js tx objects:
+ * //   augmint-js Transaction object can be a drop in as an almost direct replacement of webjs transactioObject
+ *
+ * // To construct a transaction:
+ *  const web3TxObject = rates.instance.methods.setRate(CCY, 100)
+ *  const augmintRatesTx = new Transaction(ethereumConnection, web3TxObject, {gasLimit: 200000}); // you can set the gaslimit here or later at send() too
+ *  augmintRatesTx.send(...).onTxHash(...)  // or sign().send() etc.
+ *
+ *
  * @export
  * @fires   transactionHash
- * @fires   receipt
- * @fires   confirmation
- * @fires   error
+ * @fires   receipt     fired as soon as a receipt received
+ * @fires   confirmation    fired for each confirmation
+ * @fires   error       @deprecated - fired in case of any error. kept for backward compatibility
+ * @fires   txRevert   fired when tx was mined but with REVERT opcode. error also fired in this case for backward compatibility
  * @class Transaction
  * @extends {EventEmitter}
  */
@@ -70,7 +107,7 @@ export class Transaction extends EventEmitter {
 
     public signedTx?: ISignedTransaction; /** set if signed */
 
-    public sendError?: any; /** if send returned error */
+    public sendError?: any; /** if send returned error or tx REVERT error */
 
     private signedTxPromise?: Promise<ISignedTransaction>;
     private txReceiptPromise?: Promise<ITransactionReceipt>;
@@ -191,7 +228,7 @@ export class Transaction extends EventEmitter {
                 });
                 this.once("error", (error: any) => {
                     if (this.txHash) {
-                        // tx might rejected wth error but we still need the hash (set by txSent transactionsHash event)
+                        // it's a tx revert. we still return the hash.
                         resolve(this.txHash);
                     } else {
                         reject(error);
@@ -261,7 +298,38 @@ export class Transaction extends EventEmitter {
         return txConfirmationPromise;
     }
 
-    private addTxListeners(tx: IWeb3Tx) {
+    public onceTxRevert(callback: (error: any, receipt: ITransactionReceipt) => any): Transaction {
+        this.once("txRevert", callback);
+        return this;
+    }
+
+    public onceTxHash(callback: (txHash: string) => any): Transaction {
+        this.once("transactionHash", callback);
+        return this;
+    }
+
+    public onceReceipt(callback: (receipt: ITransactionReceipt) => any): Transaction {
+        this.once("receipt", callback);
+        return this;
+    }
+
+    public onConfirmation(callback: (confirmationNumber: number, receipt: ITransactionReceipt) => any): Transaction {
+        this.on("confirmation", callback);
+        return this;
+    }
+
+    public onceConfirmedReceipt(
+        confirmationNumber: number,
+        callback: (receipt: ITransactionReceipt) => any
+    ): Transaction {
+        this.once("transactionHash", async () => {
+            const receipt: ITransactionReceipt = await this.getConfirmedReceipt(confirmationNumber);
+            callback(receipt);
+        });
+        return this;
+    }
+
+    private addTxListeners(tx: IWeb3Tx): void {
         tx.once("transactionHash", (hash: string) => {
             this.txHash = hash;
 
@@ -273,20 +341,24 @@ export class Transaction extends EventEmitter {
             })
 
             .on("error", async (error: any, receipt?: ITransactionReceipt) => {
+                this.sendError = new TransactionSendError(error);
+
                 if (this.txHash) {
                     if (!this.txReceipt) {
-                        // workaround that web3js beta36 is not emmitting receipt event when tx fails on EVM error
+                        // workaround that web3js beta36 is not emmitting receipt event when tx fails on tx REVERT
                         this.txReceipt = await this.ethereumConnection.web3.eth.getTransactionReceipt(this.txHash);
                         this.emit("receipt", this.txReceipt);
                     }
 
-                    // workaround that web3js beta36 is not emmitting confirmation events when tx fails on EVM error
+                    // workaround that web3js beta36 is not emmitting confirmation events when tx fails on tx REVERT
                     this.sentTx.on("confirmation", (confirmationNumber: number, _receipt: ITransactionReceipt) => {
                         this.confirmationCount = confirmationNumber;
                         this.emit("confirmation", confirmationNumber, _receipt);
                     });
+
+                    this.emit("txRevert", this.sendError, this.txReceipt);
                 }
-                this.sendError = new TransactionSendError(error);
+
                 this.emit("error", this.sendError, receipt);
             })
             .on("confirmation", (confirmationNumber: number, receipt: ITransactionReceipt) => {
