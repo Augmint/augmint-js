@@ -33,7 +33,10 @@ interface ISignedTransaction {
     };
 }
 
+type IWeb3Tx = PromiEvent<any>;
+
 type ITransactionReceipt = any; // TODO: use Web3's type
+
 /**
  * Transaction class to manage Ethereum transactions thourgh it's lifecycle.
  *
@@ -62,7 +65,8 @@ export class Transaction extends EventEmitter {
 
     public sendOptions: ISendOptions;
 
-    public sentTx?: PromiEvent<any>;
+    public isTxSent: boolean = false; /** indicate if .send was already called */
+    public sentTx?: IWeb3Tx;
 
     public signedTx?: ISignedTransaction; /** set if signed */
 
@@ -102,7 +106,7 @@ export class Transaction extends EventEmitter {
      * @memberof Transaction
      */
     public sign(privateKey: string, sendOptions: ISendOptions): Transaction {
-        if (this.sentTx) {
+        if (this.isTxSent) {
             throw new TransactionError("tx was already sent");
         }
 
@@ -133,9 +137,10 @@ export class Transaction extends EventEmitter {
     }
 
     public send(sendOptions: ISendOptions): Transaction {
-        if (this.sentTx) {
+        if (this.isTxSent) {
             throw new TransactionError("tx was already sent");
         }
+        this.isTxSent = true;
 
         this.sendOptions = Object.assign({}, this.sendOptions, sendOptions);
 
@@ -152,53 +157,21 @@ export class Transaction extends EventEmitter {
                     );
                 }
                 this.sentTx = this.ethereumConnection.web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+                this.addTxListeners(this.sentTx);
             });
         } else {
             if (!this.sendOptions.from) {
                 throw new TransactionError("from account is not set for send");
             }
+            this.sentTx = this.tx.send(Object.assign({}, this.sendOptions)); // webjs writes into passed params (beta36) (added .data to .sendOptions and Metamask hang for long before confirmation apperaed)
+            this.addTxListeners(this.sentTx);
         }
-
-        this.sentTx = this.tx
-            .send(Object.assign({}, this.sendOptions)) // webjs writes into passed params (beta36) (added .data to .sendOptions and Metamask hang for long before confirmation apperaed)
-            .once("transactionHash", (hash: string) => {
-                this.txHash = hash;
-
-                this.emit("transactionHash", hash);
-            })
-            .once("receipt", (receipt: ITransactionReceipt) => {
-                this.txReceipt = receipt;
-                this.emit("receipt", this.txReceipt);
-            })
-
-            .on("error", async (error: any, receipt?: ITransactionReceipt) => {
-                if (this.txHash) {
-                    if (!this.txReceipt) {
-                        // workaround that web3js beta36 is not emmitting receipt event when tx fails on EVM error
-                        this.txReceipt = await this.ethereumConnection.web3.eth.getTransactionReceipt(this.txHash);
-                        this.emit("receipt", this.txReceipt);
-                    }
-
-                    // workaround that web3js beta36 is not emmitting confirmation events when tx fails on EVM error
-                    this.sentTx.on("confirmation", (confirmationNumber: number, _receipt: ITransactionReceipt) => {
-                        this.confirmationCount = confirmationNumber;
-                        this.emit("confirmation", confirmationNumber, _receipt);
-                    });
-                }
-                this.sendError = new TransactionSendError(error);
-                this.emit("error", this.sendError, receipt);
-            })
-            .on("confirmation", (confirmationNumber: number, receipt: ITransactionReceipt) => {
-                this.confirmationCount = confirmationNumber;
-
-                this.emit("confirmation", confirmationNumber, this.txReceipt);
-            });
 
         return this;
     }
 
     public async getTxHash(): Promise<string> {
-        if (!this.sentTx) {
+        if (!this.isTxSent) {
             throw new TransactionError("tx was not sent yet");
         }
 
@@ -231,7 +204,7 @@ export class Transaction extends EventEmitter {
     }
 
     public async getTxReceipt(): Promise<ITransactionReceipt> {
-        if (!this.sentTx) {
+        if (!this.isTxSent) {
             throw new TransactionError("tx was not sent yet");
         }
 
@@ -263,7 +236,7 @@ export class Transaction extends EventEmitter {
     }
 
     public async getTxConfirmation(confirmationNumber: number = 1): Promise<ITransactionReceipt> {
-        if (!this.sentTx) {
+        if (!this.isTxSent) {
             throw new TransactionError("tx was not sent yet");
         }
 
@@ -286,5 +259,40 @@ export class Transaction extends EventEmitter {
         });
 
         return txConfirmationPromise;
+    }
+
+    private addTxListeners(tx: IWeb3Tx) {
+        tx.once("transactionHash", (hash: string) => {
+            this.txHash = hash;
+
+            this.emit("transactionHash", hash);
+        })
+            .once("receipt", (receipt: ITransactionReceipt) => {
+                this.txReceipt = receipt;
+                this.emit("receipt", this.txReceipt);
+            })
+
+            .on("error", async (error: any, receipt?: ITransactionReceipt) => {
+                if (this.txHash) {
+                    if (!this.txReceipt) {
+                        // workaround that web3js beta36 is not emmitting receipt event when tx fails on EVM error
+                        this.txReceipt = await this.ethereumConnection.web3.eth.getTransactionReceipt(this.txHash);
+                        this.emit("receipt", this.txReceipt);
+                    }
+
+                    // workaround that web3js beta36 is not emmitting confirmation events when tx fails on EVM error
+                    this.sentTx.on("confirmation", (confirmationNumber: number, _receipt: ITransactionReceipt) => {
+                        this.confirmationCount = confirmationNumber;
+                        this.emit("confirmation", confirmationNumber, _receipt);
+                    });
+                }
+                this.sendError = new TransactionSendError(error);
+                this.emit("error", this.sendError, receipt);
+            })
+            .on("confirmation", (confirmationNumber: number, receipt: ITransactionReceipt) => {
+                this.confirmationCount = confirmationNumber;
+
+                this.emit("confirmation", confirmationNumber, this.txReceipt);
+            });
     }
 }
