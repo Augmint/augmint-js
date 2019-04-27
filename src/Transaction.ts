@@ -160,7 +160,7 @@ export class Transaction extends EventEmitter {
         }
 
         this.sentTx = this.tx
-            .send(this.sendOptions)
+            .send(Object.assign({}, this.sendOptions)) // webjs writes into passed params (beta36) (added .data to .sendOptions and Metamask hang for long before confirmation apperaed)
             .once("transactionHash", (hash: string) => {
                 this.txHash = hash;
 
