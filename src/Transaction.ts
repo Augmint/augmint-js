@@ -51,7 +51,9 @@ type ITransactionReceipt = any; // TODO: use Web3's type
  * @fires   transactionHash
  * @fires   receipt
  * @fires   confirmation
- * @fires   error
+ * @fires   error               @deprecated - fired in case of any error. kept for backward compatibility
+ * @fires   transactionRevert   fired when tx was mined but with REVERT opcode. error also fired in this case for backward compatibility
+ * @fires   transactionError    fired when tx errored without mining. error event is also fired in this case for backward compatibility
  * @class Transaction
  * @extends {EventEmitter}
  */
@@ -275,16 +277,20 @@ export class Transaction extends EventEmitter {
             .on("error", async (error: any, receipt?: ITransactionReceipt) => {
                 if (this.txHash) {
                     if (!this.txReceipt) {
-                        // workaround that web3js beta36 is not emmitting receipt event when tx fails on EVM error
+                        // workaround that web3js beta36 is not emmitting receipt event when tx fails on tx REVERT
                         this.txReceipt = await this.ethereumConnection.web3.eth.getTransactionReceipt(this.txHash);
                         this.emit("receipt", this.txReceipt);
                     }
 
-                    // workaround that web3js beta36 is not emmitting confirmation events when tx fails on EVM error
+                    // workaround that web3js beta36 is not emmitting confirmation events when tx fails on tx REVERT
                     this.sentTx.on("confirmation", (confirmationNumber: number, _receipt: ITransactionReceipt) => {
                         this.confirmationCount = confirmationNumber;
                         this.emit("confirmation", confirmationNumber, _receipt);
                     });
+
+                    this.emit("transactionRevert", this.txReceipt);
+                } else {
+                    this.emit("transactionError", error);
                 }
                 this.sendError = new TransactionSendError(error);
                 this.emit("error", this.sendError, receipt);

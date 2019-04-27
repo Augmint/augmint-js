@@ -66,11 +66,14 @@ describe("Transaction", () => {
         const txHashSpy = sinon.spy();
         const receiptSpy = sinon.spy();
         const confirmationSpy = sinon.spy();
-        const errorSpy = sinon.spy();
+        const anyErrorSpy = sinon.spy();
 
         const tx = new Transaction(ethereumConnection, testContractTx);
 
-        tx.on("error", errorSpy);
+        tx.on("error", anyErrorSpy);
+        tx.on("transactionError", anyErrorSpy);
+        tx.on("transactionRevert", anyErrorSpy);
+
         tx.on("receipt", receiptSpy);
         tx.on("confirmation", confirmationSpy);
         tx.on("transactionHash", txHashSpy);
@@ -86,7 +89,7 @@ describe("Transaction", () => {
 
         sinon.assert.calledWithExactly(txHashSpy, txHash);
         sinon.assert.calledWithExactly(receiptSpy, receipt);
-        assert.equal(errorSpy.callCount, 0);
+        assert.equal(anyErrorSpy.callCount, 0);
         assert.equal(confirmationSpy.callCount, 0);
 
         // should receive receipt after given number of confirmations
@@ -102,16 +105,22 @@ describe("Transaction", () => {
         assert.equal(confirmationSpy.callCount, CONFIRMATION_NUMBER + 1);
     });
 
-    it("send Transaction to fail - EVM error", async () => {
+    it("send Transaction to fail - tx REVERT", async () => {
         const CONFIRMATION_NUMBER = 3;
         const txHashSpy = sinon.spy();
         const receiptSpy = sinon.spy();
         const confirmationSpy = sinon.spy();
+
         const errorSpy = sinon.spy();
+        const txErrorSpy = sinon.spy();
+        const txRevertSpy = sinon.spy();
 
         const tx = new Transaction(ethereumConnection, testContractTx);
 
         tx.on("error", errorSpy);
+        tx.on("transactionError", txErrorSpy);
+        tx.on("transactionRevert", txRevertSpy);
+
         tx.on("receipt", receiptSpy);
         tx.on("confirmation", confirmationSpy);
         tx.on("transactionHash", txHashSpy);
@@ -141,6 +150,8 @@ describe("Transaction", () => {
         // sinon.assert.calledWithExactly(receiptSpy, receipt);
         assert.equal(receiptSpy.callCount, 1);
         assert.equal(errorSpy.callCount, 1);
+        assert.equal(txErrorSpy.callCount, 0);
+        assert.equal(txRevertSpy.callCount, 1);
         assert.equal(confirmationSpy.callCount, 0);
 
         // should receive receipt after given number of confirmations
@@ -161,10 +172,14 @@ describe("Transaction", () => {
         const receiptSpy = sinon.spy();
         const confirmationSpy = sinon.spy();
         const errorSpy = sinon.spy();
+        const txErrorSpy = sinon.spy();
+        const txRevertSpy = sinon.spy();
 
         const tx = new Transaction(ethereumConnection, testContractTx);
 
         tx.on("error", errorSpy);
+        tx.on("transactionError", txErrorSpy);
+        tx.on("transactionRevert", txRevertSpy);
         tx.on("receipt", receiptSpy);
         tx.on("confirmation", confirmationSpy);
         tx.on("transactionHash", txHashSpy);
@@ -188,6 +203,8 @@ describe("Transaction", () => {
         assert.equal(txHashSpy.callCount, 0);
         assert.equal(receiptSpy.callCount, 0);
         assert.equal(errorSpy.callCount, 1);
+        assert.equal(txErrorSpy.callCount, 1);
+        assert.equal(txRevertSpy.callCount, 0);
         assert.equal(confirmationSpy.callCount, 0);
     });
 
@@ -198,11 +215,14 @@ describe("Transaction", () => {
         const txHashSpy = sinon.spy();
         const receiptSpy = sinon.spy();
         const confirmationSpy = sinon.spy();
-        const errorSpy = sinon.spy();
+        const anyErrorSpy = sinon.spy();
 
         const tx = new Transaction(ethereumConnection, testContractTx);
 
-        tx.on("error", errorSpy);
+        tx.on("error", anyErrorSpy);
+        tx.on("transactionError", anyErrorSpy);
+        tx.on("transactionRevert", anyErrorSpy);
+
         tx.on("receipt", receiptSpy);
         tx.on("confirmation", confirmationSpy);
         tx.on("transactionHash", txHashSpy);
@@ -229,7 +249,7 @@ describe("Transaction", () => {
 
         sinon.assert.calledWithExactly(txHashSpy, txHash);
         sinon.assert.calledWithExactly(receiptSpy, receipt);
-        assert.equal(errorSpy.callCount, 0);
+        assert.equal(anyErrorSpy.callCount, 0);
         assert.equal(confirmationSpy.callCount, 0);
 
         // should receive receipt after given number of confirmations
