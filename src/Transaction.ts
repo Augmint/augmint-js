@@ -45,7 +45,7 @@ type ITransactionReceipt = any; // TODO: use Web3's type
  *     const ethereumConnection = new EthereumConnection(config);
  *     const rates = new Rates();
  *     await rates.connect()
- *     rates.setRate
+ *     rates.setRate("USD", 121.12)
  *       .[sign(privatekey, {from: acc, to:rates.address})]  // optionally you can sign
  *       .send([{from: acc}]) // from only needed if it's not signed
  *       .onceTxHash( txHash => {.. })
@@ -73,7 +73,7 @@ type ITransactionReceipt = any; // TODO: use Web3's type
  * }
  *
  * // Deprecated and discouraged but kept for backward compatibility  with web3js style events:
- *  tx.on[ce]("transactionHash" | "receipt" | "confirmation" | "error")]
+ *  tx.on[ce]("transactionHash" | "receipt" | "confirmation" | "error")
  * // This way it can be easily plugged into dapps which are handling web3js tx objects:
  * //   augmint-js Transaction object can be a drop in as an almost direct replacement of webjs transactioObject
  *
@@ -336,7 +336,10 @@ export class Transaction extends EventEmitter {
             this.emit("transactionHash", hash);
         })
             .once("receipt", (receipt: ITransactionReceipt) => {
-                this.txReceipt = receipt;
+                if (!this.txReceipt) {
+                    // in case "error" triggered earlier we already have a receipt
+                    this.txReceipt = receipt;
+                }
                 this.emit("receipt", this.txReceipt);
             })
 
@@ -351,19 +354,19 @@ export class Transaction extends EventEmitter {
                     }
 
                     // workaround that web3js beta36 is not emmitting confirmation events when tx fails on tx REVERT
+                    //   NB: we are using the tx receipt fetched earlier because the format is slightly different
                     this.sentTx.on("confirmation", (confirmationNumber: number, _receipt: ITransactionReceipt) => {
                         this.confirmationCount = confirmationNumber;
-                        this.emit("confirmation", confirmationNumber, _receipt);
+                        this.emit("confirmation", confirmationNumber, this.txReceipt);
                     });
 
                     this.emit("txRevert", this.sendError, this.txReceipt);
                 }
 
-                this.emit("error", this.sendError, receipt);
+                this.emit("error", this.sendError, this.txReceipt);
             })
             .on("confirmation", (confirmationNumber: number, receipt: ITransactionReceipt) => {
                 this.confirmationCount = confirmationNumber;
-
                 this.emit("confirmation", confirmationNumber, this.txReceipt);
             });
     }
