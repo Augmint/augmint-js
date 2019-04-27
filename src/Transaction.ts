@@ -53,11 +53,8 @@ type ITransactionReceipt = any; // TODO: use Web3's type
  *       .onConfirmation( (confirmationNumber, receipt) => {...}
  *       .onceReceiptConfirmed(5, receipt => {...})
  *       .onceTxRevert( (error, receipt) => { ....})
- *       .catch(error => {
- *             // any error while signing/sending
- *         })
  *
- *  // Getting txHash / confirmation / receipt these promises can be also used:
+ *  // To catch errors you need to use txHash / confirmation / receipt getters:
  *  try {
  *    const txHash = await tx.getTxHash()
  *    const txReceipt = await tx.getReceipt() // receipt as soon as got it (even with 0 confirmation)
