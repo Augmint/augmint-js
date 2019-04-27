@@ -235,7 +235,7 @@ export class Transaction extends EventEmitter {
         return this.txReceiptPromise;
     }
 
-    public async getTxConfirmation(confirmationNumber: number = 1): Promise<ITransactionReceipt> {
+    public async getConfirmedReceipt(confirmationNumber: number = 1): Promise<ITransactionReceipt> {
         if (!this.isTxSent) {
             throw new TransactionError("tx was not sent yet");
         }

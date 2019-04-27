@@ -53,7 +53,7 @@ describe("Transaction", () => {
         const tx = new Transaction(ethereumConnection, testContractTx);
         expect(tx.getTxHash()).to.be.rejectedWith(TransactionError);
         expect(tx.getTxReceipt()).to.be.rejectedWith(TransactionError);
-        expect(tx.getTxConfirmation()).to.be.rejectedWith(TransactionError);
+        expect(tx.getConfirmedReceipt()).to.be.rejectedWith(TransactionError);
     });
 
     it("send transaction missing params should throw", async () => {
@@ -90,7 +90,7 @@ describe("Transaction", () => {
         assert.equal(confirmationSpy.callCount, 0);
 
         // should receive receipt after given number of confirmations
-        const confirmedReceiptPromise = tx.getTxConfirmation(CONFIRMATION_NUMBER);
+        const confirmedReceiptPromise = tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
         await mine(ethereumConnection.web3, CONFIRMATION_NUMBER); // TODO: check if newer versions of web3js are genereating confirmations with ganache
         const confirmedReceipt = await confirmedReceiptPromise;
         assert(confirmedReceipt.status);
@@ -144,7 +144,7 @@ describe("Transaction", () => {
         assert.equal(confirmationSpy.callCount, 0);
 
         // should receive receipt after given number of confirmations
-        const confirmedReceiptPromise = tx.getTxConfirmation(CONFIRMATION_NUMBER);
+        const confirmedReceiptPromise = tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
         await mine(ethereumConnection.web3, CONFIRMATION_NUMBER); // TODO: check if newer versions of web3js are genereating confirmations with ganache
         const confirmedReceipt = await confirmedReceiptPromise;
         assert(!confirmedReceipt.status);
@@ -233,7 +233,7 @@ describe("Transaction", () => {
         assert.equal(confirmationSpy.callCount, 0);
 
         // should receive receipt after given number of confirmations
-        const confirmedReceiptPromise = tx.getTxConfirmation(CONFIRMATION_NUMBER);
+        const confirmedReceiptPromise = tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
         await mine(ethereumConnection.web3, CONFIRMATION_NUMBER); // TODO: check if newer versions of web3js are genereating confirmations with ganache
         const confirmedReceipt = await confirmedReceiptPromise;
         assert(confirmedReceipt.status);
