@@ -100,6 +100,8 @@ describe("Transaction", () => {
 
         sinon.assert.calledWithExactly(txHashSpy, txHash);
         sinon.assert.calledWithExactly(receiptSpy, receipt);
+
+        assert.equal(anyErrorSpy.callCount, 0);
         assert.equal(confirmationSpy.callCount, 0);
 
         sinon.assert.calledWithExactly(onceTxHashSpy, txHash);
@@ -148,7 +150,6 @@ describe("Transaction", () => {
 
         tx.on("error", errorSpy);
         tx.on("txRevert", txRevertSpy);
-
         tx.on("receipt", receiptSpy);
         tx.on("confirmation", confirmationSpy);
         tx.on("transactionHash", txHashSpy);
@@ -180,7 +181,6 @@ describe("Transaction", () => {
         sinon.assert.calledWithExactly(txHashSpy, txHash);
         sinon.assert.calledWithExactly(receiptSpy, receipt);
         assert.equal(receiptSpy.callCount, 1);
-        assert.equal(txRevertSpy.callCount, 1);
         assert.equal(errorSpy.callCount, 1);
         assert.equal(confirmationSpy.callCount, 0);
 
