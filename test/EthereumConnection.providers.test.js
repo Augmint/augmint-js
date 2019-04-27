@@ -22,7 +22,8 @@ const testProviders = [
     {
         name: "local web3 websocket givenprovider",
         nonceTestAcc: "0x76e7a0aec3e43211395bbbb6fa059bd6750f83c3", // an account with txs to test getAccountNonce
-        testWithGivenProvider: true // it will create a new web3 instance with a new WebsocketProvider for each test (see beforeEach)
+        testWithGivenProvider: true, // it will create a new web3 instance with a new WebsocketProvider for each test (see beforeEach)
+        options: { ETHEREUM_CONNECTION_CHECK_INTERVAL: 0 }
     },
     {
         name: "infura websocket",
@@ -42,13 +43,13 @@ testProviders.forEach(testProvider => {
 
         beforeEach(() => {
             if (testProvider.testWithGivenProvider) {
-                web3 = new Web3(new Web3.providers.WebsocketProvider("ws://localhost:8545")); // testProvider.options.provider);
-                testProvider.options = { provider: web3.currentProvider };
+                web3 = new Web3(new Web3.providers.WebsocketProvider("ws://localhost:8545"));
+                testProvider.givenProvider = web3.currentProvider;
             }
         });
 
         it("should connect & disconnect", async () => {
-            ethereumConnection = new EthereumConnection(testProvider.options);
+            ethereumConnection = new EthereumConnection(testProvider.options, testProvider.givenProvider);
             const connectedSpy = sinon.spy();
             const disconnectedSpy = sinon.spy();
             const connectionLostSpy = sinon.spy();
@@ -90,7 +91,7 @@ testProviders.forEach(testProvider => {
         });
 
         it("should return account nonce", async () => {
-            const ethereumConnection = new EthereumConnection(testProvider.options);
+            const ethereumConnection = new EthereumConnection(testProvider.options, testProvider.givenProvider);
             await ethereumConnection.connect();
 
             const expectedNonce = await ethereumConnection.web3.eth.getTransactionCount(testProvider.nonceTestAcc);

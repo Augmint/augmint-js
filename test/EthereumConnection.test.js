@@ -10,6 +10,8 @@ if (config.LOG) {
 }
 
 describe("EthereumConnection", () => {
+    const MOCK_PROVIDER = { provider: { mock: true } };
+
     it("should check constructor params", () => {
         const invalidProviderType = () =>
             new EthereumConnection({ PROVIDER_TYPE: "blahblah", PROVIDER_URL: "something" });
@@ -19,12 +21,12 @@ describe("EthereumConnection", () => {
         expect(noProviderURL).throws(AugmintJsError, /No PROVIDER_URL specified/);
 
         const bothProviderTypeAndProvider = () =>
-            new EthereumConnection({ provider: { mock: true }, PROVIDER_TYPE: "websocket", PROVIDER_URL: "" });
-        expect(bothProviderTypeAndProvider).throws(AugmintJsError, /Both provider and PROVIDER_TYPE/);
+            new EthereumConnection({ PROVIDER_TYPE: "websocket", PROVIDER_URL: "" }, MOCK_PROVIDER);
+        expect(bothProviderTypeAndProvider).throws(AugmintJsError, /Both givenProvider and PROVIDER_TYPE/);
     });
 
     it("should have an initial state - given provider", async () => {
-        const ethereumConnection = new EthereumConnection({ provider: { mock: true } });
+        const ethereumConnection = new EthereumConnection(null, MOCK_PROVIDER);
 
         assert.isUndefined(ethereumConnection.web3);
         assert.isUndefined(ethereumConnection.provider);

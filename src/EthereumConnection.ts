@@ -13,14 +13,12 @@ export interface IOptions {
     ETHEREUM_CONNECTION_CLOSE_TIMEOUT: number;
     LOG_AS_SUCCESS_AFTER_N_CONFIRMATION: number;
 
-    /** provider options in case connectiong via websocket provider */
     PROVIDER_TYPE?: string;
     PROVIDER_URL?: string;
     INFURA_PROJECT_ID?: string;
-
-    /** in case web3 is available via window in browser TODO: use proper web3 typing here */
-    provider?: any;
 }
+
+type IGivenProvider = any; /** TODO: use web3 typings here */
 
 const DEFAULTS: IOptions = {
     ETHEREUM_CONNECTION_TIMEOUT: 10000,
@@ -54,6 +52,8 @@ export class EthereumConnection extends EventEmitter {
 
     public options: IOptions;
 
+    public readonly givenProvider: IGivenProvider; /** set if connection was made using an existing provider passed to constructor */
+
     public isStopping: boolean = false; /**  flag to avoid retrying connection when stop() called intentionally  */
     public isTryingToReconnect: boolean = false; /** flag to avoid  trying to reconnect if already */
 
@@ -61,7 +61,7 @@ export class EthereumConnection extends EventEmitter {
 
     private connectionCheckTimer: ReturnType<typeof setTimeout>; /** NodeJs vs. browser setTimeout returns diff. */
 
-    constructor(runtimeOptions: IOptions) {
+    constructor(runtimeOptions: IOptions, givenProvider?: IGivenProvider) {
         super();
 
         /**
@@ -78,19 +78,20 @@ export class EthereumConnection extends EventEmitter {
          */
 
         this.options = Object.assign({}, DEFAULTS, runtimeOptions);
+        this.givenProvider = givenProvider;
 
-        if (this.options.provider && (this.options.PROVIDER_URL || this.options.PROVIDER_TYPE)) {
+        if (this.givenProvider && (this.options.PROVIDER_URL || this.options.PROVIDER_TYPE)) {
             throw new AugmintJsError(
-                "EthereumConnection error. Both provider and PROVIDER_TYPE or PROVIDER_URL passed as option. Use either provider or PROVIDER_TYPE + PROVIDER_URL not both  "
+                "EthereumConnection error. Both givenProvider and PROVIDER_TYPE or PROVIDER_URL passed as option. Use either provider or PROVIDER_TYPE + PROVIDER_URL not both  "
             );
         }
 
-        if (!this.options.provider) {
+        if (!this.givenProvider) {
             if (this.options.PROVIDER_TYPE !== "websocket") {
                 throw new AugmintJsError(
                     "EthereumConnection error. Invalid PROVIDER_TYPE: " +
                         this.options.PROVIDER_TYPE +
-                        " Only websocket is supported at the moment. You can pass custom provider using provider using provider option"
+                        " Only websocket is supported at the moment.\nYou can also pass custom provider using givenProvider constructor arg"
                 );
             }
             if (!this.options.PROVIDER_URL) {
@@ -109,7 +110,7 @@ export class EthereumConnection extends EventEmitter {
         log.info(
             // IMPORTANT: NEVER expose keys even not in logs!
             `** EthereumConnection loaded with settings:
-            provider: ${this.options.provider ? "set" : "not set"}
+            givenProvider: ${this.givenProvider ? "set" : "not set"}
             PROVIDER_TYPE: ${this.options.PROVIDER_TYPE}
             PROVIDER_URL: ${this.options.PROVIDER_URL}
             INFURA_PROJECT_ID: ${
@@ -156,7 +157,7 @@ export class EthereumConnection extends EventEmitter {
     public async connect(): Promise<void> {
         this.isStopping = false;
 
-        if (!this.options.provider && this.options.PROVIDER_TYPE && this.options.PROVIDER_URL) {
+        if (!this.givenProvider && this.options.PROVIDER_TYPE && this.options.PROVIDER_URL) {
             switch (this.options.PROVIDER_TYPE) {
                 case "http": {
                     // provider.on is not a function with web3js beta 33 - maybe newer release? or shall we make it work without it?
@@ -174,7 +175,7 @@ export class EthereumConnection extends EventEmitter {
                     throw new AugmintJsError(this.options.PROVIDER_TYPE + " is not supported yet");
             }
         } else {
-            this.provider = this.options.provider;
+            this.provider = this.givenProvider;
         }
 
         this.provider.on("error", this.onProviderError.bind(this));
