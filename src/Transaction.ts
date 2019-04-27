@@ -87,7 +87,7 @@ export class Transaction extends EventEmitter {
             throw new TransactionError("Both ethereumConnection and tx must be provided for Transaction constructor");
         }
         this.tx = tx;
-        this.sendOptions = Object.assign({}, this.sendOptions, sendOptions);
+        this.sendOptions = Object.assign({}, sendOptions);
         this.ethereumConnection = ethereumConnection;
     }
 
