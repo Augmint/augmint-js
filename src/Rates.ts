@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
-import { TransactionObject } from "../abiniser/types/types";
 import { Rates as RatesInstance } from "../generated/index";
+import { TransactionObject } from "../generated/types/types";
 import { Augmint } from "./Augmint";
 import { ZeroRateError } from "./Errors";
 

@@ -1,9 +1,9 @@
 import BigNumber from "bignumber.js";
+import { Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
+import { Augmint } from "./Augmint";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
-import { Exchange as ExchangeInstance } from "../generated/index";
-import { Augmint } from "./Augmint";
 import { Rates } from "./Rates";
 
 export enum OrderDirection {
