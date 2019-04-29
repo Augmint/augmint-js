@@ -4,8 +4,10 @@ import { Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce as RatesContract } from "../
 import { TransactionObject } from "../abiniser/types/types.js";
 import { DECIMALS, DECIMALS_DIV, ONE_ETH_IN_WEI } from "./constants";
 import { Contract } from "./Contract";
-import { ZeroRateError } from "./Errors";
+import { InvalidPriceError, ZeroRateError } from "./Errors";
 import { EthereumConnection } from "./EthereumConnection";
+import { SET_RATE_GAS_LIMIT } from "./gas";
+import { Transaction } from "./Transaction";
 
 export interface IRateInfo {
     bnRate: BigNumber /** The rate without decimals */;
@@ -56,17 +58,27 @@ export class Rates extends Contract {
         };
     }
 
-    public getSetRateTx(currency: string, price: number): TransactionObject<void> {
+    public setRate(currency: string, price: number): Transaction {
         const rateToSend: number = price * DECIMALS_DIV;
+
         if (Math.round(rateToSend) !== rateToSend) {
-            throw new Error(
+            throw new InvalidPriceError(
                 ` getSetRateTx error: provided price of ${price} has more decimals than allowed by AugmintToken decimals of ${DECIMALS}`
             );
         }
-        const bytesCCY: string = this.web3.utils.asciiToHex(currency);
-        const tx: TransactionObject<void> = this.instance.methods.setRate(bytesCCY, rateToSend);
 
-        return tx;
+        const bytesCCY: string = this.web3.utils.asciiToHex(currency);
+
+        const web3Tx: TransactionObject<void> = this.instance.methods.setRate(bytesCCY, rateToSend);
+        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: SET_RATE_GAS_LIMIT,
+            // setting to: in case it's going to be signed
+            // NB: signing/sending this particular tx works without it somehow
+            // but others are throwing unhandled rejection errors (web3 beta36) so setting a good example
+            to: this.address
+        });
+
+        return transaction;
     }
 
     public async connect(ethereumConnection: EthereumConnection): Promise<any> {

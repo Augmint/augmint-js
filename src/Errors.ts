@@ -16,3 +16,29 @@ export class ZeroRateError extends AugmintJsError {
         Object.setPrototypeOf(this, ZeroRateError.prototype);
     }
 }
+
+// tslint:disable-next-line:max-classes-per-file
+export class InvalidPriceError extends AugmintJsError {
+    constructor(message: string) {
+        super(message);
+        this.name = InvalidPriceError.name;
+        Object.setPrototypeOf(this, InvalidPriceError.prototype);
+    }
+}
+
+// tslint:disable-next-line:max-classes-per-file
+export class TransactionError extends AugmintJsError {
+    constructor(message: string) {
+        super(message);
+        this.name = TransactionError.name;
+        Object.setPrototypeOf(this, TransactionError.prototype);
+    }
+}
+// tslint:disable-next-line:max-classes-per-file
+export class TransactionSendError extends TransactionError {
+    constructor(message: string) {
+        super(message);
+        this.name = TransactionSendError.name;
+        Object.setPrototypeOf(this, TransactionSendError.prototype);
+    }
+}
