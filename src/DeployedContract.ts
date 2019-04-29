@@ -1,5 +1,5 @@
 import { Contract } from "web3-eth-contract";
-import * as AbiList from "./abis"
+import * as AbiList from "../generated/abis"
 
 export interface IDeploymentItem {
     abiFileName: string;

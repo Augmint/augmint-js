@@ -1,32 +1,26 @@
 [
     {
         "generator": "typechain",
-        "files": "./abiniser/abis/*.json",
+        "files": "./augmint-contracts/abiniser/abis/*.json",
         "target": "web3-1.0.0",
-        "outDir": "./abiniser/types"
+        "outDir": "./generated/types"
     },
     {
         "generator": "./scripts/make-abis.js",
-        "files": "./abiniser/abis/*.json",
-        "outDir": "./abiniser",
+        "files": "./augmint-contracts/abiniser/abis/*.json",
+        "outDir": "./generated",
         "outFile": "abis.ts"
     },
     {
         "generator": "./scripts/make-deploymentlist.js",
-        "files": "./abiniser/deployments/1/*.json",
-        "outDir": "./abiniser",
-        "outFile": "deployments.mainnet.ts"
+        "files": "./augmint-contracts/abiniser/deployments/*/*.json",
+        "outDir": "./generated",
+        "outFile": "deployments.ts"
     },
     {
-        "generator": "./scripts/make-deploymentlist.js",
-        "files": "./abiniser/deployments/4/*.json",
-        "outDir": "./abiniser",
-        "outFile": "deployments.rinkeby.ts"
-    },
-    {
-        "generator": "./scripts/make-deploymentlist.js",
-        "files": "./abiniser/deployments/999/*.json",
-        "outDir": "./abiniser",
-        "outFile": "deployments.local.ts"
+        "generator": "./scripts/make-types.js",
+        "files": "./augmint-contracts/abiniser/abis/*.json",
+        "outDir": "./generated",
+        "outFile": "index.d.ts"
     }
 ]

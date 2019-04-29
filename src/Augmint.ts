@@ -1,18 +1,15 @@
 import { Contract } from "web3-eth-contract";
-import { DeployedContract } from "../abiniser/DeployedContract";
-import { DeployedContractList } from "../abiniser/DeployedContractList";
-import * as LocalDeployments from "../abiniser/deployments.mainnet";
-import * as MainnetDeployments from "../abiniser/deployments.mainnet";
-import * as RinkebyDeployments from "../abiniser/deployments.rinkeby";
+import { DeployedContract } from "./DeployedContract";
+import { DeployedContractList } from "./DeployedContractList";
+import deployments from "../generated/deployments";
 import * as constants from "./constants";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
 import * as gas from "./gas";
 import { AugmintToken } from "./AugmintToken";
-import { AugmintContracts, TokenAEur } from "../abiniser/index";
+import { AugmintContracts, TokenAEur } from "../generated/index";
 import { Rates } from "./Rates";
 import { Exchange } from "./Exchange";
-import { Rates as RatesInstance } from "../abiniser/index";
-import { Exchange as ExchangeInstance } from "../abiniser/index";
+import { Rates as RatesInstance, Exchange as ExchangeInstance } from "../generated/index";
 
 interface IDeployedContracts {
     [propName: string]: DeployedContractList;
@@ -31,23 +28,15 @@ export class Augmint {
     private _token: AugmintToken;
     private _rates: Rates;
     private _exchange: Exchange;
+    private _environment: string;
 
-    constructor(connectionOptions: IOptions) {
+    constructor(connectionOptions: IOptions, environment: string) {
         this.ethereumConnection = new EthereumConnection(connectionOptions);
         this.web3 = this.ethereumConnection.web3;
-        const networkId: number = this.ethereumConnection.networkId;
-
-        switch (networkId) {
-            case 1:
-                this.deployedContracts = MainnetDeployments;
-                break;
-            case 4:
-                this.deployedContracts = RinkebyDeployments;
-                break;
-            case 999:
-                this.deployedContracts = LocalDeployments;
-                break;
+        if (!environment) {
+            this._environment = this.ethereumConnection.networkId.toString(10);
         }
+        this.deployedContracts = deployments[this._environment];
 
         if (this.deployedContracts) {
             this.latestContracts = {};
@@ -65,10 +54,14 @@ export class Augmint {
         return gas;
     }
 
+    static get EthereumConnection() {
+        return EthereumConnection;
+    }
+
     get token(): AugmintToken {
         if (!this._token) {
             const tokenContract: DeployedContract<TokenAEur> = this.latestContracts[AugmintContracts.TokenAEur];
-            this._token = new AugmintToken(tokenContract, this);
+            this._token = new AugmintToken(tokenContract.connect(this.web3), { web3: this.web3 });
         }
         return this._token;
     }
@@ -76,7 +69,11 @@ export class Augmint {
     get rates(): Rates {
         if (!this._rates) {
             const ratesContract: DeployedContract<RatesInstance> = this.latestContracts[AugmintContracts.Rates];
-            this._rates = new Rates(ratesContract, this);
+            this._rates = new Rates(ratesContract.connect(this.web3), {
+                web3: this.web3,
+                decimals: this.token.decimals,
+                decimalsDiv: this.token.decimalsDiv
+            });
         }
         return this._rates;
     }
@@ -86,9 +83,19 @@ export class Augmint {
             const exchangeContract: DeployedContract<ExchangeInstance> = this.latestContracts[
                 AugmintContracts.Exchange
             ];
-            this._exchange = new Exchange(exchangeContract, this);
+            this._exchange = new Exchange(exchangeContract.connect(this.web3), {
+                web3: this.web3,
+                decimalsDiv: this.token.decimalsDiv,
+                peggedSymbol: this.token.peggedSymbol,
+                rates: this.rates,
+                safeBlockGasLimit: this.ethereumConnection.safeBlockGasLimit
+            });
         }
         return this._exchange;
+    }
+
+    get environment(): string {
+        return this._environment;
     }
 
     //  myaugmint.getLegacyExchanges(Augmint.constants.SUPPORTED_LEGACY_EXCHANGES)
@@ -103,6 +110,13 @@ export class Augmint {
                 throw new Error("legacy contracts length mismatch!");
             }
         }
-        return legacyContracts.map((contract: DeployedContract<ExchangeInstance>) => new Exchange(contract, this));
+        const options = {
+            web3: this.web3,
+            decimalsDiv: this.token.decimalsDiv,
+            peggedSymbol: this.token.peggedSymbol,
+            rates: this.rates,
+            safeBlockGasLimit: this.ethereumConnection.safeBlockGasLimit
+        };
+        return legacyContracts.map((contract: DeployedContract<ExchangeInstance>) => new Exchange(contract.connect(this.web3), options));
     }
 }

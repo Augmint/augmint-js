@@ -12,7 +12,7 @@
     },
     "include": [
         "./src/",
-        "./abiniser/"
+        "./generated/"
     ],
     "exclude": [
         "node_modules",

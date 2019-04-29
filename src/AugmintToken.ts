@@ -1,18 +1,17 @@
-import { TokenAEur } from "../abiniser/index";
-import { Augmint } from "./Augmint";
-import { ContractWrapper } from "./ContractWrapper";
-import { DeployedContract } from "../abiniser/DeployedContract";
+import { TokenAEur } from "../generated/index";
 
-export class AugmintToken extends ContractWrapper{
+export class AugmintToken {
     public instance: TokenAEur;
     private _peggedSymbol: Promise<string>;
     private _symbol: Promise<string>;
     private _name: Promise<string>;
     private _decimals: Promise<number>;
     private _feeAccountAddress: Promise<string>;
+    private _web3: any;
 
-    constructor(deployedContract: DeployedContract<TokenAEur>, augmint: Augmint) {
-        super(deployedContract, augmint)
+    constructor(deployedContractInstance: TokenAEur, options: { web3: any }) {
+        this.instance = deployedContractInstance;
+        this._web3 = options.web3;
     }
 
     get peggedSymbol(): Promise<string> {
@@ -21,7 +20,7 @@ export class AugmintToken extends ContractWrapper{
                 .peggedSymbol()
                 .call()
                 .then(bytes32PeggedSymbol => {
-                    const peggedSymbolWithTrailing: string = this.augmint.web3.utils.toAscii(bytes32PeggedSymbol);
+                    const peggedSymbolWithTrailing: string = this._web3.utils.toAscii(bytes32PeggedSymbol);
                     return peggedSymbolWithTrailing.substr(0, peggedSymbolWithTrailing.indexOf("\0"));
                 });
         }
@@ -56,10 +55,9 @@ export class AugmintToken extends ContractWrapper{
     }
 
     get feeAccountAddress(): Promise<string> {
-        if(!this._feeAccountAddress) {
-            this._feeAccountAddress = this.instance.methods.feeAccount().call()
+        if (!this._feeAccountAddress) {
+            this._feeAccountAddress = this.instance.methods.feeAccount().call();
         }
         return this._feeAccountAddress;
     }
-
 }
