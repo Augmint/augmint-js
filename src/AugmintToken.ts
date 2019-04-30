@@ -11,7 +11,7 @@ export class AugmintToken extends AbstractContract {
     private _web3: any;
 
     constructor(deployedContractInstance: TokenAEur, options: { web3: any }) {
-        super(deployedContractInstance)
+        super(deployedContractInstance);
         this.instance = deployedContractInstance;
         this._web3 = options.web3;
     }
@@ -21,7 +21,7 @@ export class AugmintToken extends AbstractContract {
             this._peggedSymbol = this.instance.methods
                 .peggedSymbol()
                 .call()
-                .then(bytes32PeggedSymbol => {
+                .then((bytes32PeggedSymbol: string) => {
                     const peggedSymbolWithTrailing: string = this._web3.utils.toAscii(bytes32PeggedSymbol);
                     return peggedSymbolWithTrailing.substr(0, peggedSymbolWithTrailing.indexOf("\0"));
                 });
@@ -53,7 +53,7 @@ export class AugmintToken extends AbstractContract {
     }
 
     get decimalsDiv(): Promise<number> {
-        return this.decimals.then(decimals => 10 ** decimals);
+        return this.decimals.then((decimals: number) => 10 ** decimals);
     }
 
     get feeAccountAddress(): Promise<string> {

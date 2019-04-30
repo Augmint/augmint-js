@@ -5,12 +5,12 @@ import { AugmintToken } from "./AugmintToken";
 import * as constants from "./constants";
 import { DeployedContract } from "./DeployedContract";
 import { DeployedContractList } from "./DeployedContractList";
+import * as Errors from "./Errors";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
 import { Exchange } from "./Exchange";
 import * as gas from "./gas";
 import { Rates } from "./Rates";
-import * as Errors from "./Errors";
-import {Transaction} from "./Transaction";
+import { Transaction } from "./Transaction";
 
 interface IDeployedContracts {
     [propName: string]: DeployedContractList;
@@ -21,7 +21,7 @@ interface ILatestContracts {
 }
 
 export class Augmint {
-    public static async create(connectionOptions: IOptions, environment: string) {
+    public static async create(connectionOptions: IOptions, environment: string): Promise<Augmint> {
         const ethereumConnection: EthereumConnection = new EthereumConnection(connectionOptions);
         await ethereumConnection.connect();
         return new Augmint(ethereumConnection, environment);
@@ -53,27 +53,27 @@ export class Augmint {
         }
     }
 
-    static get constants() {
+    static get constants(): typeof constants {
         return constants;
     }
 
-    static get gas() {
+    static get gas(): typeof gas {
         return gas;
     }
 
-    static get EthereumConnection() {
+    static get EthereumConnection(): typeof EthereumConnection {
         return EthereumConnection;
     }
 
-    static get AugmintToken() {
+    static get AugmintToken(): typeof AugmintToken {
         return AugmintToken;
     }
 
-    static get Errors() {
+    static get Errors(): typeof Errors {
         return Errors;
     }
 
-    static get Transaction() {
+    static get Transaction(): typeof Transaction {
         return Transaction;
     }
 
@@ -108,7 +108,7 @@ export class Augmint {
                 peggedSymbol: this.token.peggedSymbol,
                 rates: this.rates,
                 ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI,
-                ethereumConnection:this.ethereumConnection
+                ethereumConnection: this.ethereumConnection
             });
         }
         return this._exchange;

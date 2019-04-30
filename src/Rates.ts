@@ -1,12 +1,12 @@
 import BigNumber from "bignumber.js";
 import { Rates as RatesInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
+import { AbstractContract } from "./AbstractContract";
+import { DECIMALS, DECIMALS_DIV, ONE_ETH_IN_WEI } from "./constants";
 import { InvalidPriceError, ZeroRateError } from "./Errors";
+import { EthereumConnection } from "./EthereumConnection";
 import { SET_RATE_GAS_LIMIT } from "./gas";
 import { Transaction } from "./Transaction";
-import { DECIMALS, DECIMALS_DIV, ONE_ETH_IN_WEI } from "./constants";
-import { AbstractContract } from "./AbstractContract";
-import { EthereumConnection } from "./EthereumConnection";
 
 export interface IRateInfo {
     bnRate: BigNumber /** The rate without decimals */;
@@ -63,7 +63,7 @@ export class Rates extends AbstractContract {
     }
 
     public async getAugmintRate(currency: string): Promise<IRateInfo> {
-        const decimalsDiv = await this.decimalsDiv;
+        const decimalsDiv: number = await this.decimalsDiv;
         const bytesCCY: string = this.web3.utils.asciiToHex(currency);
         const storedRateInfo: { rate: string; lastUpdated: string } = await this.instance.methods
             .rates(bytesCCY)

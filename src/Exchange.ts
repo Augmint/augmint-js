@@ -3,10 +3,10 @@ import { Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
+import { EthereumConnection } from "./EthereumConnection";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
-import { EthereumConnection } from "./EthereumConnection";
 
 export enum OrderDirection {
     TOKEN_BUY /** Buy order: orderDirection is 0 in contract */,
@@ -93,7 +93,7 @@ export class Exchange extends AbstractContract {
      * @return {Promise}            pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
      */
     public async getMatchingOrders(gasLimit: number = this.safeBlockGasLimit): Promise<IMatchingOrders> {
-        const tokenPeggedSymbol = await this.tokenPeggedSymbol;
+        const tokenPeggedSymbol: string = await this.tokenPeggedSymbol;
         const [orderBook, bnEthFiatRate]: [IOrderBook, BigNumber] = await Promise.all([
             this.getOrderBook(),
             this.rates.getBnEthFiatRate(tokenPeggedSymbol)
