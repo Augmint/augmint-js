@@ -126,12 +126,11 @@ export class Augmint {
             }
         }
         const options = {
-            web3: this.web3,
             decimalsDiv: this.token.decimalsDiv,
             peggedSymbol: this.token.peggedSymbol,
             rates: this.rates,
-            safeBlockGasLimit: this.ethereumConnection.safeBlockGasLimit,
-            ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI
+            ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI,
+            ethereumConnection: this.ethereumConnection
         };
         return legacyContracts.map(
             (contract: DeployedContract<ExchangeInstance>) => new Exchange(contract.connect(this.web3), options)

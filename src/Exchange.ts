@@ -66,9 +66,8 @@ export class Exchange extends AbstractContract {
     public instance: ExchangeInstance;
     private web3: any;
     private safeBlockGasLimit: number;
-    private tokenPeggedSymbol: Promise<
-        string
-    >; /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
+    /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
+    private tokenPeggedSymbol: Promise<string>;
     private rates: Rates;
     private decimalsDiv: Promise<number>;
     private ONE_ETH_IN_WEI: number;
