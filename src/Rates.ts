@@ -5,6 +5,8 @@ import { InvalidPriceError, ZeroRateError } from "./Errors";
 import { SET_RATE_GAS_LIMIT } from "./gas";
 import { Transaction } from "./Transaction";
 import { DECIMALS, DECIMALS_DIV, ONE_ETH_IN_WEI } from "./constants";
+import { AbstractContract } from "./AbstractContract";
+import { EthereumConnection } from "./EthereumConnection";
 
 export interface IRateInfo {
     bnRate: BigNumber /** The rate without decimals */;
@@ -13,25 +15,26 @@ export interface IRateInfo {
 }
 
 export interface IRatesOptions {
-    web3: any
-    decimals: Promise<number>
-    decimalsDiv: Promise<number>
-    constants: any
+    decimals: Promise<number>;
+    decimalsDiv: Promise<number>;
+    constants: any;
+    ethereumConnection: EthereumConnection;
 }
 
-export class Rates {
+export class Rates extends AbstractContract {
     // overwrite Contract's  property to have typings
     public instance: RatesInstance; /** web3.js Rates contract instance  */
     private web3: any;
     private decimals: Promise<number>;
     private decimalsDiv: Promise<number>;
     private constants: any;
+    private ethereumConnection: EthereumConnection;
 
-
-
-    constructor(deployedContractInstance:RatesInstance, options: IRatesOptions) {
+    constructor(deployedContractInstance: RatesInstance, options: IRatesOptions) {
+        super(deployedContractInstance);
         this.instance = deployedContractInstance;
-        this.web3 = options.web3;
+        this.ethereumConnection = options.ethereumConnection;
+        this.web3 = this.ethereumConnection.web3;
         this.decimals = options.decimals;
         this.decimalsDiv = options.decimalsDiv;
         this.constants = options.constants;

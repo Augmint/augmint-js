@@ -84,10 +84,10 @@ export class Augmint {
         if (!this._rates) {
             const ratesContract: DeployedContract<RatesInstance> = this.latestContracts[AugmintContracts.Rates];
             this._rates = new Rates(ratesContract.connect(this.web3), {
-                web3: this.web3,
                 decimals: this.token.decimals,
                 decimalsDiv: this.token.decimalsDiv,
-                constants: constants
+                constants: constants,
+                ethereumConnection: this.ethereumConnection
             });
         }
         return this._rates;
@@ -99,12 +99,11 @@ export class Augmint {
                 AugmintContracts.Exchange
             ];
             this._exchange = new Exchange(exchangeContract.connect(this.web3), {
-                web3: this.web3,
                 decimalsDiv: this.token.decimalsDiv,
                 peggedSymbol: this.token.peggedSymbol,
                 rates: this.rates,
-                safeBlockGasLimit: this.ethereumConnection.safeBlockGasLimit,
-                ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI
+                ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI,
+                ethereumConnection:this.ethereumConnection
             });
         }
         return this._exchange;

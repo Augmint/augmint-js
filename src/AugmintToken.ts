@@ -1,6 +1,7 @@
 import { TokenAEur } from "../generated/index";
+import { AbstractContract } from "./AbstractContract";
 
-export class AugmintToken {
+export class AugmintToken extends AbstractContract {
     public instance: TokenAEur;
     private _peggedSymbol: Promise<string>;
     private _symbol: Promise<string>;
@@ -10,6 +11,7 @@ export class AugmintToken {
     private _web3: any;
 
     constructor(deployedContractInstance: TokenAEur, options: { web3: any }) {
+        super(deployedContractInstance)
         this.instance = deployedContractInstance;
         this._web3 = options.web3;
     }
