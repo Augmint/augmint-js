@@ -21,6 +21,6 @@
         "generator": "./scripts/make-types.js",
         "files": "./augmint-contracts/abiniser/abis/*.json",
         "outDir": "./generated",
-        "outFile": "index.d.ts"
+        "outFile": "index.ts"
     }
 ]

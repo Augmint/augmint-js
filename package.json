@@ -45,8 +45,8 @@
     "wait-on": "3.2.0"
   },
   "scripts": {
-    "build": "tsc",
-    "build:typings": "ts-generator ./ts-generator.json",
+    "build": "rm -r ./dist && yarn build:typings && tsc",
+    "build:typings": "rm -r ./generated &&ts-generator ./ts-generator.json",
     "test": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha 'test/**/*.test.js' --exit --timeout 5000",
     "ganache:start": "scripts/augmint-cli.sh ganache start",
     "ganache:stop": "scripts/augmint-cli.sh ganache stop"

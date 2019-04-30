@@ -1,15 +1,15 @@
 import { Contract } from "web3-eth-contract";
+import deployments from "../generated/deployments";
+import { AugmintContracts, TokenAEur } from "../generated/index";
+import { Exchange as ExchangeInstance, Rates as RatesInstance } from "../generated/index";
+import { AugmintToken } from "./AugmintToken";
+import * as constants from "./constants";
 import { DeployedContract } from "./DeployedContract";
 import { DeployedContractList } from "./DeployedContractList";
-import deployments from "../generated/deployments";
-import * as constants from "./constants";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
-import * as gas from "./gas";
-import { AugmintToken } from "./AugmintToken";
-import { AugmintContracts, TokenAEur } from "../generated/index";
-import { Rates } from "./Rates";
 import { Exchange } from "./Exchange";
-import { Rates as RatesInstance, Exchange as ExchangeInstance } from "../generated/index";
+import * as gas from "./gas";
+import { Rates } from "./Rates";
 
 interface IDeployedContracts {
     [propName: string]: DeployedContractList;
@@ -20,6 +20,13 @@ interface ILatestContracts {
 }
 
 export class Augmint {
+    public static async create(connectionOptions: IOptions, environment: string) {
+        const ethereumConnection:EthereumConnection = new EthereumConnection(connectionOptions);
+        console.log(ethereumConnection);
+        await ethereumConnection.connect();
+        return new Augmint(ethereumConnection, environment);
+    }
+
     public ethereumConnection: EthereumConnection;
     public deployedContracts: IDeployedContracts;
     public latestContracts: ILatestContracts;
@@ -30,8 +37,8 @@ export class Augmint {
     private _exchange: Exchange;
     private _environment: string;
 
-    constructor(connectionOptions: IOptions, environment: string) {
-        this.ethereumConnection = new EthereumConnection(connectionOptions);
+    private constructor(ethereumConnection: EthereumConnection, environment: string) {
+        this.ethereumConnection = ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
         if (!environment) {
             this._environment = this.ethereumConnection.networkId.toString(10);
@@ -56,6 +63,10 @@ export class Augmint {
 
     static get EthereumConnection() {
         return EthereumConnection;
+    }
+
+    static get AugmintToken() {
+        return AugmintToken;
     }
 
     get token(): AugmintToken {
