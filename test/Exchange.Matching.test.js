@@ -21,8 +21,6 @@ describe("getMatchMultipleOrdersTx", () => {
 });
 
 describe("calculateMatchingOrders", () => {
-
-
     const ETHEUR_RATE = new BigNumber(50000);
     const BN_ONE = new BigNumber(1);
     const GAS_LIMIT = Number.MAX_SAFE_INTEGER;
@@ -31,7 +29,7 @@ describe("calculateMatchingOrders", () => {
     let exchange = null;
 
     before(async () => {
-            myAugmint = await Augmint.create(config);
+        myAugmint = await Augmint.create(config);
         exchange = myAugmint.exchange;
     });
 

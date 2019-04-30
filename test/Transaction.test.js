@@ -3,7 +3,7 @@ const { assert, expect } = chai;
 const sinon = require("sinon");
 chai.use(require("chai-as-promised"));
 const { Augmint } = require("../dist/index.js");
-const { EthereumConnection, Rates, Transaction } = Augmint;
+const { Transaction } = Augmint;
 const { TransactionError, TransactionSendError, AugmintJsError } = Augmint.Errors;
 const { takeSnapshot, revertSnapshot, mine } = require("./testHelpers/ganache.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
@@ -19,7 +19,7 @@ describe("Transaction", () => {
     let snapshotId;
 
     before(async () => {
-        const myAugmint = Augmint.create(config);
+        const myAugmint = await Augmint.create(config);
         ethereumConnection = myAugmint.ethereumConnection;
         rates = myAugmint.rates;
         const BYTES_CCY = ethereumConnection.web3.utils.asciiToHex("TESTCCY");
