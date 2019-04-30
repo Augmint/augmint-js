@@ -99,7 +99,7 @@ describe("MatchMultipleOrders onchain", () => {
 
         let matchingOrders = await exchange.getMatchingOrders();
 
-        const receipt = await exchange.matchMultipleOrders(myAugmint.ethereumConnection.accounts[0], matchingOrders);
+        const receipt = await exchange.matchMultipleOrders(matchingOrders);
 
         assert(receipt.status);
         matchingOrders = await exchange.getMatchingOrders();
