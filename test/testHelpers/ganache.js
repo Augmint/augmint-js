@@ -1,7 +1,7 @@
 module.exports = {
-    takeSnapshot,
+    mine,
     revertSnapshot,
-    mine
+    takeSnapshot,
 };
 
 //let snapshotCount = 0;

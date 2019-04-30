@@ -2,25 +2,26 @@ const chai = require("chai");
 const { assert, expect } = chai;
 const sinon = require("sinon");
 chai.use(require("chai-as-promised"));
-const { Transaction } = require("../dist/Transaction.js");
-const { Augmint, utils } = require("../dist/index.js");
-const { EthereumConnection, Rates } = Augmint;
-const { TransactionError, TransactionSendError, AugmintJsError } = require("../dist/Errors.js");
+const { Augmint } = require("../dist/index.js");
+const { Transaction } = Augmint;
+const { TransactionError, TransactionSendError, AugmintJsError } = Augmint.Errors;
 const { takeSnapshot, revertSnapshot, mine } = require("./testHelpers/ganache.js");
+const loadEnv = require("./testHelpers/loadEnv.js");
+const config = loadEnv();
 
 describe("Transaction", () => {
-    const config = utils.loadEnv();
-    const ethereumConnection = new EthereumConnection(config);
+    let ethereumConnection;
 
-    const rates = new Rates();
+    let rates;
 
     let testContractTx;
     let accounts;
     let snapshotId;
 
     before(async () => {
-        await ethereumConnection.connect();
-        await rates.connect(ethereumConnection);
+        const myAugmint = await Augmint.create(config);
+        ethereumConnection = myAugmint.ethereumConnection;
+        rates = myAugmint.rates;
         const BYTES_CCY = ethereumConnection.web3.utils.asciiToHex("TESTCCY");
         testContractTx = rates.instance.methods.setRate(BYTES_CCY, 100);
         accounts = ethereumConnection.accounts;
@@ -93,17 +94,18 @@ describe("Transaction", () => {
 
         // should receive confirmations and receipt after given number of confirmations
         const confirmedReceiptPromise = tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
-        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER); // TODO: check if newer versions of web3js are genereating confirmations with ganache
+        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER);
+
+        const confirmedReceipt = await confirmedReceiptPromise;
+        assert.deepEqual(receipt, confirmedReceipt);
+        sinon.assert.calledWithExactly(onceConfirmedReceiptSpy, receipt);
 
         assert.equal(onConfirmationSpy.callCount, CONFIRMATION_NUMBER);
         sinon.assert.calledWithExactly(onConfirmationSpy, 1, receipt);
 
-        const confirmedReceipt = await confirmedReceiptPromise;
-        assert(confirmedReceipt.status);
-        sinon.assert.calledWithExactly(onceConfirmedReceiptSpy, receipt);
-
         // confirmations should be still received after confirmaton
         await mine(ethereumConnection.web3, 1);
+        await tx.getConfirmedReceipt(CONFIRMATION_NUMBER + 1);
         assert.equal(onConfirmationSpy.callCount, CONFIRMATION_NUMBER + 1);
     });
 
@@ -157,19 +159,20 @@ describe("Transaction", () => {
         assert.equal(onceConfirmedReceiptSpy.callCount, 0);
 
         // should receive confirmations and a receipt after given number of confirmations
-        const confirmedReceiptPromise = tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
-        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER); // TODO: check if newer versions of web3js are genereating confirmations with ganache
+
+        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER);
+
+        const confirmedReceipt = await tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
+        assert.deepEqual(receipt, confirmedReceipt);
+        sinon.assert.calledWithExactly(onceConfirmedReceiptSpy, confirmedReceipt);
 
         assert.equal(onConfirmationSpy.callCount, CONFIRMATION_NUMBER);
         sinon.assert.calledWithExactly(onConfirmationSpy.firstCall, 1, receipt);
         sinon.assert.calledWithExactly(onConfirmationSpy.lastCall, CONFIRMATION_NUMBER, receipt);
 
-        const confirmedReceipt = await confirmedReceiptPromise;
-        assert(!confirmedReceipt.status);
-        sinon.assert.calledWithExactly(onceConfirmedReceiptSpy, confirmedReceipt);
-
         // confirmations should be still received
         await mine(ethereumConnection.web3, 1);
+        await tx.getConfirmedReceipt(CONFIRMATION_NUMBER + 1);
         assert.equal(onConfirmationSpy.callCount, CONFIRMATION_NUMBER + 1);
         sinon.assert.calledWithExactly(onConfirmationSpy.lastCall, CONFIRMATION_NUMBER + 1, receipt);
     });
@@ -264,7 +267,7 @@ describe("Transaction", () => {
 
         // should receive confirmations and receipt after given number of confirmations
         const confirmedReceiptPromise = tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
-        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER); // TODO: check if newer versions of web3js are genereating confirmations with ganache
+        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER);
 
         assert.equal(onConfirmationSpy.callCount, CONFIRMATION_NUMBER);
         sinon.assert.calledWithExactly(onConfirmationSpy, 1, receipt);
@@ -275,6 +278,7 @@ describe("Transaction", () => {
 
         // confirmations should be still received after confirmaton
         await mine(ethereumConnection.web3, 1);
+        await tx.getConfirmedReceipt(CONFIRMATION_NUMBER + 1);
         assert.equal(onConfirmationSpy.callCount, CONFIRMATION_NUMBER + 1);
     });
 

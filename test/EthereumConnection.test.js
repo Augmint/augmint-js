@@ -1,9 +1,9 @@
 const { assert, expect } = require("chai");
 const { Augmint, utils } = require("../dist/index.js");
-const { AugmintJsError } = require("../dist/Errors.js");
+const { AugmintJsError } = Augmint.Errors;
 const { EthereumConnection } = Augmint;
-
-const config = utils.loadEnv();
+const loadEnv = require("./testHelpers/loadEnv.js");
+const config = loadEnv();
 
 if (config.LOG) {
     utils.logger.level = config.LOG;
@@ -42,19 +42,19 @@ describe("EthereumConnection", () => {
     });
 
     it("should have an initial state - websocket provider", async () => {
-        const ethereumConnection = new EthereumConnection({ PROVIDER_URL: "mock", PROVIDER_TYPE: "websocket" });
+        const localConnection = new EthereumConnection({ PROVIDER_URL: "mock", PROVIDER_TYPE: "websocket" });
 
-        assert.isUndefined(ethereumConnection.web3);
-        assert.isUndefined(ethereumConnection.provider);
+        assert.isUndefined(localConnection.web3);
+        assert.isUndefined(localConnection.provider);
 
-        assert(!(await ethereumConnection.isConnected()));
-        assert(!ethereumConnection.isStopping);
-        assert(!ethereumConnection.isTryingToReconnect);
+        assert(!(await localConnection.isConnected()));
+        assert(!localConnection.isStopping);
+        assert(!localConnection.isTryingToReconnect);
 
-        assert.isUndefined(ethereumConnection.networkId);
-        assert.isUndefined(ethereumConnection.blockGasLimit);
-        assert.isUndefined(ethereumConnection.safeBlockGasLimit);
-        assert.isUndefined(ethereumConnection.accounts);
+        assert.isUndefined(localConnection.networkId);
+        assert.isUndefined(localConnection.blockGasLimit);
+        assert.isUndefined(localConnection.safeBlockGasLimit);
+        assert.isUndefined(localConnection.accounts);
     });
 
     it("should get options as constructor parameters too", async () => {

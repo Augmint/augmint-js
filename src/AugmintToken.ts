@@ -1,47 +1,65 @@
-import { Contract } from "./Contract";
-import { EthereumConnection } from "./EthereumConnection";
+import { TokenAEur } from "../generated/index";
+import { AbstractContract } from "./AbstractContract";
 
-import * as TokenAEurAbi from "../abiniser/abis/TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5.json";
-import { TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5 as TokenAEurContract } from "../abiniser/types/TokenAEur_ABI_2ea91d34a7bfefc8f38ef0e8a5ae24a5";
+export class AugmintToken extends AbstractContract {
+    public instance: TokenAEur;
+    private _peggedSymbol: Promise<string>;
+    private _symbol: Promise<string>;
+    private _name: Promise<string>;
+    private _decimals: Promise<number>;
+    private _feeAccountAddress: Promise<string>;
+    private _web3: any;
 
-export class AugmintToken extends Contract {
-    public peggedSymbol: string;
-    public symbol: string;
-    public name: string;
-    public decimals: number;
-    public decimalsDiv: number;
-    public feeAccountAddress: string;
-    // overwrite Contract's  property to have typings
-    public instance: TokenAEurContract; /** web3.js TokenAEur contract instance  */
-
-    constructor() {
-        super();
+    constructor(deployedContractInstance: TokenAEur, options: { web3: any }) {
+        super(deployedContractInstance);
+        this.instance = deployedContractInstance;
+        this._web3 = options.web3;
     }
 
-    public async connect(ethereumConnection: EthereumConnection): Promise<void> {
-        await super.connect(ethereumConnection, TokenAEurAbi);
+    get peggedSymbol(): Promise<string> {
+        if (!this._peggedSymbol) {
+            this._peggedSymbol = this.instance.methods
+                .peggedSymbol()
+                .call()
+                .then((bytes32PeggedSymbol: string) => {
+                    const peggedSymbolWithTrailing: string = this._web3.utils.toAscii(bytes32PeggedSymbol);
+                    return peggedSymbolWithTrailing.substr(0, peggedSymbolWithTrailing.indexOf("\0"));
+                });
+        }
+        return this._peggedSymbol;
+    }
 
-        const [bytes32PeggedSymbol, symbol, name, decimals, feeAccountAddress]: [
-            string,
-            string,
-            string,
-            string,
-            string
-        ] = await Promise.all([
-            this.instance.methods.peggedSymbol().call(),
-            this.instance.methods.symbol().call(),
-            this.instance.methods.name().call(),
-            this.instance.methods.decimals().call(),
-            this.instance.methods.feeAccount().call()
-        ]);
+    get name(): Promise<string> {
+        if (!this._name) {
+            this._name = this.instance.methods.name().call();
+        }
+        return this._name;
+    }
+    get symbol(): Promise<string> {
+        if (!this._symbol) {
+            this._symbol = this.instance.methods.symbol().call();
+        }
+        return this._symbol;
+    }
 
-        const peggedSymbolWithTrailing: string = this.web3.utils.toAscii(bytes32PeggedSymbol);
-        this.peggedSymbol = peggedSymbolWithTrailing.substr(0, peggedSymbolWithTrailing.indexOf("\0"));
+    get decimals(): Promise<number> {
+        if (!this._decimals) {
+            this._decimals = this.instance.methods
+                .decimals()
+                .call()
+                .then((decimals: string) => parseInt(decimals));
+        }
+        return this._decimals;
+    }
 
-        this.name = name;
-        this.symbol = symbol;
-        this.decimals = parseInt(decimals);
-        this.decimalsDiv = 10 ** this.decimals;
-        this.feeAccountAddress = feeAccountAddress;
+    get decimalsDiv(): Promise<number> {
+        return this.decimals.then((decimals: number) => 10 ** decimals);
+    }
+
+    get feeAccountAddress(): Promise<string> {
+        if (!this._feeAccountAddress) {
+            this._feeAccountAddress = this.instance.methods.feeAccount().call();
+        }
+        return this._feeAccountAddress;
     }
 }

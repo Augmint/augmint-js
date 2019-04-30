@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import PromiEvent from "web3-core-promievent";
-import { TransactionObject } from "../abiniser/types/types.js";
+import { TransactionObject } from "../generated/types/types";
 import { TransactionError, TransactionSendError } from "./Errors";
 import { EthereumConnection } from "./EthereumConnection";
 

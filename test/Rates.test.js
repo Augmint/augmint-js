@@ -1,11 +1,11 @@
 const { assert } = require("chai");
 const BigNumber = require("bignumber.js");
 const { Augmint, utils } = require("../dist/index.js");
-const { EthereumConnection, Rates } = Augmint;
-const { ZeroRateError, AugmintJsError } = require("../dist/Errors.js");
-
-const config = utils.loadEnv();
+const loadEnv = require("./testHelpers/loadEnv.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
+
+const { AugmintJsError, ZeroRateError } = Augmint.Errors;
+const config = loadEnv();
 const CCY = "EUR";
 const DECIMALS_DIV = 100;
 
@@ -14,69 +14,63 @@ if (config.LOG) {
 }
 
 describe("Rates connection", () => {
-    const ethereumConnection = new EthereumConnection(config);
-    const rates = new Rates();
-
     it("should connect to latest contract", async () => {
-        await ethereumConnection.connect();
+        const myAugmint = await Augmint.create(config);
 
-        assert.isNull(rates.address);
-        await rates.connect(ethereumConnection);
-        assert.equal(rates.address, "0xb0a2a8e846b66C7384F52635CECEf5280F766C8B");
+        assert.equal(myAugmint.rates.instance.options.address, "0xb0a2a8e846b66C7384F52635CECEf5280F766C8B");
     });
 
     it("should connect to legacy Rates contract");
 });
 
 describe("Rates getters", () => {
-    const ethereumConnection = new EthereumConnection(config);
-    const rates = new Rates();
     const EXPECTED_RATE = 213.14;
     let snapshotId;
+    let myAugmint;
 
     before(async () => {
-        await ethereumConnection.connect();
+        myAugmint = await Augmint.create(config);
 
-        snapshotId = await takeSnapshot(ethereumConnection.web3);
+        snapshotId = await takeSnapshot(myAugmint.ethereumConnection.web3);
 
-        await rates.connect(ethereumConnection);
-        const BYTES_CCY = ethereumConnection.web3.utils.asciiToHex(CCY);
+        const BYTES_CCY = myAugmint.ethereumConnection.web3.utils.asciiToHex(CCY);
+        const rates = myAugmint.rates;
 
         await rates.instance.methods.setRate(BYTES_CCY, EXPECTED_RATE * DECIMALS_DIV).send({
-            from: ethereumConnection.accounts[0]
+            from: myAugmint.ethereumConnection.accounts[0]
         });
     });
 
     after(async () => {
-        await revertSnapshot(ethereumConnection.web3, snapshotId);
+        await revertSnapshot(myAugmint.ethereumConnection.web3, snapshotId);
     });
 
     it("getBnEthFiatRate", async () => {
-        const bnEthFiatRate = await rates.getBnEthFiatRate(CCY);
+        const bnEthFiatRate = await myAugmint.rates.getBnEthFiatRate(CCY);
         assert.deepEqual(bnEthFiatRate, new BigNumber(EXPECTED_RATE * DECIMALS_DIV));
     });
 
     it("getEthFiatRate", async () => {
-        const ethFiatRate = await rates.getEthFiatRate(CCY);
+        const ethFiatRate = await myAugmint.rates.getEthFiatRate(CCY);
         assert.equal(ethFiatRate, EXPECTED_RATE);
     });
 
     it("getBnEthFiatRate - invalid ccy", async () => {
-        await rates.getEthFiatRate("INVALID").catch(error => {
+        await myAugmint.rates.getEthFiatRate("INVALID").catch(error => {
             assert.instanceOf(error, AugmintJsError);
             assert.instanceOf(error, ZeroRateError);
         });
     });
 
     it("getAugmintRate", async () => {
-        const augmintRate = await rates.getAugmintRate(CCY);
+        const augmintRate = await myAugmint.rates.getAugmintRate(CCY);
         assert.equal(augmintRate.rate, EXPECTED_RATE);
         assert.deepEqual(augmintRate.bnRate, new BigNumber(EXPECTED_RATE * DECIMALS_DIV));
         assert.instanceOf(augmintRate.lastUpdated, Date);
     });
 
     it("getAugmintRate - invalid ccy", async () => {
-        await rates.getAugmintRate("INVALID").catch(error => {
+        await myAugmint.rates.getAugmintRate("INVALID").catch(error => {
             assert.instanceOf(error, AugmintJsError);
             assert.instanceOf(error, ZeroRateError);
         });

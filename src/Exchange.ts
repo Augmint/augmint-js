@@ -1,10 +1,8 @@
 import BigNumber from "bignumber.js";
-import * as ExchangeAbi from "../abiniser/abis/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd.json";
-import { Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd as ExchangeContract } from "../abiniser/types/Exchange_ABI_d3e7f8a261b756f9c40da097608b21cd";
-import { TransactionObject } from "../abiniser/types/types.js";
-import { AugmintToken } from "./AugmintToken";
+import { Exchange as ExchangeInstance } from "../generated/index";
+import { TransactionObject } from "../generated/types/types";
+import { AbstractContract } from "./AbstractContract";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
-import { Contract } from "./Contract";
 import { EthereumConnection } from "./EthereumConnection";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
 import { Rates } from "./Rates";
@@ -51,56 +49,40 @@ interface ISellOrderCalc extends ISellOrder {
     bnEthValue?: BigNumber;
 }
 
+interface IExchangeOptions {
+    peggedSymbol: Promise<string>;
+    rates: Rates;
+    decimalsDiv: Promise<number>;
+    ONE_ETH_IN_WEI: number;
+    ethereumConnection: EthereumConnection;
+}
+
 /**
  * Augmint Exchange contract class
  * @class Exchange
  * @extends Contract
  */
-export class Exchange extends Contract {
-    public rates: Rates;
-    public augmintToken: AugmintToken;
-    public tokenPeggedSymbol: string; /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
-    public tokenSymbol: string; /** token symbol this exchange contract instance is linked to  */
-    // overwrite Contract's  property to have typings
-    public instance: ExchangeContract; /** web3.js Exchange contract instance  */
+export class Exchange extends AbstractContract {
+    public instance: ExchangeInstance;
+    private web3: any;
+    private safeBlockGasLimit: number;
+    /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
+    private tokenPeggedSymbol: Promise<string>;
+    private rates: Rates;
+    private decimalsDiv: Promise<number>;
+    private ONE_ETH_IN_WEI: number;
+    private ethereumConnection: EthereumConnection;
 
-    constructor() {
-        super();
-    }
-
-    public async connect(ethereumConnection: EthereumConnection): Promise<void> {
-        await super.connect(ethereumConnection, ExchangeAbi);
-
-        this.rates = new Rates();
-        await this.rates.connect(this.ethereumConnection);
-
-        const [tokenAddressAtExchange, ratesAddressAtExchange]: string[] = await Promise.all([
-            this.instance.methods.augmintToken().call(),
-            this.instance.methods.rates().call()
-        ]);
-
-        if (ratesAddressAtExchange !== this.rates.address) {
-            throw new Error(
-                `Exchange: latest Rates contract deployment address ${
-                    this.rates.address
-                } for provided ABI doesn't match rates contract address ${ratesAddressAtExchange} at deployed Exchange contract`
-            );
-        }
-
-        this.augmintToken = new AugmintToken();
-        await this.augmintToken.connect(this.ethereumConnection);
-
-        if (tokenAddressAtExchange !== this.augmintToken.address) {
-            throw new Error(
-                `Exchange: latest AugmintToken contract deployment address at ${
-                    this.augmintToken.address
-                }  doesn't match AugmintToken contract address set at latest deployed Exchange contract: ${tokenAddressAtExchange}.
-                Connecting to legacy Exchanges is not supported yet`
-            );
-        }
-
-        this.tokenPeggedSymbol = this.augmintToken.peggedSymbol;
-        this.tokenSymbol = this.augmintToken.symbol;
+    constructor(deployedContractInstance: ExchangeInstance, options: IExchangeOptions) {
+        super(deployedContractInstance);
+        this.instance = deployedContractInstance;
+        this.ethereumConnection = options.ethereumConnection;
+        this.web3 = this.ethereumConnection.web3;
+        this.safeBlockGasLimit = this.ethereumConnection.safeBlockGasLimit;
+        this.tokenPeggedSymbol = options.peggedSymbol;
+        this.rates = options.rates;
+        this.decimalsDiv = options.decimalsDiv;
+        this.ONE_ETH_IN_WEI = options.ONE_ETH_IN_WEI;
     }
 
     /**
@@ -110,12 +92,11 @@ export class Exchange extends Contract {
      * @param  {number}  [gasLimit=EthereumConnection.safeBlockGasLimit]   return as many matches as it fits to gasLimit based on gas cost estimate.
      * @return {Promise}            pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
      */
-    public async getMatchingOrders(
-        gasLimit: number = this.ethereumConnection.safeBlockGasLimit
-    ): Promise<IMatchingOrders> {
+    public async getMatchingOrders(gasLimit: number = this.safeBlockGasLimit): Promise<IMatchingOrders> {
+        const tokenPeggedSymbol: string = await this.tokenPeggedSymbol;
         const [orderBook, bnEthFiatRate]: [IOrderBook, BigNumber] = await Promise.all([
             this.getOrderBook(),
-            this.rates.getBnEthFiatRate(this.tokenPeggedSymbol)
+            this.rates.getBnEthFiatRate(tokenPeggedSymbol)
         ]);
 
         return this.calculateMatchingOrders(orderBook.buyOrders, orderBook.sellOrders, bnEthFiatRate, gasLimit);
@@ -163,8 +144,8 @@ export class Exchange extends Contract {
     }
 
     public async getOrders(orderDirection: OrderDirection, offset: number): Promise<IOrderBook> {
-        const blockGasLimit: number = this.ethereumConnection.safeBlockGasLimit;
-
+        const blockGasLimit: number = this.safeBlockGasLimit;
+        const decimalsDiv = await this.decimalsDiv;
         // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
         const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
@@ -192,8 +173,8 @@ export class Exchange extends Contract {
                     const bnPrice: BigNumber = new BigNumber(order[2]);
                     const amount: number =
                         orderDirection === OrderDirection.TOKEN_BUY
-                            ? parseFloat(bnAmount.div(ONE_ETH_IN_WEI).toFixed(15))
-                            : parseFloat(bnAmount.div(this.augmintToken.decimalsDiv).toFixed(2));
+                            ? parseFloat(bnAmount.div(this.ONE_ETH_IN_WEI).toFixed(15))
+                            : parseFloat(bnAmount.div(decimalsDiv).toFixed(2));
                     const parsed: IGenericOrder = {
                         id: parseInt(order[0], 10),
                         maker: `0x${new BigNumber(order[1]).toString(16).padStart(40, "0")}`, // leading 0s if address starts with 0
@@ -247,7 +228,6 @@ export class Exchange extends Contract {
             matchingOrders.buyIds,
             matchingOrders.sellIds
         );
-
         const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
             gasLimit: matchingOrders.gasEstimate,
             // to: needs to be set if going to be signed.

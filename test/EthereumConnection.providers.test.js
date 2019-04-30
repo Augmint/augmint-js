@@ -4,7 +4,8 @@ const { Augmint, utils } = require("../dist/index.js");
 const { EthereumConnection } = Augmint;
 const Web3 = require("web3");
 
-const config = utils.loadEnv();
+const loadEnv = require("./testHelpers/loadEnv.js");
+const config = loadEnv();
 
 if (config.LOG) {
     utils.logger.level = config.LOG;
