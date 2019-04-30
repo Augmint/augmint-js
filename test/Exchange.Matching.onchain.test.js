@@ -72,7 +72,8 @@ describe("MatchMultipleOrders onchain", () => {
         // ganache account[0] private key, generated with  mnemonic fixed in ganache launch script
         const PRIVATE_KEY = "0x85b3d743fbe4ec4e2b58947fa5484da7b2f5538b0ae8e655646f94c95d5fb949";
 
-        const receipt = await exchange.matchMultipleOrders(matchingOrders)
+        const receipt = await exchange
+            .matchMultipleOrders(matchingOrders)
             .sign(PRIVATE_KEY, { from: accounts[0] })
             .send()
             .getTxReceipt();
@@ -99,7 +100,10 @@ describe("MatchMultipleOrders onchain", () => {
 
         let matchingOrders = await exchange.getMatchingOrders();
 
-        const receipt = await exchange.matchMultipleOrders(matchingOrders);
+        const receipt = await exchange
+            .matchMultipleOrders(matchingOrders)
+            .send({ from: accounts[0] })
+            .getTxReceipt();
 
         assert(receipt.status);
         matchingOrders = await exchange.getMatchingOrders();
