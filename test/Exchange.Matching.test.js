@@ -1,11 +1,10 @@
 const expect = require("chai").expect;
 const BigNumber = require("bignumber.js");
-const { Augmint, utils } = require("../dist/src/index.js");
-const { gas, Exchange } = Augmint;
+const { Augmint, utils } = require("../dist/index.js");
+const { gas } = Augmint;
+const loadEnv = require("./testHelpers/loadEnv.js");
 
-const exchange = new Exchange();
-
-const config = utils.loadEnv();
+const config = loadEnv();
 
 if (config.LOG) {
     utils.logger.level = config.LOG;
@@ -22,9 +21,19 @@ describe("getMatchMultipleOrdersTx", () => {
 });
 
 describe("calculateMatchingOrders", () => {
+
+
     const ETHEUR_RATE = new BigNumber(50000);
     const BN_ONE = new BigNumber(1);
     const GAS_LIMIT = Number.MAX_SAFE_INTEGER;
+
+    let myAugmint = null;
+    let exchange = null;
+
+    before(async () => {
+            myAugmint = await Augmint.create(config);
+        exchange = myAugmint.exchange;
+    });
 
     it("should return no match if no orders", () => {
         const matches = exchange.calculateMatchingOrders([], [], ETHEUR_RATE, GAS_LIMIT);

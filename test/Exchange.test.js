@@ -96,7 +96,7 @@ describe("getOrderBook", () => {
 
 describe("isOrderBetter", () => {
     let exchange = null;
-    beforeEach(async () => {
+        before(async () => {
         const myAugmint = await Augmint.create(config);
         exchange = myAugmint.exchange;
     });

@@ -1,6 +1,6 @@
 module.exports = {
-    takeSnapshot,
-    revertSnapshot
+    revertSnapshot,
+    takeSnapshot
 };
 
 //let snapshotCount = 0;

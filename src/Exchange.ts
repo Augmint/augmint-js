@@ -244,7 +244,7 @@ export class Exchange {
 
         const txToSign = {
             from: account,
-            to: this.instance.address,
+            to: this.instance.options.address,
             gasLimit: matchingOrders.gasEstimate,
             data: encodedABI
         };
