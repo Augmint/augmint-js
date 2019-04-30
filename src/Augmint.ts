@@ -21,7 +21,7 @@ interface ILatestContracts {
 }
 
 export class Augmint {
-    public static async create(connectionOptions: IOptions, environment: string): Promise<Augmint> {
+    public static async create(connectionOptions: IOptions, environment?: string): Promise<Augmint> {
         const ethereumConnection: EthereumConnection = new EthereumConnection(connectionOptions);
         await ethereumConnection.connect();
         return new Augmint(ethereumConnection, environment);
@@ -37,7 +37,7 @@ export class Augmint {
     private _exchange: Exchange;
     private _environment: string;
 
-    private constructor(ethereumConnection: EthereumConnection, environment: string) {
+    private constructor(ethereumConnection: EthereumConnection, environment?: string) {
         this.ethereumConnection = ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
         if (!environment) {
@@ -91,7 +91,7 @@ export class Augmint {
             this._rates = new Rates(ratesContract.connect(this.web3), {
                 decimals: this.token.decimals,
                 decimalsDiv: this.token.decimalsDiv,
-                constants: constants,
+                constants,
                 ethereumConnection: this.ethereumConnection
             });
         }
