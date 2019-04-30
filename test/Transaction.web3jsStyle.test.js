@@ -10,7 +10,6 @@ const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
 
 describe("Transaction - web3js events style", () => {
-
     let ethereumConnection;
     let rates;
 
@@ -61,7 +60,10 @@ describe("Transaction - web3js events style", () => {
         assert.equal(confirmationSpy.callCount, 0);
 
         // should receive confirmations
-        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER); // TODO: check if newer versions of web3js are genereating confirmations with ganache
+
+        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER);
+        const confirmedReceipt = await tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
+        assert.deepEqual(receipt, confirmedReceipt);
         assert.equal(confirmationSpy.callCount, CONFIRMATION_NUMBER);
         sinon.assert.calledWith(confirmationSpy, 1, receipt);
     });
@@ -110,8 +112,8 @@ describe("Transaction - web3js events style", () => {
         sinon.assert.calledWithExactly(errorSpy, errorCaught, receipt);
         assert.equal(confirmationSpy.callCount, 0);
 
-        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER); // TODO: check if newer versions of web3js are genereating confirmations with ganache
-
+        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER);
+        await tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
         assert.equal(confirmationSpy.callCount, CONFIRMATION_NUMBER);
 
         sinon.assert.calledWithExactly(confirmationSpy.firstCall, 1, receipt);
@@ -119,6 +121,7 @@ describe("Transaction - web3js events style", () => {
 
         // confirmations should be received
         await mine(ethereumConnection.web3, 1);
+        await tx.getConfirmedReceipt(CONFIRMATION_NUMBER + 1);
         assert.equal(confirmationSpy.callCount, CONFIRMATION_NUMBER + 1);
         sinon.assert.calledWithExactly(confirmationSpy.lastCall, CONFIRMATION_NUMBER + 1, receipt);
     });
@@ -206,7 +209,8 @@ describe("Transaction - web3js events style", () => {
         assert.equal(confirmationSpy.callCount, 0);
 
         // should receive confirmations
-        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER); // TODO: check if newer versions of web3js are genereating confirmations with ganache
+        await mine(ethereumConnection.web3, CONFIRMATION_NUMBER);
+        await tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
         assert.equal(confirmationSpy.callCount, CONFIRMATION_NUMBER);
         sinon.assert.calledWithExactly(confirmationSpy.lastCall, CONFIRMATION_NUMBER, receipt);
     });
