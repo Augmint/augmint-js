@@ -16,6 +16,8 @@ export interface IOptions {
     PROVIDER_TYPE?: string;
     PROVIDER_URL?: string;
     INFURA_PROJECT_ID?: string;
+
+    givenProvider?: IGivenProvider /** If already connected (eg. Metamask or a web3 browser like TrustWallet or Coinbase Wallet etc. ) */;
 }
 
 type IGivenProvider = any; /** TODO: use web3 typings here */
@@ -50,9 +52,9 @@ export class EthereumConnection extends EventEmitter {
     public safeBlockGasLimit: number;
     public accounts: string[];
 
-    public options: IOptions;
+    public options: IOptions; /** connection options excluding givenProvider  */
 
-    public readonly givenProvider: IGivenProvider; /** set if connection was made using an existing provider passed to constructor */
+    public readonly givenProvider: IGivenProvider; /** set if connection was made using an existing provider */
 
     public isStopping: boolean = false; /**  flag to avoid retrying connection when stop() called intentionally  */
     public isTryingToReconnect: boolean = false; /** flag to avoid  trying to reconnect if already */
@@ -61,7 +63,7 @@ export class EthereumConnection extends EventEmitter {
 
     private connectionCheckTimer: ReturnType<typeof setTimeout>; /** NodeJs vs. browser setTimeout returns diff. */
 
-    constructor(runtimeOptions: IOptions, givenProvider?: IGivenProvider) {
+    constructor(runtimeOptions: IOptions) {
         super();
 
         /**
@@ -77,8 +79,8 @@ export class EthereumConnection extends EventEmitter {
          * @prop {boolean}  isTryingToReconnect  true while trying to reconnect because of connection loss detected
          */
 
-        this.options = Object.assign({}, DEFAULTS, runtimeOptions);
-        this.givenProvider = givenProvider;
+        this.givenProvider = runtimeOptions.givenProvider;
+        this.options = Object.assign({}, DEFAULTS, runtimeOptions, { givenProvider: undefined });
 
         if (this.givenProvider && (this.options.PROVIDER_URL || this.options.PROVIDER_TYPE)) {
             throw new AugmintJsError(

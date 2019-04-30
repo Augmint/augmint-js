@@ -21,12 +21,12 @@ describe("EthereumConnection", () => {
         expect(noProviderURL).throws(AugmintJsError, /No PROVIDER_URL specified/);
 
         const bothProviderTypeAndProvider = () =>
-            new EthereumConnection({ PROVIDER_TYPE: "websocket", PROVIDER_URL: "" }, MOCK_PROVIDER);
+            new EthereumConnection({ PROVIDER_TYPE: "websocket", PROVIDER_URL: "", givenProvider: MOCK_PROVIDER });
         expect(bothProviderTypeAndProvider).throws(AugmintJsError, /Both givenProvider and PROVIDER_TYPE/);
     });
 
     it("should have an initial state - given provider", async () => {
-        const ethereumConnection = new EthereumConnection(null, MOCK_PROVIDER);
+        const ethereumConnection = new EthereumConnection({ givenProvider: MOCK_PROVIDER });
 
         assert.isUndefined(ethereumConnection.web3);
         assert.isUndefined(ethereumConnection.provider);

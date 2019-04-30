@@ -45,7 +45,7 @@ testProviders.forEach(testProvider => {
         beforeEach(() => {
             if (testProvider.testWithGivenProvider) {
                 web3 = new Web3(new Web3.providers.WebsocketProvider("ws://localhost:8545"));
-                testProvider.givenProvider = web3.currentProvider;
+                testProvider.options.givenProvider = web3.currentProvider;
             }
         });
 
