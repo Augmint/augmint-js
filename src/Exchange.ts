@@ -4,6 +4,7 @@ import { TransactionObject } from "../generated/types/types";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
 import { Rates } from "./Rates";
+import { Transaction } from "./Transaction";
 
 export enum OrderDirection {
     TOKEN_BUY /** Buy order: orderDirection is 0 in contract */,
@@ -209,66 +210,29 @@ export class Exchange {
     }
 
     /**
-     * Sends a matchMultipleOrders transaction
-     * Intended to use when account wallet is available (e.g. MetamMask)
-     * @param {string} account
-     * @param {IMatchingOrders} matchingOrders
-     * @returns {Promise}     A web3.js Promi event object sent to the network. Resolves when mined and you can subscribe to events, eg. .on("confirmation")
+     *  Returns a [Transaction] object with which can be signed and sent or sent to the ethereum network
+     *
+     * @param {IMatchingOrders} matchingOrders  use [getMatchingOrders] method to get it
+     * @returns {Transaction}
      * @memberof Exchange
      */
-    public async matchMultipleOrders(account: string, matchingOrders: IMatchingOrders) {
-        const matchMultipleOrdersTx = this.getMatchMultipleOrdersTx(matchingOrders.buyIds, matchingOrders.sellIds);
-
-        return matchMultipleOrdersTx.send({
-            from: account,
-            gas: matchingOrders.gasEstimate
-        });
-    }
-
-    /**
-     * Signs a matchMultipleOrders transaction with a private key and sends it (with web3.js sendSignedTransaction)     *
-     * Intended to use when private key is available, e.g. backend services
-     * @param  {string} account     tx signer ethereum account
-     * @param  {string} privateKey  Private key of the Ethereum account to sign the tx with. Include leading 0x
-     * @param  {object} matchingOrders    Returned by getMatchingOrders in format of {buyIds:[], sellIds: [], gasEstimate}
-     * @return {Promise}           A web3.js Promi event object sent to the network. Resolves when mined and you can subscribe to events, eg. .on("confirmation")
-     * @memberof Exchange
-     */
-    public async signAndSendMatchMultipleOrders(account: string, privateKey: string, matchingOrders: IMatchingOrders) {
-        const matchMultipleOrdersTx: TransactionObject<string> = this.getMatchMultipleOrdersTx(
-            matchingOrders.buyIds,
-            matchingOrders.sellIds
-        );
-
-        const encodedABI: string = matchMultipleOrdersTx.encodeABI();
-
-        const txToSign = {
-            from: account,
-            to: this.instance.options.address,
-            gasLimit: matchingOrders.gasEstimate,
-            data: encodedABI
-        };
-
-        const signedTx = await this.web3.eth.accounts.signTransaction(txToSign, privateKey);
-
-        return this.web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    }
-
-    /**
-     * Returns a web3 transaction to match the passed buyIds and sellIds. Call .send() or sign it on the returned tx.
-     * @param  {array} buyIds   array with a list of BUY order IDs (ordered)
-     * @param  {array} sellIds  array with a list of SELL order IDs (ordered)
-     * @return {Promise}         web3 transaction which can be executed with .send({account, gas})
-     * @memberof Exchange
-     */
-    public getMatchMultipleOrdersTx(buyIds: number[], sellIds: number[]): TransactionObject<string> {
-        if (sellIds.length === 0 || sellIds.length !== buyIds.length) {
+    public matchMultipleOrders(matchingOrders: IMatchingOrders): Transaction {
+        if (matchingOrders.sellIds.length === 0 || matchingOrders.sellIds.length !== matchingOrders.buyIds.length) {
             throw new Error("invalid buyIds/sellIds recevied - no ids or the the params are not equal.");
         }
 
-        const tx: TransactionObject<string> = this.instance.methods.matchMultipleOrders(buyIds, sellIds);
+        const web3Tx: TransactionObject<string> = this.instance.methods.matchMultipleOrders(
+            matchingOrders.buyIds,
+            matchingOrders.sellIds
+        );
+        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: matchingOrders.gasEstimate,
+            // to: needs to be set if going to be signed.
+            // (getting unhandled rejection errors if not set even tx is successful on ganache. beta36 )
+            to: this.address
+        });
 
-        return tx;
+        return transaction;
     }
 
     /**

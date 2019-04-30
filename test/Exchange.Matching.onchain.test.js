@@ -54,11 +54,12 @@ describe("MatchMultipleOrders onchain", () => {
         assert.deepEqual(matchingOrders, { buyIds: [], sellIds: [], gasEstimate: 0 });
     });
 
-    it("signAndSendMatchMultipleOrders", async () => {
+    it("matchMultipleOrders - sign & send", async () => {
         await Promise.all([
-            exchange.instance.methods
-                .placeBuyTokenOrder("1000000")
-                .send({ from: accounts[1], value: web3.utils.toWei("0.1"), gas: 1000000 }),
+            exchange.instance.methods.placeBuyTokenOrder("1000000").send({
+                from: accounts[1],
+                value: web3.utils.toWei("0.1"),
+                gas: 1000000 }),
 
             myAugmint.token.instance.methods
                 .transferAndNotify(exchange.address, "1000", "1000000")
@@ -68,20 +69,24 @@ describe("MatchMultipleOrders onchain", () => {
         let matchingOrders = await exchange.getMatchingOrders();
 
         // ganache account[0] private key, generated with  mnemonic fixed in ganache launch script
-        const privateKey = "0x85b3d743fbe4ec4e2b58947fa5484da7b2f5538b0ae8e655646f94c95d5fb949";
+        const PRIVATE_KEY = "0x85b3d743fbe4ec4e2b58947fa5484da7b2f5538b0ae8e655646f94c95d5fb949";
 
         const receipt = await exchange.signAndSendMatchMultipleOrders(
             myAugmint.ethereumConnection.accounts[0],
-            privateKey,
+            PRIVATE_KEY,
             matchingOrders
         );
-
         assert(receipt.status);
+
         matchingOrders = await exchange.getMatchingOrders();
-        assert.deepEqual(matchingOrders, { buyIds: [], sellIds: [], gasEstimate: 0 });
+        assert.deepEqual(matchingOrders, {
+            buyIds: [],
+            sellIds: [],
+            gasEstimate: 0
+        });
     });
 
-    it("matchMultipleOrders", async () => {
+    it("matchMultipleOrders - send", async () => {
         await Promise.all([
             exchange.instance.methods
                 .placeBuyTokenOrder("1000000")

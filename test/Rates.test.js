@@ -76,28 +76,3 @@ describe("Rates getters", () => {
         });
     });
 });
-
-describe("Rates txs", () => {
-    let myAugmint;
-    let snapshotId;
-
-    before(async () => {
-        myAugmint = await Augmint.create(config);
-    });
-
-    beforeEach(async () => {
-        snapshotId = await takeSnapshot(myAugmint.ethereumConnection.web3);
-    });
-
-    afterEach(async () => {
-        await revertSnapshot(myAugmint.ethereumConnection.web3, snapshotId);
-    });
-
-    it("setRate");
-
-    it("setRate = 0");
-
-    it("setRate - invalid ccy");
-
-    it("setRate - invalid price");
-});

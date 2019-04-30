@@ -1,7 +1,10 @@
 import BigNumber from "bignumber.js";
 import { Rates as RatesInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
-import { ZeroRateError } from "./Errors";
+import { InvalidPriceError, ZeroRateError } from "./Errors";
+import { SET_RATE_GAS_LIMIT } from "./gas";
+import { Transaction } from "./Transaction";
+import { DECIMALS, DECIMALS_DIV, ONE_ETH_IN_WEI } from "./constants";
 
 export interface IRateInfo {
     bnRate: BigNumber /** The rate without decimals */;
@@ -70,18 +73,26 @@ export class Rates {
         };
     }
 
-    public async getSetRateTx(currency: string, price: number): Promise<TransactionObject<void>> {
-        const decimalsDiv = await this.decimalsDiv;
-        const decimals = await this.decimals;
-        const rateToSend: number = price * decimalsDiv;
+    public setRate(currency: string, price: number): Transaction {
+        const rateToSend: number = price * this.constants.DECIMALS_DIV;
+
         if (Math.round(rateToSend) !== rateToSend) {
-            throw new Error(
-                ` getSetRateTx error: provided price of ${price} has more decimals than allowed by AugmintToken decimals of ${decimals}`
+            throw new InvalidPriceError(
+                ` getSetRateTx error: provided price of ${price} has more decimals than allowed by AugmintToken decimals of ${DECIMALS}`
             );
         }
-        const bytesCCY: string = this.web3.utils.asciiToHex(currency);
-        const tx: TransactionObject<void> = this.instance.methods.setRate(bytesCCY, rateToSend);
 
-        return tx;
+        const bytesCCY: string = this.web3.utils.asciiToHex(currency);
+
+        const web3Tx: TransactionObject<void> = this.instance.methods.setRate(bytesCCY, rateToSend);
+        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: SET_RATE_GAS_LIMIT,
+            // setting to: in case it's going to be signed
+            // NB: signing/sending this particular tx works without it somehow
+            // but others are throwing unhandled rejection errors (web3 beta36) so setting a good example
+            to: this.address
+        });
+
+        return transaction;
     }
 }
