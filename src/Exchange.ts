@@ -79,32 +79,6 @@ export class Exchange {
         this.ONE_ETH_IN_WEI = options.ONE_ETH_IN_WEI
     }
 
-    /*
-    public async connect(): Promise<void> {
-        const [tokenAddressAtExchange, ratesAddressAtExchange]: string[] = await Promise.all([
-            this.instance.methods.augmintToken().call(),
-            this.instance.methods.rates().call()
-        ]);
-
-        if (ratesAddressAtExchange !== this.rates.address) {
-            throw new Error(
-                `Exchange: latest Rates contract deployment address ${
-                    this.rates.address
-                } for provided ABI doesn't match rates contract address ${ratesAddressAtExchange} at deployed Exchange contract`
-            );
-        }
-
-        if (tokenAddressAtExchange !== this.augmintToken.address) {
-            throw new Error(
-                `Exchange: latest AugmintToken contract deployment address at ${
-                    this.augmintToken.address
-                }  doesn't match AugmintToken contract address set at latest deployed Exchange contract: ${tokenAddressAtExchange}.
-                Connecting to legacy Exchanges is not supported yet`
-            );
-        }
-
-    }
-*/
     /**
      * Fetches current OrderBook and returns as many matching orderIds (at current ETHFiat rate) as fits into the provided gas limit.
      *  if no gasLimit provided then ethereumConnection.safeBlockGasLimit is used
@@ -394,5 +368,9 @@ export class Exchange {
         }
 
         return { buyIds, sellIds, gasEstimate };
+    }
+
+    get address() {
+        return this.instance.options.address;
     }
 }

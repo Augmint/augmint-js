@@ -10,6 +10,7 @@ import { EthereumConnection, IOptions } from "./EthereumConnection";
 import { Exchange } from "./Exchange";
 import * as gas from "./gas";
 import { Rates } from "./Rates";
+import * as Errors from "./Errors"
 
 interface IDeployedContracts {
     [propName: string]: DeployedContractList;
@@ -66,6 +67,10 @@ export class Augmint {
 
     static get AugmintToken() {
         return AugmintToken;
+    }
+
+    static get Errors() {
+        return Errors
     }
 
     get token(): AugmintToken {
