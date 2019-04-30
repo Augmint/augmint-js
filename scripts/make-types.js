@@ -25,7 +25,7 @@ class TypeListPlugin extends TsGeneratorPlugin {
                 );
             }, [])
             .join("\n");
-        const enums = Object.keys(content).join(",");
+        const enums = Object.keys(content).map(contractName => `${contractName} = "${contractName}"`).join(",");
         const types = Object.keys(content)
             .map(contractName => `export type ${contractName} = ${content[contractName].join(" | ")};`)
             .join("\n");

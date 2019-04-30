@@ -22,7 +22,6 @@ interface ILatestContracts {
 export class Augmint {
     public static async create(connectionOptions: IOptions, environment: string) {
         const ethereumConnection:EthereumConnection = new EthereumConnection(connectionOptions);
-        console.log(ethereumConnection);
         await ethereumConnection.connect();
         return new Augmint(ethereumConnection, environment);
     }
@@ -83,7 +82,8 @@ export class Augmint {
             this._rates = new Rates(ratesContract.connect(this.web3), {
                 web3: this.web3,
                 decimals: this.token.decimals,
-                decimalsDiv: this.token.decimalsDiv
+                decimalsDiv: this.token.decimalsDiv,
+                constants: constants
             });
         }
         return this._rates;
@@ -99,7 +99,8 @@ export class Augmint {
                 decimalsDiv: this.token.decimalsDiv,
                 peggedSymbol: this.token.peggedSymbol,
                 rates: this.rates,
-                safeBlockGasLimit: this.ethereumConnection.safeBlockGasLimit
+                safeBlockGasLimit: this.ethereumConnection.safeBlockGasLimit,
+                ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI
             });
         }
         return this._exchange;
@@ -126,7 +127,8 @@ export class Augmint {
             decimalsDiv: this.token.decimalsDiv,
             peggedSymbol: this.token.peggedSymbol,
             rates: this.rates,
-            safeBlockGasLimit: this.ethereumConnection.safeBlockGasLimit
+            safeBlockGasLimit: this.ethereumConnection.safeBlockGasLimit,
+            ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI
         };
         return legacyContracts.map((contract: DeployedContract<ExchangeInstance>) => new Exchange(contract.connect(this.web3), options));
     }

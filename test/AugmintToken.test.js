@@ -1,9 +1,10 @@
 const { assert } = require("chai");
-const { Augmint, utils } = require("../dist/src/index.js");
+const { Augmint, utils } = require("../dist/index.js");
+const loadEnv = require("./testHelpers/loadEnv.js");
 
 const CCY = "EUR";
 
-const config = utils.loadEnv();
+const config = loadEnv();
 
 if (config.LOG) {
     utils.logger.level = config.LOG;

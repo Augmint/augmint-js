@@ -1,7 +1,6 @@
 import BigNumber from "bignumber.js";
 import { Rates as RatesInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
-import { Augmint } from "./Augmint";
 import { ZeroRateError } from "./Errors";
 
 export interface IRateInfo {
@@ -14,6 +13,7 @@ export interface IRatesOptions {
     web3: any
     decimals: Promise<number>
     decimalsDiv: Promise<number>
+    constants: any
 }
 
 export class Rates {
@@ -22,6 +22,8 @@ export class Rates {
     private web3: any;
     private decimals: Promise<number>;
     private decimalsDiv: Promise<number>;
+    private constants: any;
+
 
 
     constructor(deployedContractInstance:RatesInstance, options: IRatesOptions) {
@@ -29,11 +31,12 @@ export class Rates {
         this.web3 = options.web3;
         this.decimals = options.decimals;
         this.decimalsDiv = options.decimalsDiv;
+        this.constants = options.constants;
     }
 
     public async getBnEthFiatRate(currency: string): Promise<BigNumber> {
         const rate: string = await this.instance.methods
-            .convertFromWei(this.web3.utils.asciiToHex(currency), Augmint.constants.ONE_ETH_IN_WEI.toString())
+            .convertFromWei(this.web3.utils.asciiToHex(currency), this.constants.ONE_ETH_IN_WEI.toString())
             .call()
             .catch((error: Error) => {
                 if (error.message.includes("revert rates[bSymbol] must be > 0")) {
@@ -50,7 +53,7 @@ export class Rates {
 
     public async getEthFiatRate(currency: string): Promise<number> {
         const bnEthFiatRate: BigNumber = await this.getBnEthFiatRate(currency);
-        return parseFloat(bnEthFiatRate.div(Augmint.constants.DECIMALS_DIV).toFixed(Augmint.constants.DECIMALS));
+        return parseFloat(bnEthFiatRate.div(this.constants.DECIMALS_DIV).toFixed(this.constants.DECIMALS));
     }
 
     public async getAugmintRate(currency: string): Promise<IRateInfo> {
