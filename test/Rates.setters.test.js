@@ -1,9 +1,8 @@
 const assert = require("chai").assert;
-const { Augmint, utils } = require("../dist/index.js");
-const { EthereumConnection, Rates } = Augmint;
-const { InvalidPriceError, AugmintJsError } = require("../dist/Errors.js");
-
-const config = utils.loadEnv();
+const { Augmint } = require("../dist/index.js");
+const { InvalidPriceError, AugmintJsError } = Augmint.Errors;
+const loadEnv = require("./testHelpers/loadEnv.js");
+const config = loadEnv();
 
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const { assertEvent } = require("./testHelpers/events");
@@ -13,16 +12,17 @@ const DECIMALS_DIV = 100;
 let BYTES_CCY;
 
 describe("Rates setters", () => {
-    const ethereumConnection = new EthereumConnection(config);
-    const rates = new Rates();
+    let rates;
     let accounts;
     let snapshotId;
+    let ethereumConnection;
 
     before(async () => {
-        await ethereumConnection.connect();
+        const myAugmint = await Augmint.create(config);
+        rates = myAugmint.rates;
+        ethereumConnection = myAugmint.ethereumConnection;
         accounts = ethereumConnection.accounts;
         BYTES_CCY = ethereumConnection.web3.utils.asciiToHex(CCY);
-        await rates.connect(ethereumConnection);
     });
 
     beforeEach(async () => {

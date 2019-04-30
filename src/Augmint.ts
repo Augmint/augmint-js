@@ -10,6 +10,7 @@ import { Exchange } from "./Exchange";
 import * as gas from "./gas";
 import { Rates } from "./Rates";
 import * as Errors from "./Errors";
+import {Transaction} from "./Transaction";
 
 interface IDeployedContracts {
     [propName: string]: DeployedContractList;
@@ -70,6 +71,10 @@ export class Augmint {
 
     static get Errors() {
         return Errors;
+    }
+
+    static get Transaction() {
+        return Transaction;
     }
 
     get token(): AugmintToken {

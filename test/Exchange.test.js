@@ -3,7 +3,6 @@ const BigNumber = require("bignumber.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const { Augmint, utils } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
-
 const config = loadEnv();
 
 if (config.LOG) {
