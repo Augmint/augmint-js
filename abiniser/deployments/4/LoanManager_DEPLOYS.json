@@ -1,0 +1,35 @@
+{
+  "contractName": "LoanManager",
+  "latestAbiHash": "fdf5fde95aa940c6dbfb8353c572c5fb",
+  "deployedAbis": {
+    "fdf5fde95aa940c6dbfb8353c572c5fb": {
+      "latestDeployedAddress": "0x3792c5a5077dacfe331b81837ef73bc0ea721d90",
+      "deployments": {
+        "0x6cb7731c78e677f85942b5f1d646b3485e5820c1": {
+          "generatedAt": "2018-10-18T13:35:02.404Z",
+          "truffleContractFileUpdatedAt": "2018-10-18T11:36:37.002Z",
+          "deployTransactionHash": "0xc965162409524ff0b21cebe1a763229400994d88856dfdd766398a47f0d6493f",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "591f565c201032e0df4b9f7798e7ec85",
+          "deployedBytecodeHash": "e93edcccad1eb8f9142f6c257bb23bdd",
+          "sourceHash": "234fd5848af85ca2444c888fd6ba61aa"
+        },
+        "0x3792c5a5077dacfe331b81837ef73bc0ea721d90": {
+          "generatedAt": "2018-10-29T15:52:43.304Z",
+          "truffleContractFileUpdatedAt": "2018-10-19T15:49:10.833Z",
+          "deployTransactionHash": "0x5539b5879aacf2739d48f457fcd22a70d74d12af2512a7770ab3d9558cc587d7",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "591f565c201032e0df4b9f7798e7ec85",
+          "deployedBytecodeHash": "e93edcccad1eb8f9142f6c257bb23bdd",
+          "sourceHash": "234fd5848af85ca2444c888fd6ba61aa"
+        }
+      }
+    }
+  }
+}

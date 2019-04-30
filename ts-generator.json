@@ -1,25 +1,25 @@
 [
     {
         "generator": "typechain",
-        "files": "./augmint-contracts/abiniser/abis/*.json",
+        "files": "./abiniser/abis/*.json",
         "target": "web3-1.0.0",
         "outDir": "./generated/types"
     },
     {
         "generator": "./scripts/make-abis.js",
-        "files": "./augmint-contracts/abiniser/abis/*.json",
+        "files": "./abiniser/abis/*.json",
         "outDir": "./generated",
         "outFile": "abis.ts"
     },
     {
         "generator": "./scripts/make-deploymentlist.js",
-        "files": "./augmint-contracts/abiniser/deployments/*/*.json",
+        "files": "./abiniser/deployments/*/*.json",
         "outDir": "./generated",
         "outFile": "deployments.ts"
     },
     {
         "generator": "./scripts/make-types.js",
-        "files": "./augmint-contracts/abiniser/abis/*.json",
+        "files": "./abiniser/abis/*.json",
         "outDir": "./generated",
         "outFile": "index.ts"
     }

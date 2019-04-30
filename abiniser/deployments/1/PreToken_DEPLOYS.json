@@ -1,0 +1,40 @@
+{
+  "contractName": "PreToken",
+  "latestAbiHash": "7f69e33e7b345c780ac9e43f391437d9",
+  "deployedAbis": {
+    "10eebbb51a771cfd3473475169a569f1": {
+      "latestDeployedAddress": "0xecb782b19be6e657ae2d88831dd98145a00d32d5",
+      "deployments": {
+        "0xecb782b19be6e657ae2d88831dd98145a00d32d5": {
+          "generatedAt": "2018-06-11T12:15:16.664Z",
+          "truffleContractFileUpdatedAt": "2018-06-11T11:54:24.515Z",
+          "deployTransactionHash": "0x40726640442ac3c0845871b6f7b0e144f22e56b24370bf8b591d29e34136c562",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "1a1d2eee97db1fda81f02d5a4693cccc",
+          "deployedBytecodeHash": "39ecab521022215d08af346c490a4773",
+          "sourceHash": "652361fe32b441561edaf8ebd7f70277"
+        }
+      }
+    },
+    "7f69e33e7b345c780ac9e43f391437d9": {
+      "latestDeployedAddress": "0x97ea02179801fa94227db5fc1d13ac4277d40920",
+      "deployments": {
+        "0x97ea02179801fa94227db5fc1d13ac4277d40920": {
+          "generatedAt": "2018-11-14T12:52:13.115Z",
+          "truffleContractFileUpdatedAt": "2018-11-13T16:34:24.487Z",
+          "deployTransactionHash": "0x4b26c0cee55d8431019bd8c0b47fa8221455e3711f648dcd52bde7c797dfa31c",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "8d7e449258facd1c6fab22b402de6aee",
+          "deployedBytecodeHash": "bf64976158eb4f8696efd994652e7f49",
+          "sourceHash": "6cace117c42478e4f5c8cf116bec9a62"
+        }
+      }
+    }
+  }
+}

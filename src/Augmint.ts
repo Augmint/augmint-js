@@ -1,7 +1,6 @@
 import { Contract } from "web3-eth-contract";
 import deployments from "../generated/deployments";
-import { AugmintContracts, TokenAEur } from "../generated/index";
-import { Exchange as ExchangeInstance, Rates as RatesInstance } from "../generated/index";
+import { AugmintContracts, Exchange as ExchangeInstance, Rates as RatesInstance, TokenAEur } from "../generated/index";
 import { AugmintToken } from "./AugmintToken";
 import * as constants from "./constants";
 import { DeployedContract } from "./DeployedContract";
@@ -10,7 +9,7 @@ import { EthereumConnection, IOptions } from "./EthereumConnection";
 import { Exchange } from "./Exchange";
 import * as gas from "./gas";
 import { Rates } from "./Rates";
-import * as Errors from "./Errors"
+import * as Errors from "./Errors";
 
 interface IDeployedContracts {
     [propName: string]: DeployedContractList;
@@ -22,7 +21,7 @@ interface ILatestContracts {
 
 export class Augmint {
     public static async create(connectionOptions: IOptions, environment: string) {
-        const ethereumConnection:EthereumConnection = new EthereumConnection(connectionOptions);
+        const ethereumConnection: EthereumConnection = new EthereumConnection(connectionOptions);
         await ethereumConnection.connect();
         return new Augmint(ethereumConnection, environment);
     }
@@ -70,7 +69,7 @@ export class Augmint {
     }
 
     static get Errors() {
-        return Errors
+        return Errors;
     }
 
     get token(): AugmintToken {
@@ -135,6 +134,8 @@ export class Augmint {
             safeBlockGasLimit: this.ethereumConnection.safeBlockGasLimit,
             ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI
         };
-        return legacyContracts.map((contract: DeployedContract<ExchangeInstance>) => new Exchange(contract.connect(this.web3), options));
+        return legacyContracts.map(
+            (contract: DeployedContract<ExchangeInstance>) => new Exchange(contract.connect(this.web3), options)
+        );
     }
 }

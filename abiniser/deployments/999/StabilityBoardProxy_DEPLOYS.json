@@ -1,0 +1,23 @@
+{
+  "contractName": "StabilityBoardProxy",
+  "latestAbiHash": "dd40c0d39ea8bad8a388522667a84687",
+  "deployedAbis": {
+    "dd40c0d39ea8bad8a388522667a84687": {
+      "latestDeployedAddress": "0xd3ef19679c2dbbf3b8e2077c61b88f5e9c6178eb",
+      "deployments": {
+        "0xd3ef19679c2dbbf3b8e2077c61b88f5e9c6178eb": {
+          "generatedAt": "2019-04-04T18:31:39.094Z",
+          "truffleContractFileUpdatedAt": "2019-04-04T18:20:09.201Z",
+          "deployTransactionHash": "0x5bd7a28efbad40e0c60ac86c4f4eabce7643a1d45e684a6bb669282d0b9df63e",
+          "compiler": {
+            "name": "solc",
+            "version": "0.4.24+commit.e67f0147.Emscripten.clang"
+          },
+          "bytecodeHash": "4e98f44311f17629e4b7f535f015387f",
+          "deployedBytecodeHash": "93d8347fb14c5b67f0f55aa78eb86aa3",
+          "sourceHash": "4d60c55b8e4009873db939b37558d9dc"
+        }
+      }
+    }
+  }
+}
