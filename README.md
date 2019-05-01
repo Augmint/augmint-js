@@ -34,12 +34,11 @@ let web3;
 
 // Modern dapp browsers...
 if (window.ethereum) {
-    web3 = new Web3(window.ethereum);
-    await window.ethereum.enable();
-}
-// Legacy dapp browsers...
-else if (typeof window.web3 !== "undefined") {
-    web3 = new Web3(window.web3.currentProvider);
+  web3 = new Web3(window.ethereum);
+  await window.ethereum.enable();
+} else if (typeof window.web3 !== "undefined") {
+  // Legacy dapp browsers...
+  web3 = new Web3(window.web3.currentProvider);
 } else {
    // no web3... augmint-js still can be used via Infura websocket connection
 }
@@ -48,46 +47,46 @@ let connectionConfig;
 if (web3) {
   // For connection via injected provider:
   connectionConfig = {
-      givenProvider: web3.currentProvider,
-      // We assume that Metamask/Trustwallet/Metacoin wallet etc. injected provider takes care of reconnections
-      ETHEREUM_CONNECTION_CHECK_INTERVAL: 0
+    givenProvider: web3.currentProvider,
+    // We assume that injected Metamask/Trustwallet/Metacoin etc. provider takes care of reconnections
+    ETHEREUM_CONNECTION_CHECK_INTERVAL: 0
   };
 } else {
   // For connection via Infura (not passing givenProvider)
   connectionConfig = {
-      PROVIDER_URL: "wss://rinkbey.infura.io/ws/v3/",
-      // or wss://mainnet.infura.io/ws/v3/ or  ws://localhost:8545
-      PROVIDER_TYPE: "websocket",
-      INFURA_PROJECT_ID: "" // this should come from env.local or hosting env setting
+    PROVIDER_URL: "wss://rinkbey.infura.io/ws/v3/", // or wss://mainnet.infura.io/ws/v3/ or  ws://localhost:8545
+    PROVIDER_TYPE: "websocket",
+    INFURA_PROJECT_ID: "" // this should come from env.local or hosting env setting
+  };
 }
 
 const augmint = await Augmint.create(connectionConfig);
 
 augmint.rates.setRate(CCY, rate)
-       // optionally you can sign with a privatekey
-       // .sign(privatekey, {from: "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d"} )
-       //
-       // or send it if provider like MetaMask manages the signature for the given sender address
-       .send([{ from: "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d" }]) // {from: 0x..} only needed if it's not signed
-       .onceTxHash( txHash => {.. })
-       .onceReceipt( receipt => { ...})
-       .onConfirmation( (confirmationNumber, receipt) => {...}
-       .onceReceiptConfirmed(5, receipt => {...})
-       .onceTxRevert( (error, receipt) => { ....});
+  // optionally you can sign with a privatekey
+  // .sign(privatekey, {from: "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d"} )
+  //
+  // or send it if provider like MetaMask manages the signature for the given sender address
+  .send([{ from: "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d" }]) // {from: 0x..} only needed if it's not signed
+  .onceTxHash( txHash => {.. })
+  .onceReceipt( receipt => { ...})
+  .onConfirmation( (confirmationNumber, receipt) => {...}
+  .onceReceiptConfirmed(5, receipt => {...})
+  .onceTxRevert( (error, receipt) => { ....});
 
 // To catch errors you need to use txHash / confirmation / receipt getters:
 try {
-    const txHash = await tx.getTxHash();
+  const txHash = await tx.getTxHash();
 
-    // receipt as soon as we got it (even with 0 confirmation):
-    const txReceipt = await tx.getReceipt();
+  // receipt as soon as we got it (even with 0 confirmation):
+  const txReceipt = await tx.getReceipt();
 
-    // receipt after x confirmation:
-    const confirmedReceipt = await tx.getConfirmedReceipt(12);
+  // receipt after x confirmation:
+  const confirmedReceipt = await tx.getConfirmedReceipt(12);
 
 } catch (error) {
-     // These Promises are rejecting with sending errors but not when tx reverts!
-     // Also, you need to take care of timeouts. E.g. use Augmint.utils.promiseTimeout()
+  // These Promises are rejecting with sending errors but not when tx reverts!
+  // Also, you need to take care of timeouts. E.g. use Augmint.utils.promiseTimeout()
  }
 
  // receipt you need to check for receipt.status if tx was Reverted or not.
