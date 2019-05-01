@@ -19,7 +19,7 @@
     "test": "test"
   },
   "bin": {
-    "augmint-cli": "./scripts/augmint-cli.sh"
+    "augmint-cli": "scripts/augmint-cli.sh"
   },
   "engines": {
     "node": "^10.15.3",
