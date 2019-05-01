@@ -25,7 +25,8 @@ export class DeployedContractList {
     public getContractFromAddresses(addresses: string[]): DeployedContractArray {
         return this.contractList.filter((item: DeployedContract<Contract>) => {
             const contractAddress: string = item.deployedAddress;
-            return addresses.indexOf(contractAddress.toLowerCase()) > -1;
+            const lowerCaseAddresses: string[] = addresses.map((addr: string) => addr.toLowerCase());
+            return lowerCaseAddresses.indexOf(contractAddress.toLowerCase()) > -1;
         });
     }
 
