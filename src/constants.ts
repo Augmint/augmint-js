@@ -29,7 +29,7 @@ export interface ISupportedLegacyContracts {
 export const SUPPORTED_LEGACY_EXCHANGES: ISupportedLegacyContracts = {
     // mainnet
     1: [
-        "0x8b52b019d237d0bbe8Baedf219132D5254e0690b", // initial Exchange, replaced by 0xeae7d30bcd44f27d58985b56add007fcee254abd
+        "0x8b52b019d237d0bbe8baedf219132D5254e0690b", // initial Exchange, replaced by 0xeae7d30bcd44f27d58985b56add007fcee254abd
         "0xeae7d30bcd44f27d58985b56add007fcee254abd", // replaced by 0.6.1 at 0xaFEA54baDf7A68F93C2235B5F4cC8F02a2b55Edd
         "0xafea54badf7a68f93c2235b5f4cc8f02a2b55edd"
     ],
