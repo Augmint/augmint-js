@@ -48,12 +48,14 @@ const infuraConnectionConfig = {
     INFURA_PROJECT_ID: "" // this should come from env.local or hosting env setting
 }
 
-const myAugmint = await Augmint.create(connectionConfig);
+const augmint = await Augmint.create(connectionConfig);
 
-myAugmint.rates.setRate(CCY, rate)
-       // optionally you can sign
-       // .sign(privatekey, {from: acc, to:rates.address})]
-       .send([{from: acc}]) // {from: 0x} only needed if it's not signed
+augmint.rates.setRate(CCY, rate)
+       // optionally you can sign with a privatekey
+       // .sign(privatekey, {from: "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d"} )
+       //
+       // or send it if provider like MetaMask manages the signature for the given sender address
+       .send([{ from: "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d" }]) // {from: 0x..} only needed if it's not signed
        .onceTxHash( txHash => {.. })
        .onceReceipt( receipt => { ...})
        .onConfirmation( (confirmationNumber, receipt) => {...}
@@ -62,17 +64,17 @@ myAugmint.rates.setRate(CCY, rate)
 
 // To catch errors you need to use txHash / confirmation / receipt getters:
 try {
-    const txHash = await tx.getTxHash()
+    const txHash = await tx.getTxHash();
 
     // receipt as soon as we got it (even with 0 confirmation):
-    const txReceipt = await tx.getReceipt()
+    const txReceipt = await tx.getReceipt();
 
     // receipt after x confirmation:
-    const confirmedReceipt = await tx.getConfirmedReceipt(12)
+    const confirmedReceipt = await tx.getConfirmedReceipt(12);
 
 } catch (error) {
-     // These Promises are rejecting with sending errors but not with when tx reverts!
-     // Also, you need to take care of timouts. E.g. use Augmint.utils.promiseTimeout()
+     // These Promises are rejecting with sending errors but not when tx reverts!
+     // Also, you need to take care of timeouts. E.g. use Augmint.utils.promiseTimeout()
  }
 
  // receipt you need to check for receipt.status if tx was Reverted or not.
@@ -150,7 +152,7 @@ Try it: **[www.augmint.org](http://www.augmint.org)**
 
 [Solidity contracts](https://github.com/Augmint/augmint-contracts)
 
-## Contribution
+## Contributions
 
 Augmint is an open and transparent project.
 
