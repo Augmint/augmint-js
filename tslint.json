@@ -1,0 +1,57 @@
+{
+    "extends": [
+        "tslint:recommended",
+        "tslint-config-prettier"
+    ],
+    "rules": {
+        "new-parens": true,
+        "ordered-imports": {
+            "severity": "warn"
+        },
+        "jsdoc-format": {
+            "severity": "warn"
+        },
+        "variable-name": [
+            true,
+            "ban-keywords",
+            "check-format",
+            "allow-leading-underscore"
+        ],
+        "comment-format": {
+            "severity": "warn",
+            "options": [
+                "check-space"
+            ]
+        },
+        "object-literal-sort-keys": false,
+        "radix": false,
+        "no-console": {
+            "severity": "warn",
+            "options": [
+                "debug",
+                "info",
+                "log",
+                "time",
+                "timeEnd",
+                "trace"
+            ]
+        },
+        "typedef": {
+            "severity": "warn",
+            "options": [
+                "call-signature",
+                "arrow-call-signature",
+                "parameter",
+                "arrow-parameter",
+                "property-declaration",
+                "variable-declaration",
+                "member-variable-declaration",
+                "object-destructuring",
+                "array-destructuring"
+            ]
+        },
+        "object-literal-shorthand": {
+            "severity": "warn"
+        }
+    }
+}
