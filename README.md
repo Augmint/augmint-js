@@ -30,22 +30,35 @@ yarn install @augmint/js
 ```js
 import { Augmint } from "@augmint/js";
 
-const myAugmint = new Augmint(config);
+let web3;
 
-// For connection via injected provider:
-const connectionConfig = {
-    givenProvider: web3.currentProvider,
-    // We assume that Metamask/Trustwallet/Metacoin wallet etc. injected provider takes care of reconnections
-    ETHEREUM_CONNECTION_CHECK_INTERVAL: 0
-};
+// Modern dapp browsers...
+if (window.ethereum) {
+    web3 = new Web3(window.ethereum);
+    await window.ethereum.enable();
+}
+// Legacy dapp browsers...
+else if (typeof window.web3 !== "undefined") {
+    web3 = new Web3(window.web3.currentProvider);
+} else {
+   // no web3... augmint-js still can be used via Infura websocket connection
+}
 
-// For connection via Infura:
-const infuraConnectionConfig = {
-// To access via Infura without Metamask (and don't pass givenProvider):
-    PROVIDER_URL: "wss://rinkbey.infura.io/ws/v3/",
-    // or wss://mainnet.infura.io/ws/v3/ or  ws://localhost:8545
-    PROVIDER_TYPE: "websocket",
-    INFURA_PROJECT_ID: "" // this should come from env.local or hosting env setting
+let connectionConfig;
+if (web3) {
+  // For connection via injected provider:
+  connectionConfig = {
+      givenProvider: web3.currentProvider,
+      // We assume that Metamask/Trustwallet/Metacoin wallet etc. injected provider takes care of reconnections
+      ETHEREUM_CONNECTION_CHECK_INTERVAL: 0
+  };
+} else {
+  // For connection via Infura (not passing givenProvider)
+  connectionConfig = {
+      PROVIDER_URL: "wss://rinkbey.infura.io/ws/v3/",
+      // or wss://mainnet.infura.io/ws/v3/ or  ws://localhost:8545
+      PROVIDER_TYPE: "websocket",
+      INFURA_PROJECT_ID: "" // this should come from env.local or hosting env setting
 }
 
 const augmint = await Augmint.create(connectionConfig);
