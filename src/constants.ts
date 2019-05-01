@@ -18,3 +18,25 @@ export enum OrderDirection {
     TOKEN_BUY,
     TOKEN_SELL
 }
+
+export interface ISupportedLegacyContracts {
+    1?: string[] | null;
+    4?: string[] | null;
+    999?: string[] | null;
+}
+
+/* List of old augmint token deploy addresses by network id */
+export const SUPPORTED_LEGACY_EXCHANGES: ISupportedLegacyContracts = {
+    // mainnet
+    1: [
+        "0x8b52b019d237d0bbe8baedf219132D5254e0690b", // initial Exchange, replaced by 0xeae7d30bcd44f27d58985b56add007fcee254abd
+        "0xeae7d30bcd44f27d58985b56add007fcee254abd", // replaced by 0.6.1 at 0xaFEA54baDf7A68F93C2235B5F4cC8F02a2b55Edd
+        "0xafea54badf7a68f93c2235b5f4cc8f02a2b55edd"
+    ],
+
+    // local ganache (migrations deploys it for manual testing)
+    999: ["0xef49d863bd9179da0e96fab02dd498efa149dbdc"],
+
+    // rinkeby
+    4: ["0xdf47d51028daff13424f42523fdac73079ab901b"]
+};

@@ -1,6 +1,6 @@
-const assert = require("chai").assert;
-const sinon = require("sinon");
+const { assert, expect } = require("chai");
 const { Augmint, utils } = require("../dist/index.js");
+const { AugmintJsError } = Augmint.Errors;
 const { EthereumConnection } = Augmint;
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
@@ -9,22 +9,40 @@ if (config.LOG) {
     utils.logger.level = config.LOG;
 }
 
-const TEST_TIMEOUT = 10000; // infura is occasionaly slow to connect
-
-let ethereumConnection;
-const providers = [
-    { name: "local websocket", PROVIDER_URL: "ws://localhost:8545", PROVIDER_TYPE: "websocket" },
-    {
-        name: "infura websocket",
-        PROVIDER_URL: "wss://rinkeby.infura.io/ws/v3/",
-        PROVIDER_TYPE: "websocket",
-        INFURA_PROJECT_ID: "cb1b0d436be24b0fa654ca34ae6a3645"
-    }
-];
-
 describe("EthereumConnection", () => {
-    it("should have an initial state", async () => {
-        const localConnection = new EthereumConnection();
+    const MOCK_PROVIDER = { provider: { mock: true } };
+
+    it("should check constructor params", () => {
+        const invalidProviderType = () =>
+            new EthereumConnection({ PROVIDER_TYPE: "blahblah", PROVIDER_URL: "something" });
+        expect(invalidProviderType).throws(AugmintJsError, /Invalid PROVIDER_TYPE/);
+
+        const noProviderURL = () => new EthereumConnection({ PROVIDER_TYPE: "websocket", PROVIDER_URL: "" });
+        expect(noProviderURL).throws(AugmintJsError, /No PROVIDER_URL specified/);
+
+        const bothProviderTypeAndProvider = () =>
+            new EthereumConnection({ PROVIDER_TYPE: "websocket", PROVIDER_URL: "", givenProvider: MOCK_PROVIDER });
+        expect(bothProviderTypeAndProvider).throws(AugmintJsError, /Both givenProvider and PROVIDER_TYPE/);
+    });
+
+    it("should have an initial state - given provider", async () => {
+        const ethereumConnection = new EthereumConnection({ givenProvider: MOCK_PROVIDER });
+
+        assert.isUndefined(ethereumConnection.web3);
+        assert.isUndefined(ethereumConnection.provider);
+
+        assert(!(await ethereumConnection.isConnected()));
+        assert(!ethereumConnection.isStopping);
+        assert(!ethereumConnection.isTryingToReconnect);
+
+        assert.isUndefined(ethereumConnection.networkId);
+        assert.isUndefined(ethereumConnection.blockGasLimit);
+        assert.isUndefined(ethereumConnection.safeBlockGasLimit);
+        assert.isUndefined(ethereumConnection.accounts);
+    });
+
+    it("should have an initial state - websocket provider", async () => {
+        const localConnection = new EthereumConnection({ PROVIDER_URL: "mock", PROVIDER_TYPE: "websocket" });
 
         assert.isUndefined(localConnection.web3);
         assert.isUndefined(localConnection.provider);
@@ -39,143 +57,30 @@ describe("EthereumConnection", () => {
         assert.isUndefined(localConnection.accounts);
     });
 
-    providers.forEach(providerOptions => {
-        describe("EthereumConnection -" + providerOptions.name, function() {
-            this.timeout(TEST_TIMEOUT);
-
-            it("should connect & disconnect", async () => {
-                ethereumConnection = new EthereumConnection(providerOptions);
-                const connectedSpy = sinon.spy();
-                const disconnectedSpy = sinon.spy();
-                const connectionLostSpy = sinon.spy();
-
-                ethereumConnection.on("connected", connectedSpy);
-                ethereumConnection.on("disconnected", disconnectedSpy);
-                ethereumConnection.on("connectionLost", connectionLostSpy);
-
-                assert(!(await ethereumConnection.isConnected()));
-
-                await ethereumConnection.connect();
-
-                const expNetworkId = parseInt(await ethereumConnection.web3.eth.net.getId(), 10);
-
-                assert(await ethereumConnection.isConnected());
-                assert.equal(ethereumConnection.networkId, expNetworkId);
-                assert(ethereumConnection.blockGasLimit > 0);
-                assert(ethereumConnection.safeBlockGasLimit, Math.round(ethereumConnection.blockGasLimit * 0.9));
-
-                assert.isArray(ethereumConnection.accounts);
-                ethereumConnection.accounts.forEach(acc => assert(ethereumConnection.web3.utils.isAddress(acc)));
-
-                assert(!ethereumConnection.isStopping);
-                assert(!ethereumConnection.isTryingToReconnect);
-
-                sinon.assert.calledOnce(connectedSpy);
-                sinon.assert.notCalled(disconnectedSpy);
-                sinon.assert.notCalled(connectionLostSpy);
-
-                await ethereumConnection.stop();
-
-                assert(!(await ethereumConnection.isConnected()));
-                assert(ethereumConnection.isStopping);
-                assert(!ethereumConnection.isTryingToReconnect);
-
-                sinon.assert.calledOnce(connectedSpy); // 1 event left from initial connect on spy
-                sinon.assert.notCalled(connectionLostSpy);
-                sinon.assert.calledOnce(disconnectedSpy);
-            });
-
-            it("should get options as constructor parameters too", async () => {
-                const options = {
-                    ETHEREUM_CONNECTION_CHECK_INTERVAL: 9999,
-                    ETHEREUM_CONNECTION_TIMEOUT: 99,
-                    ETHEREUM_ISLISTENING_TIMEOUT: 99,
-                    ETHEREUM_CONNECTION_CLOSE_TIMEOUT: 99,
-                    PROVIDER_TYPE: "test",
-                    PROVIDER_URL: "hoops",
-                    INFURA_PROJECT_ID: "bingo"
-                };
-
-                Object.assign(options, providerOptions);
-
-                ethereumConnection = new EthereumConnection(options);
-
-                assert(
-                    ethereumConnection.options.ETHEREUM_CONNECTION_CHECK_INTERVAL,
-                    options.ETHEREUM_CONNECTION_CHECK_INTERVAL
-                );
-                assert.equal(ethereumConnection.options.PROVIDER_TYPE, options.PROVIDER_TYPE);
-                assert.equal(ethereumConnection.options.PROVIDER_URL, options.PROVIDER_URL);
-                assert.equal(ethereumConnection.options.INFURA_PROJECT_ID, options.INFURA_PROJECT_ID);
-                assert.equal(
-                    ethereumConnection.options.ETHEREUM_CONNECTION_TIMEOUT,
-                    options.ETHEREUM_CONNECTION_TIMEOUT
-                );
-                assert.equal(
-                    ethereumConnection.options.ETHEREUM_CONNECTION_CLOSE_TIMEOUT,
-                    options.ETHEREUM_CONNECTION_CLOSE_TIMEOUT
-                );
-            });
-
-            it("should return account nonce", async () => {
-                const ethereumConnection = new EthereumConnection();
-                await ethereumConnection.connect();
-                const expectedNonce = await ethereumConnection.web3.eth.getTransactionCount(
-                    ethereumConnection.accounts[0]
-                );
-
-                let nonce = await ethereumConnection.getAccountNonce(ethereumConnection.accounts[0]);
-
-                assert.equal(nonce, expectedNonce);
-
-                // with a zero nonce acc, assuming randomAcc has no tx-s from migration subscriptions
-                const randomAccount = "0x107af532e6f828da6fe79699123c9a5ea0123d16";
-                nonce = await ethereumConnection.getAccountNonce(randomAccount);
-                assert.equal(nonce, 0);
-            });
-
-            it("should reconnect after connection lost", done => {
-                const connectionLostSpy = sinon.spy();
-                const disconnectedSpy = sinon.spy();
-                const checkInterval = 100;
-                const options = {
-                    ETHEREUM_CONNECTION_CHECK_INTERVAL: checkInterval,
-                    ETHEREUM_CONNECTION_TIMEOUT: 10000
-                };
-                Object.assign(options, providerOptions);
-
-                ethereumConnection = new EthereumConnection(options);
-
-                const onConnectionLoss = async (event, eConnObj) => {
-                    connectionLostSpy(event, eConnObj);
-                    assert.equal(event.reason, "checkConnection detected connectionloss");
-                };
-
-                const onConnected = async () => {
-                    // this is only set up for the reconnection we expect
-                    assert(await ethereumConnection.isConnected());
-
-                    assert(connectionLostSpy.calledOnce);
-                    assert(disconnectedSpy.calledOnce);
-                    done();
-                };
-
-                ethereumConnection
-                    .connect()
-                    .then(async () => {
-                        assert(await ethereumConnection.isConnected());
-
-                        ethereumConnection.on("disconnected", disconnectedSpy);
-                        ethereumConnection.on("connectionLost", onConnectionLoss);
-                        ethereumConnection.once("connected", onConnected); // we only setup connected here
-
-                        await ethereumConnection.web3.currentProvider.connection.close(); // simulate connection drop
-                        assert(!(await ethereumConnection.isConnected()));
-                    })
-                    .catch(error => {
-                        throw error;
-                    });
-            });
+    it("should get options as constructor parameters too", async () => {
+        const options = Object.assign({
+            ETHEREUM_CONNECTION_CHECK_INTERVAL: 9999,
+            ETHEREUM_CONNECTION_TIMEOUT: 99,
+            ETHEREUM_ISLISTENING_TIMEOUT: 99,
+            ETHEREUM_CONNECTION_CLOSE_TIMEOUT: 99,
+            PROVIDER_TYPE: "websocket",
+            PROVIDER_URL: "hoops",
+            INFURA_PROJECT_ID: "bingo"
         });
+
+        const ethereumConnection = new EthereumConnection(options);
+
+        assert(
+            ethereumConnection.options.ETHEREUM_CONNECTION_CHECK_INTERVAL,
+            options.ETHEREUM_CONNECTION_CHECK_INTERVAL
+        );
+        assert.equal(ethereumConnection.options.PROVIDER_TYPE, options.PROVIDER_TYPE);
+        assert.equal(ethereumConnection.options.PROVIDER_URL, options.PROVIDER_URL);
+        assert.equal(ethereumConnection.options.INFURA_PROJECT_ID, options.INFURA_PROJECT_ID);
+        assert.equal(ethereumConnection.options.ETHEREUM_CONNECTION_TIMEOUT, options.ETHEREUM_CONNECTION_TIMEOUT);
+        assert.equal(
+            ethereumConnection.options.ETHEREUM_CONNECTION_CLOSE_TIMEOUT,
+            options.ETHEREUM_CONNECTION_CLOSE_TIMEOUT
+        );
     });
 });
