@@ -22,7 +22,7 @@ yarn add @augmint/js
 or
 
 ```
-yarn install @augmint/js
+npm install @augmint/js
 ```
 
 ### Example use
