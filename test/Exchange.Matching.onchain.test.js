@@ -1,45 +1,43 @@
 const assert = require("chai").assert;
 const ganache = require("./testHelpers/ganache.js");
 const { Augmint, utils } = require("../dist/index.js");
-const { Exchange, EthereumConnection } = Augmint;
-
-const config = utils.loadEnv();
+const loadEnv = require("./testHelpers/loadEnv.js");
+const config = loadEnv();
 
 if (config.LOG) {
     utils.logger.level = config.LOG;
 }
 
 describe("MatchMultipleOrders onchain", () => {
-    const ethereumConnection = new EthereumConnection(config);
-    let exchange;
     let snapshotId;
     let accounts;
     let web3;
 
-    before(async () => {
-        await ethereumConnection.connect();
-        web3 = ethereumConnection.web3;
-        accounts = ethereumConnection.accounts;
-        exchange = new Exchange(ethereumConnection, []);
+    let myAugmint = null;
+    let exchange = null;
 
-        await exchange.connect(ethereumConnection);
+    before(async () => {
+        myAugmint = await Augmint.create(config);
+        exchange = myAugmint.exchange;
+        web3 = myAugmint.ethereumConnection.web3;
+        accounts = myAugmint.ethereumConnection.accounts;
     });
 
     beforeEach(async () => {
-        snapshotId = await ganache.takeSnapshot(ethereumConnection.web3);
+        snapshotId = await ganache.takeSnapshot(myAugmint.ethereumConnection.web3);
     });
 
     afterEach(async () => {
-        await ganache.revertSnapshot(ethereumConnection.web3, snapshotId);
+        await ganache.revertSnapshot(myAugmint.ethereumConnection.web3, snapshotId);
     });
 
     it("getMatchingOrders", async () => {
         await exchange.instance.methods.placeBuyTokenOrder("1000000").send({
             from: accounts[1],
-            value: web3.utils.toWei("0.1"),
-            gas: 1000000
+            gas: 1000000,
+            value: web3.utils.toWei("0.1")
         });
-        await exchange.augmintToken.instance.methods.transferAndNotify(exchange.address, "1000", "1000000").send({
+        await myAugmint.token.instance.methods.transferAndNotify(exchange.address, "1000", "1000000").send({
             from: accounts[0],
             gas: 1000000
         });
@@ -64,10 +62,9 @@ describe("MatchMultipleOrders onchain", () => {
                 gas: 1000000
             }),
 
-            exchange.augmintToken.instance.methods.transferAndNotify(exchange.address, "1000", "1000000").send({
-                from: accounts[0],
-                gas: 1000000
-            })
+            myAugmint.token.instance.methods
+                .transferAndNotify(exchange.address, "1000", "1000000")
+                .send({ from: accounts[0], gas: 1000000 })
         ]);
 
         let matchingOrders = await exchange.getMatchingOrders();
@@ -77,12 +74,9 @@ describe("MatchMultipleOrders onchain", () => {
 
         const receipt = await exchange
             .matchMultipleOrders(matchingOrders)
-            .sign(PRIVATE_KEY, {
-                from: accounts[0]
-            })
+            .sign(PRIVATE_KEY, { from: accounts[0] })
             .send()
             .getTxReceipt();
-
         assert(receipt.status);
 
         matchingOrders = await exchange.getMatchingOrders();
@@ -99,7 +93,7 @@ describe("MatchMultipleOrders onchain", () => {
                 .placeBuyTokenOrder("1000000")
                 .send({ from: accounts[1], value: web3.utils.toWei("0.1"), gas: 1000000 }),
 
-            exchange.augmintToken.instance.methods
+            myAugmint.token.instance.methods
                 .transferAndNotify(exchange.address, "1000", "1000000")
                 .send({ from: accounts[0], gas: 1000000 })
         ]);
@@ -108,7 +102,7 @@ describe("MatchMultipleOrders onchain", () => {
 
         const receipt = await exchange
             .matchMultipleOrders(matchingOrders)
-            .send({ from: ethereumConnection.accounts[0] })
+            .send({ from: accounts[0] })
             .getTxReceipt();
 
         assert(receipt.status);

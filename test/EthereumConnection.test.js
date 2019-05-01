@@ -2,8 +2,8 @@ const assert = require("chai").assert;
 const sinon = require("sinon");
 const { Augmint, utils } = require("../dist/index.js");
 const { EthereumConnection } = Augmint;
-
-const config = utils.loadEnv();
+const loadEnv = require("./testHelpers/loadEnv.js");
+const config = loadEnv();
 
 if (config.LOG) {
     utils.logger.level = config.LOG;
@@ -24,19 +24,19 @@ const providers = [
 
 describe("EthereumConnection", () => {
     it("should have an initial state", async () => {
-        const ethereumConnection = new EthereumConnection();
+        const localConnection = new EthereumConnection();
 
-        assert.isUndefined(ethereumConnection.web3);
-        assert.isUndefined(ethereumConnection.provider);
+        assert.isUndefined(localConnection.web3);
+        assert.isUndefined(localConnection.provider);
 
-        assert(!(await ethereumConnection.isConnected()));
-        assert(!ethereumConnection.isStopping);
-        assert(!ethereumConnection.isTryingToReconnect);
+        assert(!(await localConnection.isConnected()));
+        assert(!localConnection.isStopping);
+        assert(!localConnection.isTryingToReconnect);
 
-        assert.isUndefined(ethereumConnection.networkId);
-        assert.isUndefined(ethereumConnection.blockGasLimit);
-        assert.isUndefined(ethereumConnection.safeBlockGasLimit);
-        assert.isUndefined(ethereumConnection.accounts);
+        assert.isUndefined(localConnection.networkId);
+        assert.isUndefined(localConnection.blockGasLimit);
+        assert.isUndefined(localConnection.safeBlockGasLimit);
+        assert.isUndefined(localConnection.accounts);
     });
 
     providers.forEach(providerOptions => {

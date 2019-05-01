@@ -38,6 +38,10 @@
     "cross-env": "5.2",
     "eslint": "5.16.0",
     "mocha": "6.1.4",
+    "rollup": "1.10.1",
+    "rollup-plugin-node-builtins": "2.1.2",
+    "rollup-plugin-node-globals": "1.4.0",
+    "rollup-plugin-typescript2": "0.21.0",
     "sinon": "7.3.2",
     "tslint": "5.16.0",
     "tslint-config-prettier": "1.18.0",
@@ -46,7 +50,8 @@
     "wait-on": "3.2.0"
   },
   "scripts": {
-    "build": "tsc",
+    "clean": "rm -r ./dist ./generated",
+    "build": "yarn build:typings && rollup -c",
     "build:typings": "ts-generator ./ts-generator.json",
     "test": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha 'test/**/*.test.js' --exit --timeout 5000",
     "ganache:start": "scripts/augmint-cli.sh ganache start",
@@ -57,5 +62,10 @@
       "bignumber.js"
     ]
   },
-  "main": "dist/index.js"
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "files": [
+    "dist"
+  ],
+  "types": "dist/index.d.ts"
 }

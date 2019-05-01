@@ -69,3 +69,5 @@ typings/
 .env.test.local
 .env.production.local
 /dist/
+generated
+.rpt2_cache

@@ -1,9 +1,8 @@
 import BigNumber from "bignumber.js";
-import * as RatesAbi from "../abiniser/abis/Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce.json";
-import { Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce as RatesContract } from "../abiniser/types/Rates_ABI_73a17ebb0acc71773371c6a8e1c8e6ce";
-import { TransactionObject } from "../abiniser/types/types.js";
+import { Rates as RatesInstance } from "../generated/index";
+import { TransactionObject } from "../generated/types/types";
+import { AbstractContract } from "./AbstractContract";
 import { DECIMALS, DECIMALS_DIV, ONE_ETH_IN_WEI } from "./constants";
-import { Contract } from "./Contract";
 import { InvalidPriceError, ZeroRateError } from "./Errors";
 import { EthereumConnection } from "./EthereumConnection";
 import { SET_RATE_GAS_LIMIT } from "./gas";
@@ -15,17 +14,35 @@ export interface IRateInfo {
     lastUpdated: Date;
 }
 
-export class Rates extends Contract {
-    // overwrite Contract's  property to have typings
-    public instance: RatesContract; /** web3.js Rates contract instance  */
+export interface IRatesOptions {
+    decimals: Promise<number>;
+    decimalsDiv: Promise<number>;
+    constants: any;
+    ethereumConnection: EthereumConnection;
+}
 
-    constructor() {
-        super();
+export class Rates extends AbstractContract {
+    // overwrite Contract's  property to have typings
+    public instance: RatesInstance; /** web3.js Rates contract instance  */
+    private web3: any;
+    private decimals: Promise<number>;
+    private decimalsDiv: Promise<number>;
+    private constants: any;
+    private ethereumConnection: EthereumConnection;
+
+    constructor(deployedContractInstance: RatesInstance, options: IRatesOptions) {
+        super(deployedContractInstance);
+        this.instance = deployedContractInstance;
+        this.ethereumConnection = options.ethereumConnection;
+        this.web3 = this.ethereumConnection.web3;
+        this.decimals = options.decimals;
+        this.decimalsDiv = options.decimalsDiv;
+        this.constants = options.constants;
     }
 
     public async getBnEthFiatRate(currency: string): Promise<BigNumber> {
         const rate: string = await this.instance.methods
-            .convertFromWei(this.web3.utils.asciiToHex(currency), ONE_ETH_IN_WEI.toString())
+            .convertFromWei(this.web3.utils.asciiToHex(currency), this.constants.ONE_ETH_IN_WEI.toString())
             .call()
             .catch((error: Error) => {
                 if (error.message.includes("revert rates[bSymbol] must be > 0")) {
@@ -42,10 +59,11 @@ export class Rates extends Contract {
 
     public async getEthFiatRate(currency: string): Promise<number> {
         const bnEthFiatRate: BigNumber = await this.getBnEthFiatRate(currency);
-        return parseFloat(bnEthFiatRate.div(DECIMALS_DIV).toFixed(DECIMALS));
+        return parseFloat(bnEthFiatRate.div(this.constants.DECIMALS_DIV).toFixed(this.constants.DECIMALS));
     }
 
     public async getAugmintRate(currency: string): Promise<IRateInfo> {
+        const decimalsDiv: number = await this.decimalsDiv;
         const bytesCCY: string = this.web3.utils.asciiToHex(currency);
         const storedRateInfo: { rate: string; lastUpdated: string } = await this.instance.methods
             .rates(bytesCCY)
@@ -53,13 +71,13 @@ export class Rates extends Contract {
 
         return {
             bnRate: new BigNumber(storedRateInfo.rate),
-            rate: parseInt(storedRateInfo.rate) / DECIMALS_DIV, // TODO: change to augmintToken.decimalsDiv
+            rate: parseInt(storedRateInfo.rate) / decimalsDiv, // TODO: change to augmintToken.decimalsDiv
             lastUpdated: new Date(parseInt(storedRateInfo.lastUpdated) * 1000)
         };
     }
 
     public setRate(currency: string, price: number): Transaction {
-        const rateToSend: number = price * DECIMALS_DIV;
+        const rateToSend: number = price * this.constants.DECIMALS_DIV;
 
         if (Math.round(rateToSend) !== rateToSend) {
             throw new InvalidPriceError(
@@ -79,9 +97,5 @@ export class Rates extends Contract {
         });
 
         return transaction;
-    }
-
-    public async connect(ethereumConnection: EthereumConnection): Promise<any> {
-        return await super.connect(ethereumConnection, RatesAbi);
     }
 }
