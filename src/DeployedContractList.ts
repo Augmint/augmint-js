@@ -4,37 +4,37 @@ import { DeployedContract } from "./DeployedContract";
 type DeployedContractArray = Array<DeployedContract<Contract>>;
 
 export class DeployedContractList {
-    private contractList:DeployedContractArray = [];
-    constructor(contractList:DeployedContractArray) {
+    private contractList: DeployedContractArray = [];
+    constructor(contractList: DeployedContractArray) {
         this.contractList = contractList;
     }
 
-    public getCurrentContract():DeployedContract<Contract> {
-        const currentContract =this.contractList.find(item => item.current);
-        if(currentContract) {
+    public getCurrentContract(): DeployedContract<Contract> {
+        const currentContract = this.contractList.find(item => item.current);
+        if (currentContract) {
             return currentContract;
         } else {
-            throw new Error('Could not find current contract!')
+            throw new Error("Could not find current contract!");
         }
     }
 
-    public getLegacyContracts():DeployedContractArray {
-        return this.contractList.filter(item => !item.current)
+    public getLegacyContracts(): DeployedContractArray {
+        return this.contractList.filter(item => !item.current);
     }
 
-    public getContractFromAddresses(addresses:string[]):DeployedContractArray {
-        return this.contractList.filter((item:DeployedContract<Contract>) => {
-            const contractAddress:string = item.deployedAddress;
+    public getContractFromAddresses(addresses: string[]): DeployedContractArray {
+        return this.contractList.filter((item: DeployedContract<Contract>) => {
+            const contractAddress: string = item.deployedAddress;
             return addresses.indexOf(contractAddress.toLowerCase()) > -1;
-        })
+        });
     }
 
-    public getByAddress(address:string):DeployedContract<Contract> {
-        const contract = this.contractList.find(item => item.deployedAddress.toLowerCase() === address.toLowerCase())
-        if(contract) {
-            return contract
+    public getByAddress(address: string): DeployedContract<Contract> {
+        const contract = this.contractList.find(item => item.deployedAddress.toLowerCase() === address.toLowerCase());
+        if (contract) {
+            return contract;
         } else {
-            throw new Error(`Could not find contract at ${address} !`)
+            throw new Error(`Could not find contract at ${address} !`);
         }
     }
 }
