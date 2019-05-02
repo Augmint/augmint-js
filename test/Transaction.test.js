@@ -178,6 +178,55 @@ describe("Transaction", () => {
         sinon.assert.calledWithExactly(onConfirmationSpy.lastCall, CONFIRMATION_NUMBER + 1, receipt);
     });
 
+    it("send Transaction to fail before chain", async () => {
+        const tx = new Transaction(ethereumConnection, testContractTx);
+
+        const onceTxHashSpy = sinon.spy();
+        const onceReceiptSpy = sinon.spy();
+        const onConfirmationSpy = sinon.spy();
+        const onceConfirmedReceiptSpy = sinon.spy();
+        const onceTxRevertSpy = sinon.spy();
+
+        let errorCaught;
+        try {
+            tx.send({ from: "0x0" })
+                .onceTxHash(onceTxHashSpy)
+                .onceReceipt(onceReceiptSpy)
+                .onConfirmation(onConfirmationSpy)
+                .onceConfirmedReceipt(3, onceConfirmedReceiptSpy)
+                .onceTxRevert(onceTxRevertSpy);
+        } catch (error) {
+            assert.instanceOf(error, TransactionSendError);
+            assert.instanceOf(error, AugmintJsError);
+            assert.instanceOf(error, TransactionError);
+            assert.match(error.message, /Provided address "0x0" is invalid/); // test sanity check
+            assert.deepEqual(tx.sendError, error);
+            errorCaught = error;
+        }
+
+        const txHash = await tx.getTxHash().catch(error => {
+            assert.deepEqual(error, errorCaught);
+        });
+
+        assert.isUndefined(txHash);
+
+        const receipt = await tx.getTxReceipt().catch(error => {
+            assert.deepEqual(error, errorCaught);
+        });
+        assert.isUndefined(receipt);
+
+        const confirmedReceipt = await tx.getConfirmedReceipt(3).catch(error => {
+            assert.deepEqual(error, errorCaught);
+        });
+        assert.isUndefined(confirmedReceipt);
+
+        assert.equal(onceTxHashSpy.callCount, 0);
+        assert.equal(onConfirmationSpy.callCount, 0);
+        assert.equal(onceConfirmedReceiptSpy.callCount, 0);
+        assert.equal(onceTxRevertSpy.callCount, 0);
+        assert.equal(onceConfirmedReceiptSpy.callCount, 0);
+    });
+
     /** This doesn't work with ganache --blockTime 1 : can't get error in any ways with web3 beta36 */
     it.skip("send Transaction to fail - not enough gas", async () => {
         const tx = new Transaction(ethereumConnection, testContractTx);
@@ -186,7 +235,6 @@ describe("Transaction", () => {
         const onceReceiptSpy = sinon.spy();
         const onConfirmationSpy = sinon.spy();
         const onceConfirmedReceiptSpy = sinon.spy();
-        const onceTxRevertSpy = sinon.spy();
 
         tx.send({
             from: accounts[0],

@@ -126,6 +126,51 @@ describe("Transaction - web3js events style", () => {
         sinon.assert.calledWithExactly(confirmationSpy.lastCall, CONFIRMATION_NUMBER + 1, receipt);
     });
 
+    it("send Transaction to fail before chain", async () => {
+        const txHashSpy = sinon.spy();
+        const receiptSpy = sinon.spy();
+        const confirmationSpy = sinon.spy();
+        const errorSpy = sinon.spy();
+
+        const tx = new Transaction(ethereumConnection, testContractTx);
+        let errorCaught;
+        try {
+            tx.send({ from: "0x0" })
+                .on("error", errorSpy)
+                .on("receipt", receiptSpy)
+                .on("confirmation", confirmationSpy)
+                .on("transactionHash", txHashSpy);
+        } catch (error) {
+            assert.instanceOf(error, TransactionSendError);
+            assert.instanceOf(error, AugmintJsError);
+            assert.instanceOf(error, TransactionError);
+            assert.match(error.message, /Provided address "0x0" is invalid/); // test sanity check
+            assert.deepEqual(tx.sendError, error);
+            errorCaught = error;
+        }
+
+        const txHash = await tx.getTxHash().catch(error => {
+            assert.deepEqual(error, errorCaught);
+        });
+
+        assert.isUndefined(txHash);
+
+        const receipt = await tx.getTxReceipt().catch(error => {
+            assert.deepEqual(error, errorCaught);
+        });
+        assert.isUndefined(receipt);
+
+        const confirmedReceipt = await tx.getConfirmedReceipt(3).catch(error => {
+            assert.deepEqual(error, errorCaught);
+        });
+        assert.isUndefined(confirmedReceipt);
+
+        assert.equal(errorSpy.callCount, 0);
+        assert.equal(txHashSpy.callCount, 0);
+        assert.equal(receiptSpy.callCount, 0);
+        assert.equal(confirmationSpy.callCount, 0);
+    });
+
     /** This doesn't work with ganache --blockTime 1 : can't get error in any ways with web3 beta36 */
     it.skip("send Transaction to fail - not enough gas", async () => {
         const txHashSpy = sinon.spy();
