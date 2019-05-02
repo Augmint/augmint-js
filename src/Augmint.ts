@@ -1,4 +1,3 @@
-import { Contract } from "web3-eth-contract";
 import deployments from "../generated/deployments";
 import { AugmintContracts, Exchange as ExchangeInstance, Rates as RatesInstance, TokenAEur } from "../generated/index";
 import { AugmintToken } from "./AugmintToken";
@@ -135,6 +134,11 @@ export class Augmint {
 
     get environment(): string {
         return this._environment;
+    }
+
+    public getLegacyTokens():AugmintToken[] {
+        const legacyTokens: Array<DeployedContract<TokenAEur>> = this.deployedEnvironment.getLegacyContracts(AugmintContracts.TokenAEur);
+        return legacyTokens.map(tokenContract => new AugmintToken(tokenContract.connect(this.web3), { web3: this.web3 }))
     }
 
     //  myaugmint.getLegacyExchanges(Augmint.constants.SUPPORTED_LEGACY_EXCHANGES)

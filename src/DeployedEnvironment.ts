@@ -16,6 +16,7 @@ export class DeployedEnvironment {
     public name: string;
     constructor(name: string) {
         this.name = name;
+        this.contracts = {};
     }
 
     public addContractList(contractName: AugmintContracts, contractList: DeployedContractList): void {
