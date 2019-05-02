@@ -1,5 +1,5 @@
 const { TsGeneratorPlugin } = require("ts-generator");
-const { join, dirname, basename, sep } = require("path");
+const { join, dirname, sep } = require("path");
 let environments = null;
 
 function generateContracts(contracts) {
@@ -18,31 +18,25 @@ class DeploymentListPlugin extends TsGeneratorPlugin {
             .pop();
         const deploymentFile = JSON.parse(contents);
         const contractName = deploymentFile.contractName;
+        const latestAbiHash = deploymentFile.latestAbiHash;
         const d = [];
         Object.keys(deploymentFile.deployedAbis).forEach(abiHash => {
             const abiDeployment = deploymentFile.deployedAbis[abiHash];
             const latestDeploymentAddress = abiDeployment.latestDeployedAddress;
             Object.keys(abiDeployment.deployments).forEach(deployedAddress => {
-                const deployment = abiDeployment.deployments[deployedAddress];
+                const latestInAbi = deployedAddress === latestDeploymentAddress;
                 d.push({
                     abiFileName: `${contractName}_ABI_${abiHash}`,
-                    abiHash,
-                    contractName,
-                    deployedAddress,
-                    generatedAt: new Date(deployment.generatedAt).getTime(),
-                    latestInAbi: deployedAddress === latestDeploymentAddress
+                    current: latestInAbi && abiHash === latestAbiHash,
+                    deployedAddress
                 });
             });
         });
-        d.sort((a, b) => b.generatedAt - a.generatedAt);
         if (!environments.has(nameSpace)) {
             environments.set(nameSpace, {});
         }
         const content = environments.get(nameSpace);
-        content[contractName] = d.map((item, index) => ({
-            ...item,
-            current: index === 0
-        }));
+        content[contractName] = d;
     }
 
     beforeRun() {
@@ -70,22 +64,30 @@ class DeploymentListPlugin extends TsGeneratorPlugin {
         const header = `
         import { DeployedContract} from "../src/DeployedContract";
         import { DeployedContractList} from "../src/DeployedContractList";
+        import { DeployedEnvironment} from "../src/DeployedEnvironment";
+        import { AugmintContracts } from "./index";
         ${Array.from(contractTypesSet.values())
             .sort()
             .join("\n")}
-        const deployedEnvironments = {};
+            
+        const deployedEnvironments:DeployedEnvironment[] = [];
+        let currentEnvironment: DeployedEnvironment;
         `;
         const exports = [];
         environments.forEach((content, key) => {
-            const deployedEnvironment = `deployedEnvironments[${JSON.stringify(key)}]`;
-            exports.push('');
-            exports.push(`${deployedEnvironment}={};`);
-            exports.push(Object.keys(content).map(
-                contractName =>
-                    `${deployedEnvironment}[${JSON.stringify(contractName)}] = new DeployedContractList([${generateContracts(
-                        content[contractName]
-                    )}]);`
-            ).join('\n'));
+            exports.push(`
+            currentEnvironment = new DeployedEnvironment(${JSON.stringify(key)});
+            deployedEnvironments.push(currentEnvironment);`);
+            exports.push(
+                Object.keys(content)
+                    .map(
+                        contractName =>
+                            `currentEnvironment.addContractList(AugmintContracts.${contractName},new DeployedContractList([${generateContracts(
+                                content[contractName]
+                            )}]));`
+                    )
+                    .join("\n")
+            );
         });
         return {
             contents: `

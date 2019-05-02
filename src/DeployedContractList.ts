@@ -1,12 +1,16 @@
 import { Contract } from "web3-eth-contract";
 import { DeployedContract } from "./DeployedContract";
 
-type DeployedContractArray = Array<DeployedContract<Contract>>;
+export type DeployedContractArray = Array<DeployedContract<Contract>>;
 
 export class DeployedContractList {
     private contractList: DeployedContractArray = [];
     constructor(contractList: DeployedContractArray) {
         this.contractList = contractList;
+    }
+
+    public addContract(contract: DeployedContract<Contract>) {
+        this.contractList.push(contract)
     }
 
     public getCurrentContract(): DeployedContract<Contract> {
