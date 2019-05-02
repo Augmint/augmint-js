@@ -13,8 +13,8 @@ fi
 
 function run_ganache {
     docker run --init --detach --name $CONTAINER_NAME -p 8545:8545 $DOCKER_IMAGE --db ./dockerLocalchaindb \
-                --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 --noVMErrorsOnRPCResponse \
-                -m "hello build tongue rack parade express shine salute glare rate spice stock"
+        --gasLimit 0x47D5DE --gasPrice 1000000000 --networkId 999 --noVMErrorsOnRPCResponse $ADDITIONAL_GANACHE_LAUNCH_FLAGS \
+        -m "hello build tongue rack parade express shine salute glare rate spice stock"
 }
 
 function stop_container_if_running {
@@ -41,7 +41,7 @@ function remove_container_if_image_mismatched {
 
 
 function print_instructions {
-    echo "    Usage: $0 ganache {start | stop | run}"
+    echo "    Usage: $0 ganache {start | stop | run} [<additional ganache launch flags. eg. --blockTime 1>]"
     echo "      start: tries to start container named $CONTAINER_NAME . If fails then runs (downloads, creates and starts) the container from $DOCKER_IMAGE"
     echo "      stop: plain docker stop $DOCKER_IMAGE (doesn't check if exists)"
     echo "      run: stops and removes the $CONTAINER_NAME container if exists. then runs it "
@@ -49,6 +49,9 @@ function print_instructions {
 
 case "$1" in
     ganache )
+
+        ADDITIONAL_GANACHE_LAUNCH_FLAGS=${@:3} 
+
         case "$2" in
             run )
                 remove_container_if_image_mismatched
