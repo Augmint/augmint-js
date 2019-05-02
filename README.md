@@ -3,7 +3,7 @@
 
 # Augmint - Stable Digital Tokens - Javascript Library (WIP)
 
-[![Build Status](https://travis-ci.org/Augmint/augmint-js.svg?branch=staging)](https://travis-ci.org/Augmint/augmint-js)
+[![Build Status](https://travis-ci.com/Augmint/augmint-js.svg?branch=staging)](https://travis-ci.com/Augmint/augmint-js)
 [![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu)
 [![license](https://img.shields.io/github/license/Augmint/augmint-js.svg)](https://github.com/Augmint/augmint-js/blob/master/LICENSE) [![Greenkeeper badge](https://badges.greenkeeper.io/Augmint/augmint-js.svg)](https://greenkeeper.io/)
 
