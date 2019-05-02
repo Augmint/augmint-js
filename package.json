@@ -1,6 +1,6 @@
 {
   "name": "@augmint/js",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Augmint Javascript Library",
   "keywords": [
     "augmint javascript library A-EUR stablecoin web3 dapp"
@@ -55,7 +55,8 @@
     "build:typings": "ts-generator ./ts-generator.json",
     "test": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha 'test/**/*.test.js' --exit --timeout 5000",
     "ganache:start": "scripts/augmint-cli.sh ganache start",
-    "ganache:stop": "scripts/augmint-cli.sh ganache stop"
+    "ganache:stop": "scripts/augmint-cli.sh ganache stop",
+    "ganache:run": "scripts/augmint-cli.sh ganache run"
   },
   "greenkeeper": {
     "ignore": [
