@@ -4,15 +4,14 @@ import { AugmintContracts, Exchange as ExchangeInstance, Rates as RatesInstance,
 import { AugmintToken } from "./AugmintToken";
 import * as constants from "./constants";
 import { DeployedContract, IDeploymentItem } from "./DeployedContract";
+import { DeployedContractList } from "./DeployedContractList";
+import { DeployedEnvironment, ILatestContracts } from "./DeployedEnvironment";
 import * as Errors from "./Errors";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
 import { Exchange } from "./Exchange";
 import * as gas from "./gas";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
-import * as AbiList from "../generated/abis";
-import { DeployedEnvironment, ILatestContracts } from "./DeployedEnvironment";
-import { DeployedContractList } from "./DeployedContractList";
 
 interface IDeployedEnvironmentStub {
     [propName: string]: IDeploymentItem[];
@@ -95,10 +94,6 @@ export class Augmint {
 
     static get Transaction(): typeof Transaction {
         return Transaction;
-    }
-
-    static get Abis() {
-        return AbiList;
     }
 
     get token(): AugmintToken {
