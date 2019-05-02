@@ -28,7 +28,7 @@ class DeploymentListPlugin extends TsGeneratorPlugin {
                 d.push({
                     abiFileName: `${contractName}_ABI_${abiHash}`,
                     current: latestInAbi && abiHash === latestAbiHash,
-                    deployedAddress
+                    deployedAddress:deployedAddress.toLocaleLowerCase()
                 });
             });
         });
