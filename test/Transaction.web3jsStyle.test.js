@@ -140,6 +140,8 @@ describe("Transaction - web3js events style", () => {
                 .on("receipt", receiptSpy)
                 .on("confirmation", confirmationSpy)
                 .on("transactionHash", txHashSpy);
+
+            assert.fail("We expected send() to throw");
         } catch (error) {
             assert.instanceOf(error, TransactionSendError);
             assert.instanceOf(error, AugmintJsError);

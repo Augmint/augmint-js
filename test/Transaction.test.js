@@ -38,12 +38,16 @@ describe("Transaction", () => {
     it("new Transaction missing params should throw ", () => {
         try {
             new Transaction();
+
+            assert.fail("We expected new Transaction() to throw");
         } catch (error) {
             assert.instanceOf(error, AugmintJsError);
             assert.instanceOf(error, TransactionError);
         }
+
         try {
             new Transaction(ethereumConnection);
+            assert.fail("We expected new Transaction() to throw");
         } catch (error) {
             assert.instanceOf(error, AugmintJsError);
             assert.instanceOf(error, TransactionError);
@@ -195,6 +199,8 @@ describe("Transaction", () => {
                 .onConfirmation(onConfirmationSpy)
                 .onceConfirmedReceipt(3, onceConfirmedReceiptSpy)
                 .onceTxRevert(onceTxRevertSpy);
+
+            assert.fail("We expected .send to throw");
         } catch (error) {
             assert.instanceOf(error, TransactionSendError);
             assert.instanceOf(error, AugmintJsError);
