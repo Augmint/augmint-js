@@ -24,19 +24,27 @@ class DeploymentListPlugin extends TsGeneratorPlugin {
             const abiDeployment = deploymentFile.deployedAbis[abiHash];
             const latestDeploymentAddress = abiDeployment.latestDeployedAddress;
             Object.keys(abiDeployment.deployments).forEach(deployedAddress => {
+                const deployment = abiDeployment.deployments[deployedAddress];
                 const latestInAbi = deployedAddress === latestDeploymentAddress;
                 d.push({
                     abiFileName: `${contractName}_ABI_${abiHash}`,
                     current: latestInAbi && abiHash === latestAbiHash,
-                    deployedAddress:deployedAddress.toLocaleLowerCase()
+                    deployedAddress: deployedAddress.toLocaleLowerCase(),
+                    generated: new Date(deployment.generatedAt).getTime()
                 });
             });
         });
         if (!environments.has(nameSpace)) {
             environments.set(nameSpace, {});
         }
+
+        d.sort((a, b) => (a.current ? -1 : b.current ? 1 : b.generated - a.generated));
+
         const content = environments.get(nameSpace);
-        content[contractName] = d;
+        content[contractName] = d.map(({ abiFileName, deployedAddress }) => ({
+            abiFileName,
+            deployedAddress
+        }));
     }
 
     beforeRun() {
@@ -63,9 +71,7 @@ class DeploymentListPlugin extends TsGeneratorPlugin {
         );
         const header = `
         import { DeployedContract} from "../src/DeployedContract";
-        import { DeployedContractList} from "../src/DeployedContractList";
         import { DeployedEnvironment} from "../src/DeployedEnvironment";
-        import { AugmintContracts } from "./index";
         ${Array.from(contractTypesSet.values())
             .sort()
             .join("\n")}
@@ -82,9 +88,9 @@ class DeploymentListPlugin extends TsGeneratorPlugin {
                 Object.keys(content)
                     .map(
                         contractName =>
-                            `currentEnvironment.addContractList(AugmintContracts.${contractName},new DeployedContractList([${generateContracts(
+                            `currentEnvironment.addRole(${JSON.stringify(contractName)},[${generateContracts(
                                 content[contractName]
-                            )}]));`
+                            )}]);`
                     )
                     .join("\n")
             );

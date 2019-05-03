@@ -4,8 +4,9 @@ import * as AbiList from "../generated/abis"
 export interface IDeploymentItem {
     abiFileName: string;
     deployedAddress: string;
-    current: boolean
 }
+
+const connectedInstances = new Map();
 
 export class DeployedContract<T extends Contract> {
     public abiFileName: string;
@@ -16,14 +17,19 @@ export class DeployedContract<T extends Contract> {
     constructor(deployedItem: IDeploymentItem) {
         this.abiFileName = deployedItem.abiFileName;
         this.deployedAddress = deployedItem.deployedAddress;
-        this.current = deployedItem.current;
+    }
+
+    get instanceHash() {
+        return `${this.abiFileName}_${this.deployedAddress}`;
     }
 
     public connect(web3:any):T {
-        if(!this.instance) {
-            this.instance = this.connectToAddress(web3, this.deployedAddress)
+        let connectedInstance = connectedInstances.get(this.instanceHash);
+        if(!connectedInstance) {
+            connectedInstance = this.connectToAddress(web3, this.deployedAddress);
+            connectedInstances.set(this.instanceHash, connectedInstance)
         }
-        return this.instance;
+        return connectedInstance;
     }
 
     public connectToAddress(web3: any, address: string): T {

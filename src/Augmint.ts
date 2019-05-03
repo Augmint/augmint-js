@@ -3,7 +3,6 @@ import { AugmintContracts, Exchange as ExchangeInstance, Rates as RatesInstance,
 import { AugmintToken } from "./AugmintToken";
 import * as constants from "./constants";
 import { DeployedContract, IDeploymentItem } from "./DeployedContract";
-import { DeployedContractList } from "./DeployedContractList";
 import { DeployedEnvironment, ILatestContracts } from "./DeployedEnvironment";
 import * as Errors from "./Errors";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
@@ -29,13 +28,11 @@ export class Augmint {
     ): DeployedEnvironment {
         const deployedEnvironment: DeployedEnvironment = new DeployedEnvironment(environmentName);
         Object.keys(stubs).forEach(stub => {
-            const contractName = stub;
+            const role = stub;
             const contractListStub = stubs[stub];
-            deployedEnvironment.addContractList(
-                contractName as AugmintContracts,
-                new DeployedContractList(
-                    contractListStub.map(contractStub => new DeployedContract(contractStub))
-                )
+            deployedEnvironment.addRole(
+                role,
+                contractListStub.map(contractStub => new DeployedContract(contractStub))
             );
         });
         return deployedEnvironment;
@@ -55,7 +52,7 @@ export class Augmint {
         this.ethereumConnection = ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
         if (!environment) {
-            const networkId = this.ethereumConnection.networkId.toString(10);
+            const networkId:string = this.ethereumConnection.networkId.toString(10);
             const selectedDeployedEnvironment = deployments.find(
                 (item: DeployedEnvironment) => item.name === networkId
             );
@@ -97,7 +94,7 @@ export class Augmint {
 
     get token(): AugmintToken {
         if (!this._token) {
-            const tokenContract: DeployedContract<TokenAEur> = this.latestContracts[AugmintContracts.TokenAEur];
+            const tokenContract: DeployedContract<TokenAEur> = this.deployedEnvironment.getLatestContract(AugmintContracts.TokenAEur);
             this._token = new AugmintToken(tokenContract.connect(this.web3), { web3: this.web3 });
         }
         return this._token;
@@ -105,7 +102,7 @@ export class Augmint {
 
     get rates(): Rates {
         if (!this._rates) {
-            const ratesContract: DeployedContract<RatesInstance> = this.latestContracts[AugmintContracts.Rates];
+            const ratesContract: DeployedContract<RatesInstance> = this.deployedEnvironment.getLatestContract(AugmintContracts.Rates);
             this._rates = new Rates(ratesContract.connect(this.web3), {
                 decimals: this.token.decimals,
                 decimalsDiv: this.token.decimalsDiv,
@@ -118,9 +115,7 @@ export class Augmint {
 
     get exchange(): Exchange {
         if (!this._exchange) {
-            const exchangeContract: DeployedContract<ExchangeInstance> = this.latestContracts[
-                AugmintContracts.Exchange
-            ];
+            const exchangeContract: DeployedContract<ExchangeInstance> = this.deployedEnvironment.getLatestContract(AugmintContracts.Exchange);
             this._exchange = new Exchange(exchangeContract.connect(this.web3), {
                 decimalsDiv: this.token.decimalsDiv,
                 peggedSymbol: this.token.peggedSymbol,

@@ -1,10 +1,10 @@
 import { Contract } from "web3-eth-contract";
-import { AugmintContracts } from "../generated/index";
 import { DeployedContract } from "./DeployedContract";
-import { DeployedContractArray, DeployedContractList } from "./DeployedContractList";
+
+export type IDeployedContractList = Array<DeployedContract<Contract>>
 
 export interface IDeployedContracts {
-    [propName: string]: DeployedContractList;
+    [propName: string]: IDeployedContractList
 }
 
 export interface ILatestContracts {
@@ -19,30 +19,34 @@ export class DeployedEnvironment {
         this.contracts = {};
     }
 
-    public addContractList(contractName: AugmintContracts, contractList: DeployedContractList): void {
-        this.contracts[contractName] = contractList;
+    public addRole(role: string, contractList: IDeployedContractList): void {
+        this.contracts[role] = contractList;
+    }
+
+    public getRole(role:string): IDeployedContractList {
+        return this.contracts[role]
     }
 
     public getLatestContracts(): ILatestContracts {
         const latestContracts: ILatestContracts = {};
         Object.keys(this.contracts).forEach((contractName: string) => {
-            latestContracts[contractName] = this.contracts[contractName].getCurrentContract();
+            latestContracts[contractName] = this.contracts[contractName][0];
         });
         return latestContracts;
     }
 
     public getLatestContract(name: string): DeployedContract<Contract> {
-        const contractList: DeployedContractList = this.contracts[name];
-        return contractList.getCurrentContract();
+        const contractList: IDeployedContractList = this.contracts[name];
+        return contractList[0];
     }
 
-    public getLegacyContracts(name: AugmintContracts): DeployedContractArray {
-        const contractList: DeployedContractList = this.contracts[name];
-        return contractList.getLegacyContracts();
+    public getLegacyContracts(name: string): IDeployedContractList {
+        const contractList: IDeployedContractList = this.contracts[name];
+        return contractList.slice(1);
     }
 
-    public getContractFromAddresses(name: AugmintContracts, addresses: string[]): DeployedContractArray {
-        const contractList: DeployedContractList = this.contracts[name];
-        return contractList.getContractFromAddresses(addresses);
+    public getContractFromAddresses(name: string, addresses: string[]): IDeployedContractList {
+        const contractList: IDeployedContractList = this.contracts[name];
+        return contractList.filter((contract:DeployedContract<Contract>) => addresses.indexOf(contract.deployedAddress) > -1)
     }
 }
