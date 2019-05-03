@@ -1,5 +1,7 @@
 {
     "compilerOptions": {
+        "baseUrl": ".",
+        "paths": { "*": ["types/*"] },
         "declaration": true,
         "declarationDir": "./dist/", // path to output directory
         "module": "ES6", // specify module code generation

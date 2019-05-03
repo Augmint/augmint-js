@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@augmint/contracts@1.0.9":
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/@augmint/contracts/-/contracts-1.0.9.tgz#f4d683b382b996f1afc1cc255a9caa77a097bd30"
+  integrity sha512-gxVMN76ILUU0vdY0eJXHToVZIk3+2RznG+ZxLJoMwz6WO6WsxEpiZy02AiKJoYlHV/fF2iLACvqUlrWElvUOQw==
+
 "@babel/code-frame@^7.0.0":
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.0.0.tgz#06e2ab19bdb535385559aabb5ba59729482800f8"
