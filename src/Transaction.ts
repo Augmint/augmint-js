@@ -197,7 +197,12 @@ export class Transaction extends EventEmitter {
             if (!this.sendOptions.from) {
                 throw new TransactionError("from account is not set for send");
             }
-            this.sentTx = this.tx.send(Object.assign({}, this.sendOptions)); // webjs writes into passed params (beta36) (added .data to .sendOptions and Metamask hang for long before confirmation apperaed)
+            try {
+                this.sentTx = this.tx.send(Object.assign({}, this.sendOptions)); // webjs writes into passed params (beta36) (added .data to .sendOptions and Metamask hang for long before confirmation apperaed)
+            } catch (error) {
+                this.sendError = new TransactionSendError(error);
+                throw this.sendError;
+            }
             this.addTxListeners(this.sentTx);
         }
 

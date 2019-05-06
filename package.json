@@ -55,9 +55,9 @@
     "build": "yarn build:typings && rollup -c",
     "build:typings": "ts-generator ./ts-generator.json",
     "test": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha 'test/**/*.test.js' --exit --timeout 5000",
-    "ganache:start": "scripts/augmint-cli.sh ganache start",
+    "ganache:start": "scripts/augmint-cli.sh ganache start --blockTime 1",
     "ganache:stop": "scripts/augmint-cli.sh ganache stop",
-    "ganache:run": "scripts/augmint-cli.sh ganache run"
+    "ganache:run": "scripts/augmint-cli.sh ganache run --blockTime 1"
   },
   "greenkeeper": {
     "ignore": [
