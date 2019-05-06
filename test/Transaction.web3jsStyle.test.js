@@ -1,5 +1,5 @@
 const chai = require("chai");
-const { assert } = chai;
+const { assert, expect } = chai;
 const sinon = require("sinon");
 chai.use(require("chai-as-promised"));
 const { Augmint } = require("../dist/index.js");
@@ -151,21 +151,9 @@ describe("Transaction - web3js events style", () => {
             errorCaught = error;
         }
 
-        const txHash = await tx.getTxHash().catch(error => {
-            assert.deepEqual(error, errorCaught);
-        });
-
-        assert.isUndefined(txHash);
-
-        const receipt = await tx.getTxReceipt().catch(error => {
-            assert.deepEqual(error, errorCaught);
-        });
-        assert.isUndefined(receipt);
-
-        const confirmedReceipt = await tx.getConfirmedReceipt(3).catch(error => {
-            assert.deepEqual(error, errorCaught);
-        });
-        assert.isUndefined(confirmedReceipt);
+        await expect(tx.getTxHash()).to.be.rejectedWith(errorCaught);
+        await expect(tx.getTxReceipt()).to.be.rejectedWith(errorCaught);
+        await expect(tx.getConfirmedReceipt(3)).to.be.rejectedWith(errorCaught);
 
         assert.equal(errorSpy.callCount, 0);
         assert.equal(txHashSpy.callCount, 0);
@@ -199,19 +187,12 @@ describe("Transaction - web3js events style", () => {
         });
 
         // when ganache started with --blockTime 1 then we receive a hash
-        // assert.isUndefined(txHash);
+        assert.isUndefined(txHash);
 
-        const receipt = await tx.getTxReceipt().catch(error => {
-            assert.deepEqual(error, errorCaught);
-        });
-        assert.isUndefined(receipt);
+        await expect(tx.getTxReceipt()).to.be.rejectedWith(errorCaught);
+        await expect(tx.getConfirmedReceipt(3)).to.be.rejectedWith(errorCaught);
 
-        const confirmedReceipt = await tx.getConfirmedReceipt(3).catch(error => {
-            assert.deepEqual(error, errorCaught);
-        });
-        assert.isUndefined(confirmedReceipt);
-
-        sinon.assert.calledWithExactly(errorSpy, errorCaught, receipt);
+        sinon.assert.calledWithExactly(errorSpy, errorCaught);
         assert.equal(txHashSpy.callCount, 0);
         assert.equal(receiptSpy.callCount, 0);
         assert.equal(confirmationSpy.callCount, 0);

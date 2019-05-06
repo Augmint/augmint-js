@@ -210,21 +210,9 @@ describe("Transaction", () => {
             errorCaught = error;
         }
 
-        const txHash = await tx.getTxHash().catch(error => {
-            assert.deepEqual(error, errorCaught);
-        });
-
-        assert.isUndefined(txHash);
-
-        const receipt = await tx.getTxReceipt().catch(error => {
-            assert.deepEqual(error, errorCaught);
-        });
-        assert.isUndefined(receipt);
-
-        const confirmedReceipt = await tx.getConfirmedReceipt(3).catch(error => {
-            assert.deepEqual(error, errorCaught);
-        });
-        assert.isUndefined(confirmedReceipt);
+        await expect(tx.getTxHash()).to.be.rejectedWith(errorCaught);
+        await expect(tx.getTxReceipt()).to.be.rejectedWith(errorCaught);
+        await expect(tx.getConfirmedReceipt(3)).to.be.rejectedWith(errorCaught);
 
         assert.equal(onceTxHashSpy.callCount, 0);
         assert.equal(onConfirmationSpy.callCount, 0);
@@ -241,6 +229,7 @@ describe("Transaction", () => {
         const onceReceiptSpy = sinon.spy();
         const onConfirmationSpy = sinon.spy();
         const onceConfirmedReceiptSpy = sinon.spy();
+        const onceTxRevertSpy = sinon.spy();
 
         tx.send({
             from: accounts[0],
@@ -262,17 +251,10 @@ describe("Transaction", () => {
             errorCaught = error;
         });
         // when ganache started with --blockTime 1 then we receive a hash
-        // assert.isUndefined(txHash);
+        assert.isUndefined(txHash);
 
-        const receipt = await tx.getTxReceipt().catch(error => {
-            assert.deepEqual(error, errorCaught);
-        });
-        assert.isUndefined(receipt);
-
-        const confirmedReceipt = await tx.getConfirmedReceipt(3).catch(error => {
-            assert.deepEqual(error, errorCaught);
-        });
-        assert.isUndefined(confirmedReceipt);
+        await expect(tx.getTxReceipt()).to.be.rejectedWith(errorCaught);
+        await expect(tx.getConfirmedReceipt(3)).to.be.rejectedWith(errorCaught);
 
         assert.equal(onceTxHashSpy.callCount, 0);
         assert.equal(onConfirmationSpy.callCount, 0);
