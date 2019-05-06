@@ -37,12 +37,11 @@ export class Rates extends AbstractContract {
         this.web3 = this.ethereumConnection.web3;
         this.decimals = options.decimals;
         this.decimalsDiv = options.decimalsDiv;
-        this.constants = options.constants;
     }
 
     public async getBnEthFiatRate(currency: string): Promise<BigNumber> {
         const rate: string = await this.instance.methods
-            .convertFromWei(this.web3.utils.asciiToHex(currency), this.constants.ONE_ETH_IN_WEI.toString())
+            .convertFromWei(this.web3.utils.asciiToHex(currency), ONE_ETH_IN_WEI.toString())
             .call()
             .catch((error: Error) => {
                 if (error.message.includes("revert rates[bSymbol] must be > 0")) {
@@ -59,7 +58,7 @@ export class Rates extends AbstractContract {
 
     public async getEthFiatRate(currency: string): Promise<number> {
         const bnEthFiatRate: BigNumber = await this.getBnEthFiatRate(currency);
-        return parseFloat(bnEthFiatRate.div(this.constants.DECIMALS_DIV).toFixed(this.constants.DECIMALS));
+        return parseFloat(bnEthFiatRate.div(DECIMALS_DIV).toFixed(DECIMALS));
     }
 
     public async getAugmintRate(currency: string): Promise<IRateInfo> {
@@ -71,13 +70,13 @@ export class Rates extends AbstractContract {
 
         return {
             bnRate: new BigNumber(storedRateInfo.rate),
-            rate: parseInt(storedRateInfo.rate) / decimalsDiv, // TODO: change to augmintToken.decimalsDiv
+            rate: parseInt(storedRateInfo.rate) / decimalsDiv,
             lastUpdated: new Date(parseInt(storedRateInfo.lastUpdated) * 1000)
         };
     }
 
     public setRate(currency: string, price: number): Transaction {
-        const rateToSend: number = price * this.constants.DECIMALS_DIV;
+        const rateToSend: number = price * DECIMALS_DIV;
 
         if (Math.round(rateToSend) !== rateToSend) {
             throw new InvalidPriceError(

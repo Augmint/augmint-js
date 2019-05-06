@@ -1,6 +1,6 @@
 const assert = require("chai").assert;
 const { Augmint } = require("../dist/index.js");
-const { InvalidPriceError, AugmintJsError } = Augmint.Errors;
+const { InvalidPriceError } = Augmint.Errors;
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
 
@@ -92,12 +92,6 @@ describe("Rates setters", () => {
     });
 
     it("setRate - invalid price", () => {
-        const expectedPrice = 1232.222;
-        try {
-            rates.setRate(CCY, expectedPrice);
-        } catch (error) {
-            assert.instanceOf(error, AugmintJsError);
-            assert.instanceOf(error, InvalidPriceError);
-        }
+        assert.throws(() => rates.setRate(CCY, 1232.222), InvalidPriceError);
     });
 });
