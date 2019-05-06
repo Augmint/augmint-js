@@ -1,10 +1,11 @@
 import BigNumber from "bignumber.js";
+import BN from "bn.js";
 import { Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
 import { CHUNK_SIZE, DECIMALS, DECIMALS_DIV, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
-import { InvalidPriceError, InvalidTokenAmountError } from "./Errors";
+import { InvalidPriceError } from "./Errors";
 import { EthereumConnection } from "./EthereumConnection";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PLACE_ORDER_GAS } from "./gas";
 import { Augmint } from "./index";
@@ -204,24 +205,10 @@ export class Exchange extends AbstractContract {
         return orders;
     }
 
-    public placeSellTokenOrder(price: number, amount: number): Transaction {
-        const amountToSend: number = amount * DECIMALS_DIV;
-
-        if (!Number.isInteger(price)) {
-            throw new InvalidPriceError(
-                ` placeSellTokenOrder error: Provided price of ${price} is not an integer. Price % value must be provided as parts per million.`
-            );
-        }
-
-        if (Math.round(amountToSend) !== amountToSend) {
-            throw new InvalidTokenAmountError(
-                ` placeSellTokenOrder error: provided price of ${amountToSend} has more decimals than allowed by AugmintToken decimals of ${DECIMALS}`
-            );
-        }
-
+    public placeSellTokenOrder(price: BN, amount: BN): Transaction {
         const web3Tx: TransactionObject<void> = this.token.instance.methods.transferAndNotify(
             this.address,
-            amountToSend.toString(),
+            amount.toString(),
             price.toString()
         );
 
@@ -233,13 +220,7 @@ export class Exchange extends AbstractContract {
         return transaction;
     }
 
-    public placeBuyTokenOrder(price: number, amount: BigNumber): Transaction {
-        if (!Number.isInteger(price)) {
-            throw new InvalidPriceError(
-                ` placeSellTokenOrder error: Provided price of ${price} is not an integer. Price % value must be provided as parts per million.`
-            );
-        }
-
+    public placeBuyTokenOrder(price: BN, amount: BN): Transaction {
         const web3Tx: TransactionObject<string> = this.instance.methods.placeBuyTokenOrder(price.toString());
 
         const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {

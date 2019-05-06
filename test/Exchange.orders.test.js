@@ -1,10 +1,10 @@
+const { BN } = require("bn.js");
 const { assert } = require("chai");
-const BigNumber = require("bignumber.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const { Augmint, utils } = require("../dist/index.js");
 const { assertEvent } = require("./testHelpers/events");
 const { issueToken } = require("./testHelpers/token");
-const { InvalidPriceError, InvalidTokenAmountError } = Augmint.Errors;
+const { TransactionSendError } = Augmint.Errors;
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
 if (config.LOG) {
@@ -20,16 +20,28 @@ describe("place orders - invalid args", () => {
         exchange = augmint.exchange;
     });
 
-    it("placeBuyTokenOrder should not allow decimals in price", () => {
-        assert.throws(() => exchange.placeBuyTokenOrder(1.1, 10000), InvalidPriceError);
+    it("placeBuyTokenOrder should allow only integer for price", () => {
+        assert.throws(
+            () => exchange.placeBuyTokenOrder(1.1, 10000).send({ from: augmint.ethereumConnection.accounts[0] }),
+            TransactionSendError,
+            /invalid number value/
+        );
     });
 
-    it("placeSellTokenOrder should not allow decimals in price", () => {
-        assert.throws(() => exchange.placeSellTokenOrder(1.1, 10000), InvalidPriceError);
+    it("placeSellTokenOrder should allow only integer for  price", () => {
+        assert.throws(
+            () => exchange.placeSellTokenOrder(1.1, 10000).send({ from: augmint.ethereumConnection.accounts[0] }),
+            TransactionSendError,
+            /invalid number value/
+        );
     });
 
-    it("placeSellTokenOrder should not allow more decimals in amount than token decimals", () => {
-        assert.throws(() => exchange.placeSellTokenOrder(1000000, 100.121), InvalidTokenAmountError);
+    it("placeSellTokenOrder should allow only integer for tokenamount", () => {
+        assert.throws(
+            () => exchange.placeSellTokenOrder(1000000, 100.121).send({ from: augmint.ethereumConnection.accounts[0] }),
+            TransactionSendError,
+            /invalid number value/
+        );
     });
 });
 
@@ -55,8 +67,8 @@ describe("place orders - onchain", () => {
 
     it("placeBuyTokenOrder success", async () => {
         const maker = accounts[1];
-        const price = 1.01 * Augmint.constants.PPM_DIV;
-        const amount = new BigNumber(2000000000);
+        const price = new BN(1.01 * Augmint.constants.PPM_DIV);
+        const amount = new BN(2000000000);
         const tx = exchange.placeBuyTokenOrder(price, amount);
         const txReceipt = await tx.send({ from: maker }).getTxReceipt();
 
@@ -73,8 +85,8 @@ describe("place orders - onchain", () => {
 
     it("placeSellTokenOrder success", async () => {
         const maker = accounts[1];
-        const price = 1.02 * Augmint.constants.PPM_DIV;
-        const amount = 10.99;
+        const price = new BN(1.02 * Augmint.constants.PPM_DIV);
+        const amount = new BN(1099);
 
         await issueToken(augmint, accounts[0], maker, amount);
 
@@ -88,7 +100,7 @@ describe("place orders - onchain", () => {
             orderId: x => parseInt(x),
             maker: maker,
             price: price.toString(),
-            tokenAmount: (amount * Augmint.constants.DECIMALS_DIV).toString(),
+            tokenAmount: amount.toString(),
             weiAmount: "0"
         });
     });
