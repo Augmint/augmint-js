@@ -120,7 +120,6 @@ export class Augmint {
                 AugmintContracts.Exchange
             );
             this._exchange = new Exchange(exchangeContract.connect(this.web3), {
-                decimalsDiv: this.token.decimalsDiv,
                 token: this.token,
                 rates: this.rates,
                 ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI,

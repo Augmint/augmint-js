@@ -55,7 +55,6 @@ interface ISellOrderCalc extends ISellOrder {
 interface IExchangeOptions {
     token: AugmintToken;
     rates: Rates;
-    decimalsDiv: Promise<number>;
     ONE_ETH_IN_WEI: number;
     ethereumConnection: EthereumConnection;
 }
@@ -85,7 +84,6 @@ export class Exchange extends AbstractContract {
         this.safeBlockGasLimit = this.ethereumConnection.safeBlockGasLimit;
         this.rates = options.rates;
         this.token = options.token;
-        this.decimalsDiv = options.decimalsDiv;
         this.ONE_ETH_IN_WEI = options.ONE_ETH_IN_WEI;
     }
 
@@ -149,7 +147,7 @@ export class Exchange extends AbstractContract {
 
     public async getOrders(orderDirection: OrderDirection, offset: number): Promise<IOrderBook> {
         const blockGasLimit: number = this.safeBlockGasLimit;
-        const decimalsDiv = await this.decimalsDiv;
+        const decimalsDiv = await this.token.decimalsDiv;
         // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
         const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
