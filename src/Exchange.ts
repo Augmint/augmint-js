@@ -83,7 +83,6 @@ export class Exchange extends AbstractContract {
         this.ethereumConnection = options.ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
         this.safeBlockGasLimit = this.ethereumConnection.safeBlockGasLimit;
-        this.tokenPeggedSymbol = options.token.peggedSymbol;
         this.rates = options.rates;
         this.token = options.token;
         this.decimalsDiv = options.decimalsDiv;
