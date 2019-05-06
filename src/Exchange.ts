@@ -2,9 +2,12 @@ import BigNumber from "bignumber.js";
 import { Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
-import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
+import { AugmintToken } from "./AugmintToken";
+import { CHUNK_SIZE, DECIMALS, DECIMALS_DIV, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
+import { InvalidPriceError, InvalidTokenAmountError } from "./Errors";
 import { EthereumConnection } from "./EthereumConnection";
-import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS } from "./gas";
+import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PLACE_ORDER_GAS } from "./gas";
+import { Augmint } from "./index";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
 
@@ -50,7 +53,7 @@ interface ISellOrderCalc extends ISellOrder {
 }
 
 interface IExchangeOptions {
-    peggedSymbol: Promise<string>;
+    token: AugmintToken;
     rates: Rates;
     decimalsDiv: Promise<number>;
     ONE_ETH_IN_WEI: number;
@@ -67,6 +70,7 @@ export class Exchange extends AbstractContract {
     private web3: any;
     private safeBlockGasLimit: number;
     /** fiat symbol this exchange is linked to (via Exchange.augmintToken) */
+    private token: AugmintToken;
     private tokenPeggedSymbol: Promise<string>;
     private rates: Rates;
     private decimalsDiv: Promise<number>;
@@ -79,8 +83,9 @@ export class Exchange extends AbstractContract {
         this.ethereumConnection = options.ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
         this.safeBlockGasLimit = this.ethereumConnection.safeBlockGasLimit;
-        this.tokenPeggedSymbol = options.peggedSymbol;
+        this.tokenPeggedSymbol = options.token.peggedSymbol;
         this.rates = options.rates;
+        this.token = options.token;
         this.decimalsDiv = options.decimalsDiv;
         this.ONE_ETH_IN_WEI = options.ONE_ETH_IN_WEI;
     }
@@ -200,6 +205,53 @@ export class Exchange extends AbstractContract {
         );
 
         return orders;
+    }
+
+    public placeSellTokenOrder(price: number, amount: number): Transaction {
+        const amountToSend: number = amount * DECIMALS_DIV;
+
+        if (!Number.isInteger(price)) {
+            throw new InvalidPriceError(
+                ` placeSellTokenOrder error: Provided price of ${price} is not an integer. Price % value must be provided as parts per million.`
+            );
+        }
+
+        if (Math.round(amountToSend) !== amountToSend) {
+            throw new InvalidTokenAmountError(
+                ` placeSellTokenOrder error: provided price of ${amountToSend} has more decimals than allowed by AugmintToken decimals of ${DECIMALS}`
+            );
+        }
+
+        const web3Tx: TransactionObject<void> = this.token.instance.methods.transferAndNotify(
+            this.address,
+            amountToSend.toString(),
+            price.toString()
+        );
+
+        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: PLACE_ORDER_GAS,
+            to: this.address
+        });
+
+        return transaction;
+    }
+
+    public placeBuyTokenOrder(price: number, amount: BigNumber): Transaction {
+        if (!Number.isInteger(price)) {
+            throw new InvalidPriceError(
+                ` placeSellTokenOrder error: Provided price of ${price} is not an integer. Price % value must be provided as parts per million.`
+            );
+        }
+
+        const web3Tx: TransactionObject<string> = this.instance.methods.placeBuyTokenOrder(price.toString());
+
+        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: PLACE_ORDER_GAS,
+            to: this.address,
+            value: amount
+        });
+
+        return transaction;
     }
 
     public isOrderBetter(o1: IGenericOrder, o2: IGenericOrder): number {

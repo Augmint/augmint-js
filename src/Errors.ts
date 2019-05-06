@@ -27,6 +27,15 @@ export class InvalidPriceError extends AugmintJsError {
 }
 
 // tslint:disable-next-line:max-classes-per-file
+export class InvalidTokenAmountError extends AugmintJsError {
+    constructor(message: string) {
+        super(message);
+        this.name = InvalidPriceError.name;
+        Object.setPrototypeOf(this, InvalidTokenAmountError.prototype);
+    }
+}
+
+// tslint:disable-next-line:max-classes-per-file
 export class TransactionError extends AugmintJsError {
     constructor(message: string) {
         super(message);
