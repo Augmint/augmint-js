@@ -1,10 +1,10 @@
 import { Contract } from "web3-eth-contract";
 import { DeployedContract } from "./DeployedContract";
 
-export type IDeployedContractList = Array<DeployedContract<Contract>>
+export type IDeployedContractList = Array<DeployedContract<Contract>>;
 
 export interface IDeployedContracts {
-    [propName: string]: IDeployedContractList
+    [propName: string]: IDeployedContractList;
 }
 
 export interface ILatestContracts {
@@ -23,8 +23,8 @@ export class DeployedEnvironment {
         this.contracts[role] = contractList;
     }
 
-    public getRole(role:string): IDeployedContractList {
-        return this.contracts[role]
+    public getRole(role: string): IDeployedContractList {
+        return this.contracts[role];
     }
 
     public getLatestContracts(): ILatestContracts {
@@ -47,6 +47,9 @@ export class DeployedEnvironment {
 
     public getContractFromAddresses(name: string, addresses: string[]): IDeployedContractList {
         const contractList: IDeployedContractList = this.contracts[name];
-        return contractList.filter((contract:DeployedContract<Contract>) => addresses.indexOf(contract.deployedAddress) > -1)
+        return contractList.filter(
+            (contract: DeployedContract<Contract>) =>
+                addresses.map((addr: string) => addr.toLowerCase()).indexOf(contract.deployedAddress.toLowerCase()) > -1
+        );
     }
 }
