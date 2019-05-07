@@ -116,7 +116,6 @@ export class Augmint {
             this._exchange = new Exchange(exchangeContract.connect(this.web3), {
                 token: this.token,
                 rates: this.rates,
-                ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI,
                 ethereumConnection: this.ethereumConnection
             });
         }
