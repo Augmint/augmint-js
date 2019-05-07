@@ -1,5 +1,5 @@
 const { assert } = require("chai");
-const BigNumber = require("bignumber.js");
+const BN = require("bn.js");
 const { Augmint, utils } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
@@ -23,7 +23,7 @@ describe("Rates connection", () => {
 });
 
 describe("Rates getters", () => {
-    const EXPECTED_RATE = 213.14;
+    const EXPECTED_RATE = new BN(213.14 * DECIMALS_DIV);
     let snapshotId;
     let myAugmint;
 
@@ -35,18 +35,13 @@ describe("Rates getters", () => {
         const BYTES_CCY = myAugmint.ethereumConnection.web3.utils.asciiToHex(CCY);
         const rates = myAugmint.rates;
 
-        await rates.instance.methods.setRate(BYTES_CCY, EXPECTED_RATE * DECIMALS_DIV).send({
+        await rates.instance.methods.setRate(BYTES_CCY, EXPECTED_RATE.toString()).send({
             from: myAugmint.ethereumConnection.accounts[0]
         });
     });
 
     after(async () => {
         await revertSnapshot(myAugmint.ethereumConnection.web3, snapshotId);
-    });
-
-    it("getBnEthFiatRate", async () => {
-        const bnEthFiatRate = await myAugmint.rates.getBnEthFiatRate(CCY);
-        assert.deepEqual(bnEthFiatRate, new BigNumber(EXPECTED_RATE * DECIMALS_DIV));
     });
 
     it("getEthFiatRate", async () => {
@@ -57,7 +52,6 @@ describe("Rates getters", () => {
     it("getAugmintRate", async () => {
         const augmintRate = await myAugmint.rates.getAugmintRate(CCY);
         assert.equal(augmintRate.rate, EXPECTED_RATE);
-        assert.deepEqual(augmintRate.bnRate, new BigNumber(EXPECTED_RATE * DECIMALS_DIV));
         assert.instanceOf(augmintRate.lastUpdated, Date);
     });
 });

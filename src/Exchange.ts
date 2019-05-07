@@ -95,12 +95,12 @@ export class Exchange extends AbstractContract {
      */
     public async getMatchingOrders(gasLimit: number = this.safeBlockGasLimit): Promise<IMatchingOrders> {
         const tokenPeggedSymbol: string = await this.tokenPeggedSymbol;
-        const [orderBook, bnEthFiatRate]: [IOrderBook, BigNumber] = await Promise.all([
+        const [orderBook, ethFiatRate]: [IOrderBook, BN] = await Promise.all([
             this.getOrderBook(),
-            this.rates.getBnEthFiatRate(tokenPeggedSymbol)
+            this.rates.getEthFiatRate(tokenPeggedSymbol)
         ]);
 
-        return this.calculateMatchingOrders(orderBook.buyOrders, orderBook.sellOrders, bnEthFiatRate, gasLimit);
+        return this.calculateMatchingOrders(orderBook.buyOrders, orderBook.sellOrders, ethFiatRate, gasLimit);
     }
 
     /**
@@ -270,14 +270,14 @@ export class Exchange extends AbstractContract {
      * calculate matching pairs from ordered ordebook for sending in Exchange.matchMultipleOrders ethereum tx
      * @param  {object} _buyOrders     must be ordered by price descending then by id ascending
      * @param  {array} _sellOrders    must be ordered by price ascending then by id ascending
-     * @param  {BigNumber} bnEthFiatRate current ETHFiat rate to use for calculation
+     * @param  {BN} ethFiatRate current ETHFiat rate to use for calculation
      * @param  {number} gasLimit       return as many matches as it fits to gasLimit based on gas cost estimate.
      * @return {object}                pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
      */
     public calculateMatchingOrders(
         _buyOrders: IBuyOrder[],
         _sellOrders: ISellOrder[],
-        bnEthFiatRate: BigNumber,
+        ethFiatRate: BN,
         gasLimit: number
     ): IMatchingOrders {
         const sellIds: number[] = [];
@@ -313,7 +313,7 @@ export class Exchange extends AbstractContract {
 
             const bnMatchPrice: BigNumber = buyOrder.id > sellOrder.id ? sellOrder.bnPrice : buyOrder.bnPrice;
 
-            buyOrder.bnTokenValue = bnEthFiatRate
+            buyOrder.bnTokenValue = new BigNumber(ethFiatRate)
                 .mul(PPM_DIV)
                 .div(bnMatchPrice)
                 .mul(buyOrder.bnEthAmount)
@@ -321,7 +321,7 @@ export class Exchange extends AbstractContract {
 
             sellOrder.bnEthValue = sellOrder.bnAmount
                 .mul(bnMatchPrice)
-                .div(bnEthFiatRate)
+                .div(ethFiatRate)
                 .div(PPM_DIV);
 
             if (sellOrder.bnAmount.lt(buyOrder.bnTokenValue)) {

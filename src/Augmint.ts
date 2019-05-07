@@ -104,12 +104,7 @@ export class Augmint {
             const ratesContract: DeployedContract<RatesInstance> = this.deployedEnvironment.getLatestContract(
                 AugmintContracts.Rates
             );
-            this._rates = new Rates(ratesContract.connect(this.web3), {
-                decimals: this.token.decimals,
-                decimalsDiv: this.token.decimalsDiv,
-                constants,
-                ethereumConnection: this.ethereumConnection
-            });
+            this._rates = new Rates(ratesContract.connect(this.web3), this.ethereumConnection);
         }
         return this._rates;
     }
