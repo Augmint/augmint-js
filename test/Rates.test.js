@@ -46,12 +46,12 @@ describe("Rates getters", () => {
 
     it("getEthFiatRate", async () => {
         const ethFiatRate = await myAugmint.rates.getEthFiatRate(CCY);
-        assert.equal(ethFiatRate, EXPECTED_RATE);
+        assert(EXPECTED_RATE.eq(ethFiatRate));
     });
 
     it("getAugmintRate", async () => {
         const augmintRate = await myAugmint.rates.getAugmintRate(CCY);
-        assert.equal(augmintRate.rate, EXPECTED_RATE);
+        assert(EXPECTED_RATE.eq(augmintRate.rate));
         assert.instanceOf(augmintRate.lastUpdated, Date);
     });
 });

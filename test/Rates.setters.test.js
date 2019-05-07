@@ -47,7 +47,7 @@ describe("Rates setters", () => {
 
         const newStoredRate = await rates.getAugmintRate(CCY);
 
-        assert.equal(newStoredRate.rate, expectedPrice);
+        assert(expectedPrice.eq(newStoredRate.rate));
     });
 
     it("setRate - signed", async () => {
@@ -72,7 +72,7 @@ describe("Rates setters", () => {
 
         const newStoredRate = await rates.getAugmintRate(CCY);
 
-        assert.equal(newStoredRate.rate, expectedPrice);
+        assert(expectedPrice.eq(newStoredRate.rate));
     });
 
     it("setRate = 0", async () => {
@@ -88,7 +88,7 @@ describe("Rates setters", () => {
         });
 
         const newStoredRate = await rates.getAugmintRate(CCY);
-        assert.equal(newStoredRate.rate, expectedPrice);
+        assert(expectedPrice.eq(newStoredRate.rate));
     });
 
 });

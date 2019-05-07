@@ -40,7 +40,7 @@ export class Rates extends AbstractContract {
                 }
             });
 
-        return rate;
+        return new BN(rate);
     }
 
     public async getAugmintRate(currency: string): Promise<IRateInfo> {
@@ -50,7 +50,7 @@ export class Rates extends AbstractContract {
             .call();
 
         return {
-            rate: storedRateInfo.rate,
+            rate: new BN(storedRateInfo.rate),
             lastUpdated: new Date(parseInt(storedRateInfo.lastUpdated) * 1000)
         };
     }
