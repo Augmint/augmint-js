@@ -88,7 +88,7 @@ describe("Transaction", () => {
         const receipt = await tx.getTxReceipt();
 
         assert(txHash);
-        assert(receipt.status);
+        assert(receipt.status === true);
 
         sinon.assert.calledWithExactly(onceTxHashSpy, txHash);
         sinon.assert.calledWithExactly(onceReceiptSpy, receipt);
@@ -151,6 +151,7 @@ describe("Transaction", () => {
         });
 
         const receipt = await tx.getTxReceipt();
+        assert(receipt.status === false);
 
         assert(txHash);
         assert(!receipt.status);
@@ -296,7 +297,7 @@ describe("Transaction", () => {
         const receipt = await tx.getTxReceipt();
 
         assert(txHash);
-        assert(receipt.status);
+        assert(receipt.status === true);
 
         sinon.assert.calledWithExactly(onceTxHashSpy, txHash);
         sinon.assert.calledWithExactly(onceReceiptSpy, receipt);
@@ -311,7 +312,7 @@ describe("Transaction", () => {
         sinon.assert.calledWithExactly(onConfirmationSpy, 1, receipt);
 
         const confirmedReceipt = await confirmedReceiptPromise;
-        assert(confirmedReceipt.status);
+        assert(confirmedReceipt.status === true);
         sinon.assert.calledWithExactly(onceConfirmedReceiptSpy, receipt);
 
         // confirmations should be still received after confirmaton

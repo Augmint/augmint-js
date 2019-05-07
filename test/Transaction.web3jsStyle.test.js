@@ -51,7 +51,7 @@ describe("Transaction - web3js events style", () => {
         const receipt = await tx.getTxReceipt();
 
         assert(txHash);
-        assert(receipt.status);
+        assert(receipt.status === true);
 
         sinon.assert.calledWithExactly(txHashSpy, txHash);
         sinon.assert.calledWithExactly(receiptSpy, receipt);
@@ -102,7 +102,7 @@ describe("Transaction - web3js events style", () => {
         const receipt = await tx.getTxReceipt();
 
         assert(txHash);
-        assert(!receipt.status);
+        assert(!receipt.status === false);
 
         sinon.assert.calledWithExactly(txHashSpy, txHash);
         sinon.assert.calledWithExactly(receiptSpy, receipt);
@@ -229,7 +229,7 @@ describe("Transaction - web3js events style", () => {
         const receipt = await tx.getTxReceipt();
 
         assert(txHash);
-        assert(receipt.status);
+        assert(receipt.status === true);
 
         sinon.assert.calledWithExactly(txHashSpy, txHash);
         sinon.assert.calledWithExactly(receiptSpy, receipt);
