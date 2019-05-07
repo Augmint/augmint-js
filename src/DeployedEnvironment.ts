@@ -45,11 +45,12 @@ export class DeployedEnvironment {
         return contractList.slice(1);
     }
 
-    public getContractFromAddresses(name: string, addresses: string[]): IDeployedContractList {
+    public getContractFromAddresses(name: string, _addresses: string[]): IDeployedContractList {
         const contractList: IDeployedContractList = this.contracts[name];
+        const addresses: string[] = _addresses.map((addr: string) => addr.toLowerCase());
+
         return contractList.filter(
-            (contract: DeployedContract<Contract>) =>
-                addresses.map((addr: string) => addr.toLowerCase()).indexOf(contract.deployedAddress.toLowerCase()) > -1
+            (contract: DeployedContract<Contract>) => addresses.indexOf(contract.deployedAddress.toLowerCase()) > -1
         );
     }
 }
