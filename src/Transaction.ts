@@ -1,3 +1,4 @@
+import { BN } from "bn.js";
 import { EventEmitter } from "events";
 import PromiEvent from "web3-core-promievent";
 import { TransactionObject } from "../generated/types/types";
@@ -10,6 +11,7 @@ interface ISendOptions {
     gasLimit?: number;
     gasPrice?: number;
     nonce?: number;
+    value?: BN;
 }
 
 interface ITxToSign extends ISendOptions {

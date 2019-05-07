@@ -30,10 +30,7 @@ export class Augmint {
         Object.keys(stubs).forEach(stub => {
             const role = stub;
             const contractListStub = stubs[stub];
-            deployedEnvironment.addRole(
-                role,
-                contractListStub.map(contractStub => new DeployedContract(contractStub))
-            );
+            deployedEnvironment.addRole(role, contractListStub.map(contractStub => new DeployedContract(contractStub)));
         });
         return deployedEnvironment;
     }
@@ -52,7 +49,7 @@ export class Augmint {
         this.ethereumConnection = ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
         if (!environment) {
-            const networkId:string = this.ethereumConnection.networkId.toString(10);
+            const networkId: string = this.ethereumConnection.networkId.toString(10);
             const selectedDeployedEnvironment = deployments.find(
                 (item: DeployedEnvironment) => item.name === networkId
             );
@@ -94,7 +91,9 @@ export class Augmint {
 
     get token(): AugmintToken {
         if (!this._token) {
-            const tokenContract: DeployedContract<TokenAEur> = this.deployedEnvironment.getLatestContract(AugmintContracts.TokenAEur);
+            const tokenContract: DeployedContract<TokenAEur> = this.deployedEnvironment.getLatestContract(
+                AugmintContracts.TokenAEur
+            );
             this._token = new AugmintToken(tokenContract.connect(this.web3), { web3: this.web3 });
         }
         return this._token;
@@ -102,7 +101,9 @@ export class Augmint {
 
     get rates(): Rates {
         if (!this._rates) {
-            const ratesContract: DeployedContract<RatesInstance> = this.deployedEnvironment.getLatestContract(AugmintContracts.Rates);
+            const ratesContract: DeployedContract<RatesInstance> = this.deployedEnvironment.getLatestContract(
+                AugmintContracts.Rates
+            );
             this._rates = new Rates(ratesContract.connect(this.web3), {
                 decimals: this.token.decimals,
                 decimalsDiv: this.token.decimalsDiv,
@@ -115,10 +116,11 @@ export class Augmint {
 
     get exchange(): Exchange {
         if (!this._exchange) {
-            const exchangeContract: DeployedContract<ExchangeInstance> = this.deployedEnvironment.getLatestContract(AugmintContracts.Exchange);
+            const exchangeContract: DeployedContract<ExchangeInstance> = this.deployedEnvironment.getLatestContract(
+                AugmintContracts.Exchange
+            );
             this._exchange = new Exchange(exchangeContract.connect(this.web3), {
-                decimalsDiv: this.token.decimalsDiv,
-                peggedSymbol: this.token.peggedSymbol,
+                token: this.token,
                 rates: this.rates,
                 ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI,
                 ethereumConnection: this.ethereumConnection
@@ -131,9 +133,13 @@ export class Augmint {
         return this._environment;
     }
 
-    public getLegacyTokens():AugmintToken[] {
-        const legacyTokens: Array<DeployedContract<TokenAEur>> = this.deployedEnvironment.getLegacyContracts(AugmintContracts.TokenAEur);
-        return legacyTokens.map(tokenContract => new AugmintToken(tokenContract.connect(this.web3), { web3: this.web3 }))
+    public getLegacyTokens(): AugmintToken[] {
+        const legacyTokens: Array<DeployedContract<TokenAEur>> = this.deployedEnvironment.getLegacyContracts(
+            AugmintContracts.TokenAEur
+        );
+        return legacyTokens.map(
+            tokenContract => new AugmintToken(tokenContract.connect(this.web3), { web3: this.web3 })
+        );
     }
 
     //  myaugmint.getLegacyExchanges(Augmint.constants.SUPPORTED_LEGACY_EXCHANGES)
@@ -149,7 +155,7 @@ export class Augmint {
         }
         const options = {
             decimalsDiv: this.token.decimalsDiv,
-            peggedSymbol: this.token.peggedSymbol,
+            token: this.token, // FIXME: This should come from the exchange contract's augmintToken property
             rates: this.rates,
             ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI,
             ethereumConnection: this.ethereumConnection
