@@ -102,7 +102,7 @@ describe("Transaction - web3js events style", () => {
         const receipt = await tx.getTxReceipt();
 
         assert(txHash);
-        assert(!receipt.status === false);
+        assert(receipt.status === false);
 
         sinon.assert.calledWithExactly(txHashSpy, txHash);
         sinon.assert.calledWithExactly(receiptSpy, receipt);
