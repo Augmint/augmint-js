@@ -73,7 +73,7 @@ const tx = augmint.rates.setRate(CCY, rate)
   .send([{ from: "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d" }]) // {from: 0x..} only needed if it's not signed
   .onceTxHash( txHash => {.. })
   .onceReceipt( receipt => { ...})
-  .onConfirmation( (confirmationNumber, receipt) => {...}
+  .onConfirmation( confirmationNumber => {...}
   .onceReceiptConfirmed(5, receipt => {...})
   .onceTxRevert( (error, receipt) => { ....});
 

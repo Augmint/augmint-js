@@ -292,7 +292,7 @@ export class Transaction extends EventEmitter {
 
             this.on("confirmation", (confNum: number, receipt: ITransactionReceipt) => {
                 if (confNum >= confirmationNumber) {
-                    resolve(receipt);
+                    resolve(this.txReceipt);
                 }
             });
 
@@ -339,6 +339,7 @@ export class Transaction extends EventEmitter {
 
             this.emit("transactionHash", hash);
         })
+
             .once("receipt", (receipt: ITransactionReceipt) => {
                 this.setReceipt(receipt);
             })
@@ -353,22 +354,23 @@ export class Transaction extends EventEmitter {
                     }
 
                     // workaround that web3js beta36 is not emmitting confirmation events when tx fails on tx REVERT
-                    //   NB: we are using the tx receipt fetched earlier because the format is slightly different
-                    this.sentTx.on("confirmation", (confirmationNumber: number, _receipt: ITransactionReceipt) => {
-                        this.confirmationCount = confirmationNumber;
-                        this.emit("confirmation", confirmationNumber, this.txReceipt);
-                    });
+                    this.sentTx.on(
+                        "confirmation",
+                        (confirmationNumber: number, receiptFromConf: ITransactionReceipt) => {
+                            this.confirmationCount = confirmationNumber;
+                            this.emit("confirmation", confirmationNumber);
+                        }
+                    );
 
                     this.emit("txRevert", this.sendError, this.txReceipt);
                 }
 
                 this.emit("error", this.sendError, this.txReceipt);
             })
-            .on("confirmation", (confirmationNumber: number, receipt: ITransactionReceipt) => {
-                this.setReceipt(receipt);
 
+            .on("confirmation", (confirmationNumber: number, receipt: ITransactionReceipt) => {
                 this.confirmationCount = confirmationNumber;
-                this.emit("confirmation", confirmationNumber, this.txReceipt);
+                this.emit("confirmation", confirmationNumber);
             });
     }
 

@@ -64,7 +64,8 @@ describe("Transaction - web3js events style", () => {
         const confirmedReceipt = await tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
         assert.deepEqual(receipt, confirmedReceipt);
         assert.isAtLeast(confirmationSpy.callCount, CONFIRMATION_NUMBER);
-        sinon.assert.calledWith(confirmationSpy, 1, receipt);
+        sinon.assert.calledWithExactly(confirmationSpy.firstCall, 0);
+        sinon.assert.calledWithExactly(confirmationSpy.lastCall, CONFIRMATION_NUMBER);
     });
 
     it("send Transaction to fail - tx REVERT", async () => {
@@ -115,15 +116,15 @@ describe("Transaction - web3js events style", () => {
         assert.isAtLeast(confirmationSpy.callCount, CONFIRMATION_NUMBER);
 
         // this triggered this way ganache --blockTime 1 flag. without it's different (web3 beta36)
-        sinon.assert.calledWithExactly(confirmationSpy.firstCall, 0, undefined);
-        sinon.assert.calledWithExactly(confirmationSpy.secondCall, 1, receipt);
-        sinon.assert.calledWithExactly(confirmationSpy.lastCall, CONFIRMATION_NUMBER, receipt);
+        sinon.assert.calledWithExactly(confirmationSpy.firstCall, 0);
+        sinon.assert.calledWithExactly(confirmationSpy.secondCall, 1);
+        sinon.assert.calledWithExactly(confirmationSpy.lastCall, CONFIRMATION_NUMBER);
 
         // confirmations should be received
         await mine(ethereumConnection.web3, 1);
         await tx.getConfirmedReceipt(CONFIRMATION_NUMBER + 1);
         assert.isAtLeast(confirmationSpy.callCount, CONFIRMATION_NUMBER + 1);
-        sinon.assert.calledWithExactly(confirmationSpy.lastCall, CONFIRMATION_NUMBER + 1, receipt);
+        sinon.assert.calledWithExactly(confirmationSpy.lastCall, CONFIRMATION_NUMBER + 1);
     });
 
     it("send Transaction to fail before chain", async () => {
@@ -239,6 +240,6 @@ describe("Transaction - web3js events style", () => {
         await mine(ethereumConnection.web3, CONFIRMATION_NUMBER);
         await tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
         assert.isAtLeast(confirmationSpy.callCount, CONFIRMATION_NUMBER);
-        sinon.assert.calledWithExactly(confirmationSpy.lastCall, CONFIRMATION_NUMBER, receipt);
+        sinon.assert.calledWithExactly(confirmationSpy.lastCall, CONFIRMATION_NUMBER);
     });
 });
