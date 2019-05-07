@@ -43,7 +43,6 @@ export class Augmint {
     private _token: AugmintToken;
     private _rates: Rates;
     private _exchange: Exchange;
-    private _environment: string;
 
     private constructor(ethereumConnection: EthereumConnection, environment?: DeployedEnvironment) {
         this.ethereumConnection = ethereumConnection;
@@ -122,10 +121,6 @@ export class Augmint {
             });
         }
         return this._exchange;
-    }
-
-    get environment(): string {
-        return this._environment;
     }
 
     public getLegacyTokens(): AugmintToken[] {
