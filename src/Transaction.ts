@@ -292,7 +292,7 @@ export class Transaction extends EventEmitter {
 
             this.on("confirmation", (confNum: number, receipt: ITransactionReceipt) => {
                 if (confNum >= confirmationNumber) {
-                    resolve(receipt);
+                    resolve(this.txReceipt);
                 }
             });
 
@@ -339,12 +339,9 @@ export class Transaction extends EventEmitter {
 
             this.emit("transactionHash", hash);
         })
+
             .once("receipt", (receipt: ITransactionReceipt) => {
-                if (!this.txReceipt) {
-                    // in case "error" triggered earlier we already have a receipt
-                    this.txReceipt = receipt;
-                }
-                this.emit("receipt", this.txReceipt);
+                this.setReceipt(receipt);
             })
 
             .on("error", async (error: any, receipt?: ITransactionReceipt) => {
@@ -353,25 +350,34 @@ export class Transaction extends EventEmitter {
                 if (this.txHash) {
                     if (!this.txReceipt) {
                         // workaround that web3js beta36 is not emmitting receipt event when tx fails on tx REVERT
-                        this.txReceipt = await this.ethereumConnection.web3.eth.getTransactionReceipt(this.txHash);
-                        this.emit("receipt", this.txReceipt);
+                        this.setReceipt(await this.ethereumConnection.web3.eth.getTransactionReceipt(this.txHash));
                     }
 
                     // workaround that web3js beta36 is not emmitting confirmation events when tx fails on tx REVERT
-                    //   NB: we are using the tx receipt fetched earlier because the format is slightly different
-                    this.sentTx.on("confirmation", (confirmationNumber: number, _receipt: ITransactionReceipt) => {
-                        this.confirmationCount = confirmationNumber;
-                        this.emit("confirmation", confirmationNumber, this.txReceipt);
-                    });
+                    this.sentTx.on(
+                        "confirmation",
+                        (confirmationNumber: number, receiptFromConf: ITransactionReceipt) => {
+                            this.confirmationCount = confirmationNumber;
+                            this.emit("confirmation", confirmationNumber);
+                        }
+                    );
 
                     this.emit("txRevert", this.sendError, this.txReceipt);
                 }
 
                 this.emit("error", this.sendError, this.txReceipt);
             })
+
             .on("confirmation", (confirmationNumber: number, receipt: ITransactionReceipt) => {
                 this.confirmationCount = confirmationNumber;
-                this.emit("confirmation", confirmationNumber, this.txReceipt);
+                this.emit("confirmation", confirmationNumber);
             });
+    }
+
+    private setReceipt(receipt: ITransactionReceipt): void {
+        if (!this.txReceipt && receipt) {
+            this.txReceipt = receipt;
+            this.emit("receipt", this.txReceipt);
+        }
     }
 }

@@ -88,7 +88,7 @@ describe("Transaction", () => {
         const receipt = await tx.getTxReceipt();
 
         assert(txHash);
-        assert(receipt.status);
+        assert(receipt.status === true);
 
         sinon.assert.calledWithExactly(onceTxHashSpy, txHash);
         sinon.assert.calledWithExactly(onceReceiptSpy, receipt);
@@ -104,7 +104,7 @@ describe("Transaction", () => {
         sinon.assert.calledWithExactly(onceConfirmedReceiptSpy, receipt);
 
         assert.isAtLeast(onConfirmationSpy.callCount, CONFIRMATION_NUMBER);
-        sinon.assert.calledWithExactly(onConfirmationSpy, 1, receipt);
+        sinon.assert.calledWithExactly(onConfirmationSpy, 1);
 
         // confirmations should be still received after confirmaton
         await mine(ethereumConnection.web3, 1);
@@ -149,14 +149,14 @@ describe("Transaction", () => {
                     error
             );
         });
+        assert(txHash);
+        sinon.assert.calledWithExactly(onceTxHashSpy, txHash);
 
         const receipt = await tx.getTxReceipt();
+        assert(receipt.status === false);
 
-        assert(txHash);
-        assert(!receipt.status);
-
-        sinon.assert.calledWithExactly(onceTxHashSpy, txHash);
         sinon.assert.calledWithExactly(onceReceiptSpy, receipt);
+
         sinon.assert.calledWithExactly(onceTxRevertSpy, errorCaught, receipt);
         assert.equal(onceConfirmedReceiptSpy.callCount, 0);
 
@@ -165,21 +165,20 @@ describe("Transaction", () => {
         await mine(ethereumConnection.web3, CONFIRMATION_NUMBER);
 
         const confirmedReceipt = await tx.getConfirmedReceipt(CONFIRMATION_NUMBER);
-        assert.deepEqual(receipt, confirmedReceipt);
+        assert.deepEqual(confirmedReceipt, receipt);
         sinon.assert.calledWithExactly(onceConfirmedReceiptSpy, confirmedReceipt);
 
         assert.isAtLeast(onConfirmationSpy.callCount, CONFIRMATION_NUMBER);
 
-        // this triggered this way ganache --blockTime 1 flag. without it's different (web3 beta36)
-        sinon.assert.calledWithExactly(onConfirmationSpy.firstCall, 0, undefined);
-        sinon.assert.calledWithExactly(onConfirmationSpy.secondCall, 1, receipt);
-        sinon.assert.calledWithExactly(onConfirmationSpy.lastCall, CONFIRMATION_NUMBER, receipt);
+        sinon.assert.calledWithExactly(onConfirmationSpy.firstCall, 0);
+        sinon.assert.calledWithExactly(onConfirmationSpy.secondCall, 1);
+        sinon.assert.calledWithExactly(onConfirmationSpy.lastCall, CONFIRMATION_NUMBER);
 
         // confirmations should be still received
         await mine(ethereumConnection.web3, 1);
         await tx.getConfirmedReceipt(CONFIRMATION_NUMBER + 1);
         assert.isAtLeast(onConfirmationSpy.callCount, CONFIRMATION_NUMBER + 1);
-        sinon.assert.calledWithExactly(onConfirmationSpy.lastCall, CONFIRMATION_NUMBER + 1, receipt);
+        sinon.assert.calledWithExactly(onConfirmationSpy.lastCall, CONFIRMATION_NUMBER + 1);
     });
 
     it("send Transaction to fail before chain", async () => {
@@ -296,7 +295,7 @@ describe("Transaction", () => {
         const receipt = await tx.getTxReceipt();
 
         assert(txHash);
-        assert(receipt.status);
+        assert(receipt.status === true);
 
         sinon.assert.calledWithExactly(onceTxHashSpy, txHash);
         sinon.assert.calledWithExactly(onceReceiptSpy, receipt);
@@ -308,10 +307,10 @@ describe("Transaction", () => {
         await mine(ethereumConnection.web3, CONFIRMATION_NUMBER);
 
         assert.isAtLeast(onConfirmationSpy.callCount, CONFIRMATION_NUMBER);
-        sinon.assert.calledWithExactly(onConfirmationSpy, 1, receipt);
+        sinon.assert.calledWithExactly(onConfirmationSpy, 1);
 
         const confirmedReceipt = await confirmedReceiptPromise;
-        assert(confirmedReceipt.status);
+        assert(confirmedReceipt.status === true);
         sinon.assert.calledWithExactly(onceConfirmedReceiptSpy, receipt);
 
         // confirmations should be still received after confirmaton
