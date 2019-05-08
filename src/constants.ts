@@ -20,9 +20,7 @@ export enum OrderDirection {
 }
 
 export interface ISupportedLegacyContracts {
-    1?: string[] | null;
-    4?: string[] | null;
-    999?: string[] | null;
+    [propName: string]: string[];
 }
 
 /* List of old augmint token deploy addresses by network id */

@@ -62,7 +62,10 @@ if (web3) {
 
 const augmint = await Augmint.create(connectionConfig);
 
-augmint.rates.setRate(CCY, rate)
+// To catch errors you need to use txHash / confirmation / receipt getters:
+try {
+
+const tx = augmint.rates.setRate(CCY, rate)
   // optionally you can sign with a privatekey
   // .sign(privatekey, {from: "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d"} )
   //
@@ -70,12 +73,11 @@ augmint.rates.setRate(CCY, rate)
   .send([{ from: "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d" }]) // {from: 0x..} only needed if it's not signed
   .onceTxHash( txHash => {.. })
   .onceReceipt( receipt => { ...})
-  .onConfirmation( (confirmationNumber, receipt) => {...}
+  .onConfirmation( confirmationNumber => {...}
   .onceReceiptConfirmed(5, receipt => {...})
   .onceTxRevert( (error, receipt) => { ....});
 
-// To catch errors you need to use txHash / confirmation / receipt getters:
-try {
+
   const txHash = await tx.getTxHash();
 
   // receipt as soon as we got it (even with 0 confirmation):
@@ -85,7 +87,7 @@ try {
   const confirmedReceipt = await tx.getConfirmedReceipt(12);
 
 } catch (error) {
-  // These Promises are rejecting with sending errors but not when tx reverts!
+  // .send / sign throwing or rejecting with sending errors but not when tx reverts!
   // Also, you need to take care of timeouts. E.g. use Augmint.utils.promiseTimeout()
  }
 

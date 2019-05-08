@@ -16,10 +16,6 @@ function getBnPrice(price) {
     return new BigNumber((price * PPM_DIV).toFixed(0));
 }
 
-describe("getMatchMultipleOrdersTx", () => {
-    it("should match orders on chain");
-});
-
 describe("calculateMatchingOrders", () => {
     const ETHEUR_RATE = new BigNumber(50000);
     const BN_ONE = new BigNumber(1);

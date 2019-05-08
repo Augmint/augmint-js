@@ -4,7 +4,6 @@ const { Augmint, utils } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 
-const { AugmintJsError, ZeroRateError } = Augmint.Errors;
 const config = loadEnv();
 const CCY = "EUR";
 const DECIMALS_DIV = 100;
@@ -55,24 +54,10 @@ describe("Rates getters", () => {
         assert.equal(ethFiatRate, EXPECTED_RATE);
     });
 
-    it("getBnEthFiatRate - invalid ccy", async () => {
-        await myAugmint.rates.getEthFiatRate("INVALID").catch(error => {
-            assert.instanceOf(error, AugmintJsError);
-            assert.instanceOf(error, ZeroRateError);
-        });
-    });
-
     it("getAugmintRate", async () => {
         const augmintRate = await myAugmint.rates.getAugmintRate(CCY);
         assert.equal(augmintRate.rate, EXPECTED_RATE);
         assert.deepEqual(augmintRate.bnRate, new BigNumber(EXPECTED_RATE * DECIMALS_DIV));
         assert.instanceOf(augmintRate.lastUpdated, Date);
-    });
-
-    it("getAugmintRate - invalid ccy", async () => {
-        await myAugmint.rates.getAugmintRate("INVALID").catch(error => {
-            assert.instanceOf(error, AugmintJsError);
-            assert.instanceOf(error, ZeroRateError);
-        });
     });
 });
