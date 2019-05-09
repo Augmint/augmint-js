@@ -146,7 +146,6 @@ export class Augmint {
             decimalsDiv: this.token.decimalsDiv,
             token: this.token, // FIXME: This should come from the exchange contract's augmintToken property
             rates: this.rates,
-            ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI,
             ethereumConnection: this.ethereumConnection
         };
         return legacyContracts.map(
