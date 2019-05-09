@@ -6,7 +6,7 @@ import { DeployedContract, IDeploymentItem } from "./DeployedContract";
 import { DeployedEnvironment, ILatestContracts } from "./DeployedEnvironment";
 import * as Errors from "./Errors";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
-import { Exchange } from "./Exchange";
+import { Exchange, IExchangeOptions } from "./Exchange";
 import * as gas from "./gas";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
@@ -151,8 +151,7 @@ export class Augmint {
                 throw new Error("legacy contracts length mismatch!");
             }
         }
-        const options = {
-            decimalsDiv: this.token.decimalsDiv,
+        const options: IExchangeOptions = {
             token: this.token, // FIXME: This should come from the exchange contract's augmintToken property
             rates: this.rates,
             ethereumConnection: this.ethereumConnection
