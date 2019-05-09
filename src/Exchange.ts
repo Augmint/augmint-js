@@ -278,6 +278,8 @@ export class Exchange extends AbstractContract {
             sellIds.push(sell.id);
             buyIds.push(buy.id);
 
+            // matching logic follows smart contract _fillOrder implementation
+            // see https://github.com/Augmint/augmint-contracts/blob/staging/contracts/Exchange.sol
             const price: BN = buy.id > sell.id ? sell.price : buy.price;
 
             const sellWei = sell.amount.mul(price).mul(E12).divRound(ethFiatRate);
