@@ -49,3 +49,15 @@ export const SUPPORTED_LEGACY_EXCHANGES: ISupportedLegacyContracts = {
     // rinkeby
     4: ["0xdf47d51028daff13424f42523fdac73079ab901b"]
 };
+
+/* List of old augmint LoanManager deploy addresses by network id */
+export const SUPPORTED_LEGACY_LOANMANAGERS: ISupportedLegacyContracts = {
+    // mainnet
+    1: ["0xcbefaf199b800deeb9ead61f358ee46e06c54070"],
+
+    // local ganache (migrations deploys it for manual testing)
+    999: ["0xf7b8384c392fc333d3858a506c4f1506af44d53c"],
+
+    // rinkeby
+    4: ["0x6cb7731c78e677f85942b5f1d646b3485e5820c1"]
+};

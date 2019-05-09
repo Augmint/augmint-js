@@ -1,5 +1,11 @@
 import deployments from "../generated/deployments";
-import { AugmintContracts, Exchange as ExchangeInstance, Rates as RatesInstance, TokenAEur } from "../generated/index";
+import {
+    AugmintContracts,
+    Exchange as ExchangeInstance,
+    LoanManager as LoanManagerInstance,
+    Rates as RatesInstance,
+    TokenAEur
+} from "../generated/index";
 import { AugmintToken } from "./AugmintToken";
 import * as constants from "./constants";
 import { DeployedContract, IDeploymentItem } from "./DeployedContract";
@@ -8,6 +14,7 @@ import * as Errors from "./Errors";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
 import { Exchange } from "./Exchange";
 import * as gas from "./gas";
+import { ILoanManagerOptions, LoanManager } from "./LoanManager";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
 
@@ -43,6 +50,7 @@ export class Augmint {
     private _token: AugmintToken;
     private _rates: Rates;
     private _exchange: Exchange;
+    private _loanManager: LoanManager;
 
     private constructor(ethereumConnection: EthereumConnection, environment?: DeployedEnvironment) {
         this.ethereumConnection = ethereumConnection;
@@ -122,6 +130,20 @@ export class Augmint {
         return this._exchange;
     }
 
+    get loanManager(): LoanManager {
+        if (!this._loanManager) {
+            const loanManagerContract: DeployedContract<
+                LoanManagerInstance
+            > = this.deployedEnvironment.getLatestContract(AugmintContracts.LoanManager);
+            this._loanManager = new LoanManager(loanManagerContract.connect(this.web3), {
+                token: this.token,
+                rates: this.rates,
+                ethereumConnection: this.ethereumConnection
+            });
+        }
+        return this._loanManager;
+    }
+
     public getLegacyTokens(addresses: string[] = []): AugmintToken[] {
         let legacyTokens: Array<DeployedContract<TokenAEur>> = [];
 
@@ -159,6 +181,30 @@ export class Augmint {
         };
         return legacyContracts.map(
             (contract: DeployedContract<ExchangeInstance>) => new Exchange(contract.connect(this.web3), options)
+        );
+    }
+
+    //  augmint.getLegacyLoanManagers(Augmint.constants.SUPPORTED_LEGACY_LOANMANAGERS)
+    public getLegacyLoanManagers(addresses: string[] = []): LoanManager[] {
+        let legacyContracts: Array<DeployedContract<LoanManagerInstance>> = [];
+        if (addresses.length === 0) {
+            legacyContracts = this.deployedEnvironment.getLegacyContracts(AugmintContracts.LoanManager);
+        } else {
+            legacyContracts = this.deployedEnvironment.getContractFromAddresses(
+                AugmintContracts.LoanManager,
+                addresses
+            );
+            if (legacyContracts.length !== addresses.length) {
+                throw new Error("legacy contracts length mismatch!");
+            }
+        }
+        const options: ILoanManagerOptions = {
+            token: this.token, // FIXME: This should come from LoanManager contract's augmintToken property
+            rates: this.rates, // FIXME: This should come from LoanManager contract's rates property
+            ethereumConnection: this.ethereumConnection
+        };
+        return legacyContracts.map(
+            (contract: DeployedContract<LoanManagerInstance>) => new LoanManager(contract.connect(this.web3), options)
         );
     }
 }
