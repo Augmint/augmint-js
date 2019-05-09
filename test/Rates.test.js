@@ -18,8 +18,6 @@ describe("Rates connection", () => {
 
         assert.equal(myAugmint.rates.instance.options.address, "0xb0a2a8e846b66C7384F52635CECEf5280F766C8B");
     });
-
-    it("should connect to legacy Rates contract");
 });
 
 describe("Rates getters", () => {

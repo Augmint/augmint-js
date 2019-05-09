@@ -10,13 +10,26 @@ if (config.LOG) {
 }
 
 describe("connection", () => {
+    let augmint;
+    before(async () => {
+        augmint = await Augmint.create(config);
+    });
+
     it("should connect to latest contract", async () => {
-        const myAugmint = await Augmint.create(config);
-        const exchange = myAugmint.exchange;
+        const exchange = augmint.exchange;
         assert.equal(exchange.address, "0xFAceA53a04bEfCC6C9246eb3951814cfEE2A1415");
     });
 
-    it("should connect to legacy Excahnge contract");
+    it("should connect to supported legacy Exchange contracts", () => {
+        const legacyAddresses = Augmint.constants.SUPPORTED_LEGACY_EXCHANGES[augmint.deployedEnvironment.name];
+
+        const legacyContracts = augmint.getLegacyExchanges(legacyAddresses);
+
+        const connectedAddresses = legacyContracts.map(leg => leg.address.toLowerCase());
+        const lowerCaseLegacyAddresses = legacyAddresses.map(addr => addr.toLowerCase());
+
+        assert.deepEqual(connectedAddresses, lowerCaseLegacyAddresses);
+    });
 });
 
 describe("getOrderBook", () => {
@@ -72,7 +85,7 @@ describe("getOrderBook", () => {
                     maker: buyMaker.toLowerCase(),
                     price: bnBuyPrice,
                     amount: bn_buyWeiAmount,
-                    direction: Augmint.constants.OrderDirection.TOKEN_BUY,
+                    direction: Augmint.constants.OrderDirection.TOKEN_BUY
                 }
             ],
             sellOrders: [
@@ -81,7 +94,7 @@ describe("getOrderBook", () => {
                     maker: sellMaker.toLowerCase(),
                     price: bnSellPrice,
                     amount: bn_sellTokenAmount,
-                    direction: Augmint.constants.OrderDirection.TOKEN_SELL,
+                    direction: Augmint.constants.OrderDirection.TOKEN_SELL
                 }
             ]
         });
