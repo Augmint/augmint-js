@@ -25,7 +25,7 @@ export interface IMatchingOrders {
     gasEstimate: number;
 }
 
-interface IOrder {
+export interface IOrder {
     id: number;
     maker: string;
     direction: OrderDirection;
@@ -35,7 +35,7 @@ interface IOrder {
 
 type IOrderTuple = [string, string, string, string]; /** result from contract: [id, maker, price, amount] */
 
-interface IExchangeOptions {
+export interface IExchangeOptions {
     token: AugmintToken;
     rates: Rates;
     ethereumConnection: EthereumConnection;
