@@ -169,11 +169,11 @@ augmint-cli : start / stop augmint contracts. Docker image: augmint/contracts:vx
 
 Also recreates the container if it exists but image is not as expected (ie. there was a version upgrade)
 
-## Contribution
+## Contributions
 
 Augmint is an open and transparent project.
 
-We are seeking for great minds to extend our core team. Contribution in any area is much appreciated: development, testing, UX&UI design, legal, marketing, spreading the word etc.
+We are looking for great minds to extend our core team. Contributions in any area is much appreciated: development, testing, UX&UI design, legal, marketing, spreading the word etc.
 
 [Code of Conduct](CODE_OF_CONDUCT.md)
 
