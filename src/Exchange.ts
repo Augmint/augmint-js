@@ -1,10 +1,9 @@
-import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
-import { CHUNK_SIZE, DECIMALS, DECIMALS_DIV, LEGACY_CONTRACTS_CHUNK_SIZE, ONE_ETH_IN_WEI, PPM_DIV } from "./constants";
+import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE } from "./constants";
 import { EthereumConnection } from "./EthereumConnection";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PLACE_ORDER_GAS } from "./gas";
 import { Rates } from "./Rates";
@@ -15,14 +14,9 @@ export enum OrderDirection {
     TOKEN_SELL /** Sell order: orderDirection is 1 in contract */
 }
 
-export type ISellOrder = IGenericOrder;
-export interface IBuyOrder extends IGenericOrder {
-    bnEthAmount: BigNumber /** Buy order bnAmount in ETH */;
-}
-
 export interface IOrderBook {
-    buyOrders: IBuyOrder[];
-    sellOrders: ISellOrder[];
+    buyOrders: IOrder[];
+    sellOrders: IOrder[];
 }
 
 export interface IMatchingOrders {
@@ -31,30 +25,19 @@ export interface IMatchingOrders {
     gasEstimate: number;
 }
 
-interface IGenericOrder {
+export interface IOrder {
     id: number;
     maker: string;
     direction: OrderDirection;
-    bnAmount: BigNumber /** Buy order amount in Wei | Sell order amount in tokens, without decimals */;
-    amount: number /** Buy order amount in ETH | Sell order amount in tokens with decimals */;
-    bnPrice: BigNumber /** price in PPM (parts per million) | price in PPM (parts per million) */;
-    price: number /** price with decimals */;
+    amount: BN /** Buy order amount in Wei | Sell order amount in tokens, without decimals */;
+    price: BN /** price in PPM (parts per million) | price in PPM (parts per million) */;
 }
 
 type IOrderTuple = [string, string, string, string]; /** result from contract: [id, maker, price, amount] */
 
-interface IBuyOrderCalc extends IBuyOrder {
-    bnTokenValue?: BigNumber;
-}
-
-interface ISellOrderCalc extends ISellOrder {
-    bnEthValue?: BigNumber;
-}
-
-interface IExchangeOptions {
+export interface IExchangeOptions {
     token: AugmintToken;
     rates: Rates;
-    ONE_ETH_IN_WEI: number;
     ethereumConnection: EthereumConnection;
 }
 
@@ -71,8 +54,6 @@ export class Exchange extends AbstractContract {
     private token: AugmintToken;
     private tokenPeggedSymbol: Promise<string>;
     private rates: Rates;
-    private decimalsDiv: Promise<number>;
-    private ONE_ETH_IN_WEI: number;
     private ethereumConnection: EthereumConnection;
 
     constructor(deployedContractInstance: ExchangeInstance, options: IExchangeOptions) {
@@ -83,7 +64,6 @@ export class Exchange extends AbstractContract {
         this.safeBlockGasLimit = this.ethereumConnection.safeBlockGasLimit;
         this.rates = options.rates;
         this.token = options.token;
-        this.ONE_ETH_IN_WEI = options.ONE_ETH_IN_WEI;
     }
 
     /**
@@ -95,12 +75,12 @@ export class Exchange extends AbstractContract {
      */
     public async getMatchingOrders(gasLimit: number = this.safeBlockGasLimit): Promise<IMatchingOrders> {
         const tokenPeggedSymbol: string = await this.tokenPeggedSymbol;
-        const [orderBook, bnEthFiatRate]: [IOrderBook, BigNumber] = await Promise.all([
+        const [orderBook, ethFiatRate]: [IOrderBook, BN] = await Promise.all([
             this.getOrderBook(),
-            this.rates.getBnEthFiatRate(tokenPeggedSymbol)
+            this.rates.getEthFiatRate(tokenPeggedSymbol)
         ]);
 
-        return this.calculateMatchingOrders(orderBook.buyOrders, orderBook.sellOrders, bnEthFiatRate, gasLimit);
+        return this.calculateMatchingOrders(orderBook.buyOrders, orderBook.sellOrders, ethFiatRate, gasLimit);
     }
 
     /**
@@ -123,7 +103,7 @@ export class Exchange extends AbstractContract {
         const sellCount: number = parseInt(orderCounts.sellTokenOrderCount, 10);
 
         // retreive all orders
-        let buyOrders: IBuyOrder[] = [];
+        let buyOrders: IOrder[] = [];
         let queryCount: number = Math.ceil(buyCount / LEGACY_CONTRACTS_CHUNK_SIZE);
 
         for (let i: number = 0; i < queryCount; i++) {
@@ -131,7 +111,7 @@ export class Exchange extends AbstractContract {
             buyOrders = buyOrders.concat(fetchedOrders.buyOrders);
         }
 
-        let sellOrders: ISellOrder[] = [];
+        let sellOrders: IOrder[] = [];
         queryCount = Math.ceil(sellCount / chunkSize);
         for (let i: number = 0; i < queryCount; i++) {
             const fetchedOrders: IOrderBook = await this.getOrders(OrderDirection.TOKEN_SELL, i * chunkSize);
@@ -146,7 +126,6 @@ export class Exchange extends AbstractContract {
 
     public async getOrders(orderDirection: OrderDirection, offset: number): Promise<IOrderBook> {
         const blockGasLimit: number = this.safeBlockGasLimit;
-        const decimalsDiv = await this.token.decimalsDiv;
         // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
         const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
@@ -169,30 +148,21 @@ export class Exchange extends AbstractContract {
         // result format: [id, maker, price, amount]
         const orders: IOrderBook = result.reduce(
             (res: IOrderBook, order: IOrderTuple) => {
-                const bnAmount: BigNumber = new BigNumber(order[3]);
-                if (!bnAmount.eq(0)) {
-                    const bnPrice: BigNumber = new BigNumber(order[2]);
-                    const amount: number =
-                        orderDirection === OrderDirection.TOKEN_BUY
-                            ? parseFloat(bnAmount.div(this.ONE_ETH_IN_WEI).toFixed(15))
-                            : parseFloat(bnAmount.div(decimalsDiv).toFixed(2));
-                    const parsed: IGenericOrder = {
+                const amount: BN = new BN(order[3]);
+                if (!amount.isZero()) {
+                    const price: BN = new BN(order[2]);
+                    const parsed: IOrder = {
                         id: parseInt(order[0], 10),
-                        maker: `0x${new BigNumber(order[1]).toString(16).padStart(40, "0")}`, // leading 0s if address starts with 0
-                        bnPrice,
-                        bnAmount,
+                        maker: `0x${new BN(order[1]).toString(16).padStart(40, "0")}`, // leading 0s if address starts with 0
+                        price,
                         amount,
-                        price: parseFloat(bnPrice.div(PPM_DIV).toString()),
                         direction: orderDirection
                     };
 
                     if (orderDirection === OrderDirection.TOKEN_BUY) {
-                        const bnEthAmount: BigNumber = bnAmount.div(ONE_ETH_IN_WEI);
-                        const buyOrder: IBuyOrder = { ...parsed, bnEthAmount };
-
-                        res.buyOrders.push(buyOrder);
+                        res.buyOrders.push(parsed);
                     } else {
-                        res.sellOrders.push(parsed as ISellOrder);
+                        res.sellOrders.push(parsed);
                     }
                 }
                 return res;
@@ -230,14 +200,14 @@ export class Exchange extends AbstractContract {
         return transaction;
     }
 
-    public isOrderBetter(o1: IGenericOrder, o2: IGenericOrder): number {
+    public isOrderBetter(o1: IOrder, o2: IOrder): number {
         if (o1.direction !== o2.direction) {
             throw new Error("isOrderBetter(): order directions must be the same" + o1 + o2);
         }
 
-        const dir: number = o1.direction === OrderDirection.TOKEN_SELL ? 1 : -1;
+        const dir: BN = o1.direction === OrderDirection.TOKEN_SELL ? new BN(1) : new BN(-1);
 
-        return o1.price * dir > o2.price * dir || (o1.price === o2.price && o1.id > o2.id) ? 1 : -1;
+        return o1.price.mul(dir).gt(o2.price.mul(dir)) || (o1.price.eq(o2.price) && o1.id > o2.id) ? 1 : -1;
     }
 
     /**
@@ -270,14 +240,14 @@ export class Exchange extends AbstractContract {
      * calculate matching pairs from ordered ordebook for sending in Exchange.matchMultipleOrders ethereum tx
      * @param  {object} _buyOrders     must be ordered by price descending then by id ascending
      * @param  {array} _sellOrders    must be ordered by price ascending then by id ascending
-     * @param  {BigNumber} bnEthFiatRate current ETHFiat rate to use for calculation
+     * @param  {BN} ethFiatRate current ETHFiat rate to use for calculation
      * @param  {number} gasLimit       return as many matches as it fits to gasLimit based on gas cost estimate.
      * @return {object}                pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
      */
     public calculateMatchingOrders(
-        _buyOrders: IBuyOrder[],
-        _sellOrders: ISellOrder[],
-        bnEthFiatRate: BigNumber,
+        _buyOrders: IOrder[],
+        _sellOrders: IOrder[],
+        ethFiatRate: BN,
         gasLimit: number
     ): IMatchingOrders {
         const sellIds: number[] = [];
@@ -286,75 +256,51 @@ export class Exchange extends AbstractContract {
         if (_buyOrders.length === 0 || _sellOrders.length === 0) {
             return { buyIds, sellIds, gasEstimate: 0 };
         }
-        const lowestSellPrice: BigNumber = _sellOrders[0].bnPrice;
-        const highestBuyPrice: BigNumber = _buyOrders[0].bnPrice;
+        const lowestSellPrice: BN = _sellOrders[0].price;
+        const highestBuyPrice: BN = _buyOrders[0].price;
 
-        const buyOrders: IBuyOrderCalc[] = _buyOrders
-            .filter((o: IBuyOrder) => o.bnPrice.gte(lowestSellPrice))
-            .map((o: IBuyOrderCalc) => o as IBuyOrderCalc);
+        const buyOrders: IOrder[] = _buyOrders
+            .filter((o: IOrder) => o.price.gte(lowestSellPrice));
 
-        const sellOrders: ISellOrderCalc[] = _sellOrders
-            .filter((o: ISellOrder) => o.bnPrice.lte(highestBuyPrice))
-            .map((o: ISellOrderCalc) => o as ISellOrderCalc);
+        const sellOrders: IOrder[] = _sellOrders
+            .filter((o: IOrder) => o.price.lte(highestBuyPrice));
 
         let buyIdx: number = 0;
         let sellIdx: number = 0;
         let gasEstimate: number = 0;
         let nextGasEstimate: number = MATCH_MULTIPLE_FIRST_MATCH_GAS;
 
+        const E12 = new BN("1000000000000");
         while (buyIdx < buyOrders.length && sellIdx < sellOrders.length && nextGasEstimate <= gasLimit) {
-            const sellOrder: ISellOrderCalc = sellOrders[sellIdx];
-            const buyOrder: IBuyOrderCalc = buyOrders[buyIdx];
-            sellIds.push(sellOrder.id);
-            buyIds.push(buyOrder.id);
 
-            let tradedEth: BigNumber;
-            let tradedTokens: BigNumber;
+            const sell: IOrder = sellOrders[sellIdx];
+            const buy: IOrder = buyOrders[buyIdx];
+            sellIds.push(sell.id);
+            buyIds.push(buy.id);
 
-            const bnMatchPrice: BigNumber = buyOrder.id > sellOrder.id ? sellOrder.bnPrice : buyOrder.bnPrice;
+            // matching logic follows smart contract _fillOrder implementation
+            // see https://github.com/Augmint/augmint-contracts/blob/staging/contracts/Exchange.sol
+            const price: BN = buy.id > sell.id ? sell.price : buy.price;
 
-            buyOrder.bnTokenValue = bnEthFiatRate
-                .mul(PPM_DIV)
-                .div(bnMatchPrice)
-                .mul(buyOrder.bnEthAmount)
-                .round();
+            const sellWei = sell.amount.mul(price).mul(E12).divRound(ethFiatRate);
 
-            sellOrder.bnEthValue = sellOrder.bnAmount
-                .mul(bnMatchPrice)
-                .div(bnEthFiatRate)
-                .div(PPM_DIV);
-
-            if (sellOrder.bnAmount.lt(buyOrder.bnTokenValue)) {
-                tradedEth = sellOrder.bnEthValue;
-                tradedTokens = sellOrder.bnAmount;
+            let tradedWei: BN;
+            let tradedTokens: BN;
+            if (sellWei.lte(buy.amount)) {
+                tradedWei = sellWei;
+                tradedTokens = sell.amount;
             } else {
-                tradedEth = buyOrder.bnEthAmount;
-                tradedTokens = buyOrder.bnTokenValue;
+                tradedWei = buy.amount;
+                tradedTokens = buy.amount.mul(ethFiatRate).divRound(price.mul(E12));
             }
 
-            //     const DECIMALS_DIV = 100; // in order debug to work with tests (instead of this.augmintToken.decimalsDiv)
-            //     console.debug(
-            //         `MATCH:  BUY: id: ${buyOrder.id} bnPrice: ${buyOrder.bnPrice.div(PPM_DIV)}% Amount: ${
-            //             buyOrder.bnEthAmount
-            //         } ETH tokenValue: ${buyOrder.bnTokenValue.div(DECIMALS_DIV)}
-            // SELL: id: ${sellOrder.id} bnPrice: ${sellOrder.bnPrice.div(PPM_DIV)}% Amount: ${sellOrder.bnAmount.div(
-            //             DECIMALS_DIV
-            //         )} AEUR  ethValue: ${sellOrder.bnEthValue}
-            // Traded: ${tradedEth.toString()} ETH <-> ${tradedTokens.div(DECIMALS_DIV)} AEUR @${bnMatchPrice.div(
-            //             PPM_DIV
-            //         )}% on ${bnEthFiatRate.div(DECIMALS_DIV)} ETHEUR`
-            //     );
-
-            buyOrder.bnEthAmount = buyOrder.bnEthAmount.sub(tradedEth);
-            buyOrder.bnTokenValue = buyOrder.bnTokenValue.sub(tradedTokens);
-
-            if (buyOrder.bnEthAmount.eq(0)) {
+            buy.amount = buy.amount.sub(tradedWei);
+            if (buy.amount.isZero()) {
                 buyIdx++;
             }
 
-            sellOrder.bnEthValue = sellOrder.bnEthValue.sub(tradedEth);
-            sellOrder.bnAmount = sellOrder.bnAmount.sub(tradedTokens);
-            if (sellOrder.bnAmount.eq(0)) {
+            sell.amount = sell.amount.sub(tradedTokens);
+            if (sell.amount.isZero()) {
                 sellIdx++;
             }
 

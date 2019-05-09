@@ -1,5 +1,5 @@
 const { expect, assert } = require("chai");
-const BigNumber = require("bignumber.js");
+const BN = require("bn.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const { Augmint, utils } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
@@ -46,14 +46,14 @@ describe("getOrderBook", () => {
         const buyMaker = myAugmint.ethereumConnection.accounts[1];
         const sellMaker = myAugmint.ethereumConnection.accounts[0];
         const buyPrice = 1.01;
-        const bnBuyPrice = new BigNumber(buyPrice * Augmint.constants.PPM_DIV);
+        const bnBuyPrice = new BN(buyPrice * Augmint.constants.PPM_DIV);
         const sellPrice = 1.05;
-        const bnSellPrice = new BigNumber(sellPrice * Augmint.constants.PPM_DIV);
+        const bnSellPrice = new BN(sellPrice * Augmint.constants.PPM_DIV);
 
         const buyEthAmount = 0.1;
-        const bn_buyWeiAmount = new BigNumber(myAugmint.ethereumConnection.web3.utils.toWei(buyEthAmount.toString()));
+        const bn_buyWeiAmount = new BN(myAugmint.ethereumConnection.web3.utils.toWei(buyEthAmount.toString()));
         const sellTokenAmount = 10;
-        const bn_sellTokenAmount = new BigNumber(sellTokenAmount * Augmint.constants.DECIMALS_DIV);
+        const bn_sellTokenAmount = new BN(sellTokenAmount * Augmint.constants.DECIMALS_DIV);
 
         await exchange.instance.methods
             .placeBuyTokenOrder(bnBuyPrice.toString())
@@ -70,23 +70,18 @@ describe("getOrderBook", () => {
                 {
                     id: 1,
                     maker: buyMaker.toLowerCase(),
-                    bnPrice: bnBuyPrice,
-                    bnAmount: bn_buyWeiAmount,
-                    price: buyPrice,
+                    price: bnBuyPrice,
+                    amount: bn_buyWeiAmount,
                     direction: Augmint.constants.OrderDirection.TOKEN_BUY,
-                    bnEthAmount: new BigNumber(buyEthAmount),
-                    amount: buyEthAmount
                 }
             ],
             sellOrders: [
                 {
                     id: 2,
                     maker: sellMaker.toLowerCase(),
-                    bnPrice: bnSellPrice,
-                    bnAmount: bn_sellTokenAmount,
-                    price: sellPrice,
+                    price: bnSellPrice,
+                    amount: bn_sellTokenAmount,
                     direction: Augmint.constants.OrderDirection.TOKEN_SELL,
-                    amount: sellTokenAmount
                 }
             ]
         });
@@ -100,44 +95,44 @@ describe("isOrderBetter", () => {
         exchange = myAugmint.exchange;
     });
     it("o2 should be better (SELL price)", () => {
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: 2, id: 1 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: 1, id: 2 };
+        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(2), id: 1 };
+        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(1), id: 2 };
         const result = exchange.isOrderBetter(o1, o2);
         expect(result).to.be.equal(1);
     });
 
     it("o1 should be better (BUY price)", () => {
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: 2, id: 2 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: 1, id: 1 };
+        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: new BN(2), id: 2 };
+        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: new BN(1), id: 1 };
         const result = exchange.isOrderBetter(o1, o2);
         expect(result).to.be.equal(-1);
     });
 
     it("o2 should be better (SELL id)", () => {
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: 1, id: 2 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: 1, id: 1 };
+        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(1), id: 2 };
+        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(1), id: 1 };
         const result = exchange.isOrderBetter(o1, o2);
         expect(result).to.be.equal(1);
     });
 
     it("o2 should be better (BUY id)", () => {
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: 1, id: 2 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: 1, id: 1 };
+        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: new BN(1), id: 2 };
+        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: new BN(1), id: 1 };
         const result = exchange.isOrderBetter(o1, o2);
         expect(result).to.be.equal(1);
     });
 
     it("o1 should be better when o1 same as o2", () => {
         // same id for two orders, it shouldn't happen
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: 1, id: 1 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: 1, id: 1 };
+        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(1), id: 1 };
+        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(1), id: 1 };
         const result = exchange.isOrderBetter(o1, o2);
         expect(result).to.be.equal(-1);
     });
 
     it("the direction of the two orders should be same", () => {
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: 2, id: 2 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: 1, id: 1 };
+        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(2), id: 2 };
+        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: new BN(1), id: 1 };
         expect(() => exchange.isOrderBetter(o1, o2)).to.throw(/order directions must be the same/);
     });
 });

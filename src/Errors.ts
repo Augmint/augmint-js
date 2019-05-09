@@ -18,15 +18,6 @@ export class ZeroRateError extends AugmintJsError {
 }
 
 // tslint:disable-next-line:max-classes-per-file
-export class InvalidPriceError extends AugmintJsError {
-    constructor(message: string) {
-        super(message);
-        this.name = InvalidPriceError.name;
-        Object.setPrototypeOf(this, InvalidPriceError.prototype);
-    }
-}
-
-// tslint:disable-next-line:max-classes-per-file
 export class TransactionError extends AugmintJsError {
     constructor(message: string) {
         super(message);

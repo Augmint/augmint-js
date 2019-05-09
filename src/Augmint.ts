@@ -6,7 +6,7 @@ import { DeployedContract, IDeploymentItem } from "./DeployedContract";
 import { DeployedEnvironment, ILatestContracts } from "./DeployedEnvironment";
 import * as Errors from "./Errors";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
-import { Exchange } from "./Exchange";
+import { Exchange, IExchangeOptions } from "./Exchange";
 import * as gas from "./gas";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
@@ -103,12 +103,7 @@ export class Augmint {
             const ratesContract: DeployedContract<RatesInstance> = this.deployedEnvironment.getLatestContract(
                 AugmintContracts.Rates
             );
-            this._rates = new Rates(ratesContract.connect(this.web3), {
-                decimals: this.token.decimals,
-                decimalsDiv: this.token.decimalsDiv,
-                constants,
-                ethereumConnection: this.ethereumConnection
-            });
+            this._rates = new Rates(ratesContract.connect(this.web3), this.ethereumConnection);
         }
         return this._rates;
     }
@@ -121,7 +116,6 @@ export class Augmint {
             this._exchange = new Exchange(exchangeContract.connect(this.web3), {
                 token: this.token,
                 rates: this.rates,
-                ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI,
                 ethereumConnection: this.ethereumConnection
             });
         }
@@ -148,11 +142,9 @@ export class Augmint {
                 throw new Error("legacy contracts length mismatch!");
             }
         }
-        const options = {
-            decimalsDiv: this.token.decimalsDiv,
+        const options: IExchangeOptions = {
             token: this.token, // FIXME: This should come from the exchange contract's augmintToken property
             rates: this.rates,
-            ONE_ETH_IN_WEI: constants.ONE_ETH_IN_WEI,
             ethereumConnection: this.ethereumConnection
         };
         return legacyContracts.map(
