@@ -122,12 +122,21 @@ export class Augmint {
         return this._exchange;
     }
 
-    public getLegacyTokens(): AugmintToken[] {
-        const legacyTokens: Array<DeployedContract<TokenAEur>> = this.deployedEnvironment.getLegacyContracts(
-            AugmintContracts.TokenAEur
-        );
+    public getLegacyTokens(addresses: string[] = []): AugmintToken[] {
+        let legacyTokens: Array<DeployedContract<TokenAEur>> = [];
+
+        if (addresses.length === 0) {
+            legacyTokens = this.deployedEnvironment.getLegacyContracts(AugmintContracts.TokenAEur);
+        } else {
+            legacyTokens = this.deployedEnvironment.getContractFromAddresses(AugmintContracts.TokenAEur, addresses);
+            if (legacyTokens.length !== addresses.length) {
+                throw new Error("legacy contracts length mismatch!");
+            }
+        }
+
         return legacyTokens.map(
-            tokenContract => new AugmintToken(tokenContract.connect(this.web3), { web3: this.web3 })
+            (tokenContract: DeployedContract<TokenAEur>) =>
+                new AugmintToken(tokenContract.connect(this.web3), { web3: this.web3 })
         );
     }
 

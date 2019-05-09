@@ -23,7 +23,18 @@ export interface ISupportedLegacyContracts {
     [propName: string]: string[];
 }
 
-/* List of old augmint token deploy addresses by network id */
+export const SUPPORTED_LEGACY_AUGMINTTOKENS: ISupportedLegacyContracts = {
+    // mainnet
+    1: ["0x86a635eccefffa70ff8a6db29da9c8db288e40d0"],
+
+    // local ganache (migrations deploys it for manual testing)
+    999: ["0x5d77f09a3703be84d84810379067a6d9ad759582"],
+
+    // rinkeby
+    4: ["0x0557183334edc23a666201edc6b0aa2787e2ad3f"]
+};
+
+/* List of old augmint Exchange deploy addresses by network id */
 export const SUPPORTED_LEGACY_EXCHANGES: ISupportedLegacyContracts = {
     // mainnet
     1: [
