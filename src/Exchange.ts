@@ -89,37 +89,27 @@ export class Exchange extends AbstractContract {
         // @ts-ignore  TODO: remove ts - ignore and handle properly when legacy contract support added
         const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
-
-        const orderCounts: {
-            buyTokenOrderCount: string;
-            sellTokenOrderCount: string;
-        } = await this.instance.methods.getActiveOrderCounts().call({ gas: 4000000 });
-        const buyCount: number = parseInt(orderCounts.buyTokenOrderCount, 10);
-        const sellCount: number = parseInt(orderCounts.sellTokenOrderCount, 10);
-
-        // retreive all orders
-        let buyOrders: IOrder[] = [];
-        let queryCount: number = Math.ceil(buyCount / LEGACY_CONTRACTS_CHUNK_SIZE);
-
-        for (let i: number = 0; i < queryCount; i++) {
-            const fetchedOrders: IOrderBook = await this.getOrders(true, i * chunkSize);
-            buyOrders = buyOrders.concat(fetchedOrders.buyOrders);
-        }
-
-        let sellOrders: IOrder[] = [];
-        queryCount = Math.ceil(sellCount / chunkSize);
-        for (let i: number = 0; i < queryCount; i++) {
-            const fetchedOrders: IOrderBook = await this.getOrders(false, i * chunkSize);
-            sellOrders = sellOrders.concat(fetchedOrders.sellOrders);
-        }
-
-        buyOrders.sort(this.isOrderBetter);
-        sellOrders.sort(this.isOrderBetter);
-
+        const [buyOrders, sellOrders] = await Promise.all([
+            this.getOrders(true, chunkSize),
+            this.getOrders(false, chunkSize)
+        ]);
         return { buyOrders, sellOrders };
     }
 
-    public async getOrders(buy: boolean, offset: number): Promise<IOrderBook> {
+    private async getOrders(buy: boolean, chunkSize: number): Promise<IOrder[]> {
+        const orders: IOrder[] = [];
+        let i: number = 0;
+        let fetched: IOrder[];
+        do {
+            fetched = await this.getOrdersChunk(buy, i * chunkSize);
+            orders.push(...fetched);
+            i += chunkSize;
+        } while (fetched.length === chunkSize);
+        orders.sort(this.isOrderBetter);
+        return orders;
+    }
+
+    private async getOrdersChunk(buy: boolean, offset: number): Promise<IOrder[]> {
         const blockGasLimit: number = this.safeBlockGasLimit;
         // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
         const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
@@ -141,31 +131,22 @@ export class Exchange extends AbstractContract {
         }
 
         // result format: [id, maker, price, amount]
-        const orders: IOrderBook = result.reduce(
-            (res: IOrderBook, order: IOrderTuple) => {
+        return result.reduce(
+            (res: IOrder[], order: IOrderTuple) => {
                 const amount: BN = new BN(order[3]);
                 if (!amount.isZero()) {
-                    const price: BN = new BN(order[2]);
-                    const parsed: IOrder = {
+                    res.push({
                         id: parseInt(order[0], 10),
                         maker: `0x${new BN(order[1]).toString(16).padStart(40, "0")}`, // leading 0s if address starts with 0
-                        price,
+                        price: new BN(order[2]),
                         amount,
                         buy
-                    };
-
-                    if (buy) {
-                        res.buyOrders.push(parsed);
-                    } else {
-                        res.sellOrders.push(parsed);
-                    }
+                    });
                 }
                 return res;
             },
-            { buyOrders: [], sellOrders: [] }
+            []
         );
-
-        return orders;
     }
 
     public placeSellTokenOrder(price: BN, amount: BN): Transaction {
