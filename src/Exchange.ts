@@ -9,11 +9,6 @@ import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PL
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
 
-export enum OrderDirection {
-    TOKEN_BUY /** Buy order: orderDirection is 0 in contract */,
-    TOKEN_SELL /** Sell order: orderDirection is 1 in contract */
-}
-
 export interface IOrderBook {
     buyOrders: IOrder[];
     sellOrders: IOrder[];
@@ -28,9 +23,9 @@ export interface IMatchingOrders {
 export interface IOrder {
     id: number;
     maker: string;
-    direction: OrderDirection;
+    buy: boolean;
     amount: BN /** Buy order amount in Wei | Sell order amount in tokens, without decimals */;
-    price: BN /** price in PPM (parts per million) | price in PPM (parts per million) */;
+    price: BN /** price in PPM (parts per million) */;
 }
 
 type IOrderTuple = [string, string, string, string]; /** result from contract: [id, maker, price, amount] */
@@ -107,14 +102,14 @@ export class Exchange extends AbstractContract {
         let queryCount: number = Math.ceil(buyCount / LEGACY_CONTRACTS_CHUNK_SIZE);
 
         for (let i: number = 0; i < queryCount; i++) {
-            const fetchedOrders: IOrderBook = await this.getOrders(OrderDirection.TOKEN_BUY, i * chunkSize);
+            const fetchedOrders: IOrderBook = await this.getOrders(true, i * chunkSize);
             buyOrders = buyOrders.concat(fetchedOrders.buyOrders);
         }
 
         let sellOrders: IOrder[] = [];
         queryCount = Math.ceil(sellCount / chunkSize);
         for (let i: number = 0; i < queryCount; i++) {
-            const fetchedOrders: IOrderBook = await this.getOrders(OrderDirection.TOKEN_SELL, i * chunkSize);
+            const fetchedOrders: IOrderBook = await this.getOrders(false, i * chunkSize);
             sellOrders = sellOrders.concat(fetchedOrders.sellOrders);
         }
 
@@ -124,14 +119,14 @@ export class Exchange extends AbstractContract {
         return { buyOrders, sellOrders };
     }
 
-    public async getOrders(orderDirection: OrderDirection, offset: number): Promise<IOrderBook> {
+    public async getOrders(buy: boolean, offset: number): Promise<IOrderBook> {
         const blockGasLimit: number = this.safeBlockGasLimit;
         // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
         const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
         const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
 
         let result: IOrderTuple[];
-        if (orderDirection === OrderDirection.TOKEN_BUY) {
+        if (buy) {
             // prettier-ignore
             result = isLegacyExchangeContract
                 // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
@@ -156,10 +151,10 @@ export class Exchange extends AbstractContract {
                         maker: `0x${new BN(order[1]).toString(16).padStart(40, "0")}`, // leading 0s if address starts with 0
                         price,
                         amount,
-                        direction: orderDirection
+                        buy
                     };
 
-                    if (orderDirection === OrderDirection.TOKEN_BUY) {
+                    if (buy) {
                         res.buyOrders.push(parsed);
                     } else {
                         res.sellOrders.push(parsed);
@@ -201,11 +196,11 @@ export class Exchange extends AbstractContract {
     }
 
     public isOrderBetter(o1: IOrder, o2: IOrder): number {
-        if (o1.direction !== o2.direction) {
+        if (o1.buy !== o2.buy) {
             throw new Error("isOrderBetter(): order directions must be the same" + o1 + o2);
         }
 
-        const dir: BN = o1.direction === OrderDirection.TOKEN_SELL ? new BN(1) : new BN(-1);
+        const dir: BN = o1.buy ? new BN(-1) : new BN(1);
 
         return o1.price.mul(dir).gt(o2.price.mul(dir)) || (o1.price.eq(o2.price) && o1.id > o2.id) ? 1 : -1;
     }

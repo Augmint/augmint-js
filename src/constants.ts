@@ -14,11 +14,6 @@ export const LEGACY_CONTRACTS_CHUNK_SIZE: number = 100;
 // New contracts accept chunksize as param for each fx so it can be adjusted with this constant
 export const CHUNK_SIZE: number = 100;
 
-export enum OrderDirection {
-    TOKEN_BUY,
-    TOKEN_SELL
-}
-
 export interface ISupportedLegacyContracts {
     [propName: string]: string[];
 }
