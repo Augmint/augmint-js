@@ -1,3 +1,5 @@
+import BN from "bn.js";
+
 export const ONE_ETH_IN_WEI: number = 1e18;
 
 /* augmintToken decimals */
@@ -6,6 +8,7 @@ export const DECIMALS_DIV: number = 100;
 export const DECIMALS: number = 2;
 
 export const PPM_DIV: number = 1000000;
+export const BN_PPM_DIV: BN = new BN(PPM_DIV);
 
 export const ETHEUR: string = "ETHEUR";
 
@@ -18,6 +21,10 @@ export enum OrderDirection {
     TOKEN_BUY,
     TOKEN_SELL
 }
+
+// rational: it's to avoid loan tx to fail on min loan amount because of an ETH/EUR rate change
+// in the background right while sending the tx
+export const MIN_LOAN_AMOUNT_ADJUSTMENT: number = new BN(1250000); // in PPM
 
 export interface ISupportedLegacyContracts {
     [propName: string]: string[];
