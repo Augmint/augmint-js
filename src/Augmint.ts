@@ -88,6 +88,10 @@ export class Augmint {
         return Transaction;
     }
 
+    static get Exchange(): typeof Exchange {
+        return Exchange;
+    }
+
     get token(): AugmintToken {
         if (!this._token) {
             const tokenContract: DeployedContract<TokenAEur> = this.deployedEnvironment.getLatestContract(

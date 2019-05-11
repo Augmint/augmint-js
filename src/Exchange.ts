@@ -14,6 +14,9 @@ export class OrderBook {
         public buyOrders: IOrder[],
         public sellOrders: IOrder[]
     ) {
+        if (buyOrders.some(o => o.buy !== true) || sellOrders.some(o => o.buy !== false)) {
+            throw new Error("Incongruent orders");
+        }
         buyOrders.sort(OrderBook.compareOrders);
         sellOrders.sort(OrderBook.compareOrders);
     }
@@ -48,11 +51,12 @@ export class OrderBook {
         const lowestSellPrice: BN = this.sellOrders[0].price;
         const highestBuyPrice: BN = this.buyOrders[0].price;
 
-        const buyOrders: IOrder[] = this.buyOrders
-            .filter((o: IOrder) => o.price.gte(lowestSellPrice));
+        const clone = o => Object.assign({}, o);
+        const buys: IOrder[] = this.buyOrders
+            .filter((o: IOrder) => o.price.gte(lowestSellPrice)).map(clone);
 
-        const sellOrders: IOrder[] = this.sellOrders
-            .filter((o: IOrder) => o.price.lte(highestBuyPrice));
+        const sells: IOrder[] = this.sellOrders
+            .filter((o: IOrder) => o.price.lte(highestBuyPrice)).map(clone);
 
         let buyIdx: number = 0;
         let sellIdx: number = 0;
@@ -60,10 +64,10 @@ export class OrderBook {
         let nextGasEstimate: number = MATCH_MULTIPLE_FIRST_MATCH_GAS;
 
         const E12 = new BN("1000000000000");
-        while (buyIdx < buyOrders.length && sellIdx < sellOrders.length && nextGasEstimate <= gasLimit) {
+        while (buyIdx < buys.length && sellIdx < sells.length && nextGasEstimate <= gasLimit) {
 
-            const sell: IOrder = sellOrders[sellIdx];
-            const buy: IOrder = buyOrders[buyIdx];
+            const sell: IOrder = sells[sellIdx];
+            const buy: IOrder = buys[buyIdx];
             sellIds.push(sell.id);
             buyIds.push(buy.id);
 
@@ -287,6 +291,10 @@ export class Exchange extends AbstractContract {
         });
 
         return transaction;
+    }
+
+    static get OrderBook(): typeof OrderBook {
+        return OrderBook;
     }
 
 }

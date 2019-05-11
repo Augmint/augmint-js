@@ -4,6 +4,7 @@ const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const { Augmint, utils } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
+const OrderBook = Augmint.Exchange.OrderBook;
 
 if (config.LOG) {
     utils.logger.level = config.LOG;
