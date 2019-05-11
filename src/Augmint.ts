@@ -96,6 +96,10 @@ export class Augmint {
         return Transaction;
     }
 
+    static get LoanManager(): typeof LoanManager {
+        return LoanManager;
+    }
+
     get token(): AugmintToken {
         if (!this._token) {
             const tokenContract: DeployedContract<TokenAEur> = this.deployedEnvironment.getLatestContract(

@@ -1,7 +1,8 @@
-const { assert } = require("chai");
+const { assert, expect } = require("chai");
 const BN = require("bn.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const { Augmint, utils } = require("../dist/index.js");
+const { AugmintJsError } = Augmint.Errors;
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
 
@@ -34,15 +35,15 @@ describe("LoanManager connection", () => {
 
 function mockProd(
     id,
+    minDisbursedAmount,
     termInSecs,
     discountRate,
-    interestRatePa,
     collateralRatio,
-    minDisbursedAmount,
-    adjustedMinDisbursedAmount,
-    maxLoanAmount,
     defaultingFeePt,
-    isActive
+    maxLoanAmount,
+    isActive,
+    interestRatePa,
+    adjustedMinDisbursedAmount
 ) {
     return {
         id,
@@ -57,19 +58,37 @@ function mockProd(
         isActive
     };
 }
+describe.only("LoanProduct", () => {
+    const LoanProduct = Augmint.LoanManager.LoanProduct;
 
-describe("LoanManager getters", () => {
+    it("should create a LoanProduct from a tuple", async () => {
+        const expectedProd = mockProd(0, 1000, 31536000, 854700, 550000, 50000, 21801, true, 0.17, 1250);
+        // Solidity LoanManager contract .getProducts() tuple:
+        // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
+        const lp = new LoanProduct(["0", "1000", "31536000", "854700", "550000", "50000", "21801", "1"]);
+        assert.deepEqual(lp, expectedProd);
+    });
+
+    it("should throw if creating with 0 term ", () => {
+        expect(() => new LoanProduct(["99", "11", "0", "22", "33", "44", "55", "66"])).to.throw(
+            AugmintJsError,
+            /LoanProduct with 0 term/
+        );
+    });
+});
+
+describe.only("LoanManager getters", () => {
     const EXPECTED_ALL_PRODUCTS = [
-        // id, termInSecs, discountRate, interestRatePa, collateralRatio, minDisbursedAmount, adjustedMinDisbursedAmount, maxLoanAmount, defaultingFeePt, isActive
-        mockProd(0, 31536000, 854700, 0.17, 550000, 1000, 1250, 21801, 50000, true),
-        mockProd(1, 15552000, 924752, 0.165, 550000, 1000, 1250, 21801, 50000, true),
-        mockProd(2, 7776000, 962045, 0.16, 600000, 1000, 1250, 21801, 50000, false),
-        mockProd(3, 5184000, 975153, 0.155, 600000, 1000, 1250, 21801, 50000, true),
-        mockProd(4, 2592000, 987821, 0.15, 600000, 1000, 1250, 21801, 50000, true),
-        mockProd(5, 1209600, 994279, 0.15, 600000, 1000, 1250, 21801, 50000, false),
-        mockProd(6, 604800, 997132, 0.15, 600000, 1000, 1250, 21801, 50000, true),
-        mockProd(7, 3600, 999998, 0.0175, 980000, 2000, 2500, 21801, 50000, true),
-        mockProd(8, 1, 999999, 31.536, 990000, 3000, 3750, 21801, 50000, true)
+        // id,minDisbursedAmount,termInSecs,discountRate,collateralRatio,defaultingFeePt,maxLoanAmount,isActive,interestRatePa,adjustedMinDisbursedAmount
+        mockProd(0, 1000, 31536000, 854700, 550000, 50000, 21801, true, 0.17, 1250),
+        mockProd(1, 1000, 15552000, 924752, 550000, 50000, 21801, true, 0.165, 1250),
+        mockProd(2, 1000, 7776000, 962045, 600000, 50000, 21801, false, 0.16, 1250),
+        mockProd(3, 1000, 5184000, 975153, 600000, 50000, 21801, true, 0.155, 1250),
+        mockProd(4, 1000, 2592000, 987821, 600000, 50000, 21801, true, 0.15, 1250),
+        mockProd(5, 1000, 1209600, 994279, 600000, 50000, 21801, false, 0.15, 1250),
+        mockProd(6, 1000, 604800, 997132, 600000, 50000, 21801, true, 0.15, 1250),
+        mockProd(7, 2000, 3600, 999998, 980000, 50000, 21801, true, 0.0175, 2500),
+        mockProd(8, 3000, 1, 999999, 990000, 50000, 21801, true, 31.536, 3750)
     ];
 
     const EXPECTED_ACTIVE_PRODUCTS = EXPECTED_ALL_PRODUCTS.filter(p => p.isActive);
