@@ -23,20 +23,12 @@ function toWei(amount) {
     return new BN(amount * PPM_DIV).mul(ONE_ETH_IN_WEI).div(new BN(PPM_DIV));
 }
 
-describe("calculateMatchingOrders", () => {
+describe("getMatchingOrders", () => {
     const ETHEUR_RATE = new BN(50000);
     const GAS_LIMIT = Number.MAX_SAFE_INTEGER;
 
-    let myAugmint = null;
-    let exchange = null;
-
-    before(async () => {
-        myAugmint = await Augmint.create(config);
-        exchange = myAugmint.exchange;
-    });
-
     it("should return no match if no orders", () => {
-        const matches = exchange.calculateMatchingOrders([], [], ETHEUR_RATE, GAS_LIMIT);
+        const matches = new OrderBook([], []).getMatchingOrders(ETHEUR_RATE, GAS_LIMIT);
         expect(matches.buyIds).to.have.lengthOf(0);
         expect(matches.sellIds).to.have.lengthOf(0);
         expect(matches.gasEstimate).to.be.equal(0);
@@ -54,7 +46,7 @@ describe("calculateMatchingOrders", () => {
             { id: 5, price: toPPM(1.01), amount: new BN(10) } //
         ];
 
-        const matches = exchange.calculateMatchingOrders(buyOrders, sellOrders, ETHEUR_RATE, GAS_LIMIT);
+        const matches = new OrderBook(buyOrders, sellOrders).getMatchingOrders(ETHEUR_RATE, GAS_LIMIT);
 
         expect(matches.buyIds).to.have.lengthOf(0);
         expect(matches.sellIds).to.have.lengthOf(0);
@@ -72,7 +64,7 @@ describe("calculateMatchingOrders", () => {
             { id: 5, price: toPPM(1.05), amount: new BN(1000) } //
         ];
 
-        const matches = exchange.calculateMatchingOrders(buyOrders, sellOrders, ETHEUR_RATE, GAS_LIMIT);
+        const matches = new OrderBook(buyOrders, sellOrders).getMatchingOrders(ETHEUR_RATE, GAS_LIMIT);
 
         expect(matches.buyIds).to.deep.equal([2]);
         expect(matches.sellIds).to.deep.equal([4]);
@@ -91,7 +83,7 @@ describe("calculateMatchingOrders", () => {
             { id: 6, price: toPPM(1.04), amount: new BN(1000) } // no fill...
         ];
 
-        const matches = exchange.calculateMatchingOrders(buyOrders, sellOrders, ETHEUR_RATE, GAS_LIMIT);
+        const matches = new OrderBook(buyOrders, sellOrders).getMatchingOrders(ETHEUR_RATE, GAS_LIMIT);
 
         expect(matches.buyIds).to.deep.equal([2, 2]);
         expect(matches.sellIds).to.deep.equal([4, 5]);
@@ -114,7 +106,7 @@ describe("calculateMatchingOrders", () => {
             { id: 6, price: toPPM(1.08), amount: new BN(1000) } // no matching because no more left in matching buy orders..
         ];
 
-        const matches = exchange.calculateMatchingOrders(buyOrders, sellOrders, ETHEUR_RATE, GAS_LIMIT);
+        const matches = new OrderBook(buyOrders, sellOrders).getMatchingOrders(ETHEUR_RATE, GAS_LIMIT);
 
         expect(matches.buyIds).to.deep.equal([11, 3, 3]);
         expect(matches.sellIds).to.deep.equal([9, 4, 2]);
@@ -138,7 +130,7 @@ describe("calculateMatchingOrders", () => {
 
         const gasLimit = gas.MATCH_MULTIPLE_FIRST_MATCH_GAS + gas.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS;
 
-        const matches = exchange.calculateMatchingOrders(buyOrders, sellOrders, ETHEUR_RATE, gasLimit);
+        const matches = new OrderBook(buyOrders, sellOrders).getMatchingOrders(ETHEUR_RATE, gasLimit);
 
         expect(matches.buyIds).to.deep.equal([1, 2]);
         expect(matches.sellIds).to.deep.equal([5, 6]);
@@ -160,7 +152,7 @@ describe("calculateMatchingOrders", () => {
 
         const gasLimit = gas.MATCH_MULTIPLE_FIRST_MATCH_GAS + 2 * gas.MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS - 1;
 
-        const matches = exchange.calculateMatchingOrders(buyOrders, sellOrders, ETHEUR_RATE, gasLimit);
+        const matches = new OrderBook(buyOrders, sellOrders).getMatchingOrders(ETHEUR_RATE, gasLimit);
 
         expect(matches.buyIds).to.deep.equal([1, 2]);
         expect(matches.sellIds).to.deep.equal([5, 6]);
