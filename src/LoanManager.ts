@@ -36,7 +36,6 @@ export class LoanManager extends AbstractContract {
     private token: AugmintToken;
     private rates: Rates;
     private ethereumConnection: EthereumConnection;
-    private _products: LoanProduct[];
 
     constructor(deployedContractInstance: LoanManagerInstance, options: ILoanManagerOptions) {
         super(deployedContractInstance);
@@ -63,7 +62,6 @@ export class LoanManager extends AbstractContract {
     // public async getProduct(productId: number): Promise<ILoanProduct> {}
 
     private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
-        if (!this._products) {
             // @ts-ignore  TODO: how to detect better without ts-ignore?
             const isLegacyLoanContractWithChunkSize: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
             const chunkSize: number = isLegacyLoanContractWithChunkSize ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
@@ -91,9 +89,7 @@ export class LoanManager extends AbstractContract {
 
                 products = products.concat(productInstances);
             }
-            this._products = products;
-        }
-
-        return this._products.filter((p: LoanProduct) => p.isActive || !onlyActive);
+     
+              return products.filter((p: LoanProduct) => p.isActive || !onlyActive);
     }
 }

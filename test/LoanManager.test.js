@@ -58,7 +58,7 @@ function mockProd(
         isActive
     };
 }
-describe.only("LoanProduct", () => {
+describe("LoanProduct", () => {
     const LoanProduct = Augmint.LoanManager.LoanProduct;
 
     it("should create a LoanProduct from a tuple", async () => {
@@ -77,7 +77,7 @@ describe.only("LoanProduct", () => {
     });
 });
 
-describe.only("LoanManager getters", () => {
+describe("LoanManager getters", () => {
     const EXPECTED_ALL_PRODUCTS = [
         // id,minDisbursedAmount,termInSecs,discountRate,collateralRatio,defaultingFeePt,maxLoanAmount,isActive,interestRatePa,adjustedMinDisbursedAmount
         mockProd(0, 1000, 31536000, 854700, 550000, 50000, 21801, true, 0.17, 1250),
