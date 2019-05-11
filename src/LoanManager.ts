@@ -62,34 +62,32 @@ export class LoanManager extends AbstractContract {
     // public async getProduct(productId: number): Promise<ILoanProduct> {}
 
     private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
-            // @ts-ignore  TODO: how to detect better without ts-ignore?
-            const isLegacyLoanContractWithChunkSize: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
-            const chunkSize: number = isLegacyLoanContractWithChunkSize ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
+        // @ts-ignore  TODO: how to detect better without ts-ignore?
+        const isLegacyLoanContractWithChunkSize: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
+        const chunkSize: number = isLegacyLoanContractWithChunkSize ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
 
-            const productCount: number = await this.instance.methods
-                .getProductCount()
-                .call()
-                .then((res: string) => parseInt(res, 10));
+        const productCount: number = await this.instance.methods
+            .getProductCount()
+            .call()
+            .then((res: string) => parseInt(res, 10));
 
-            let products: LoanProduct[] = [];
-            const queryCount: number = Math.ceil(productCount / chunkSize);
+        let products: LoanProduct[] = [];
+        const queryCount: number = Math.ceil(productCount / chunkSize);
 
-            for (let i = 0; i < queryCount; i++) {
-                const productTuples: ILoanProductTuple[] = isLegacyLoanContractWithChunkSize
-                    ? ((await (this.instance as LegacyLoanManagerInstanceWithChunkSize).methods
-                          .getProducts(i * chunkSize)
-                          .call()) as ILoanProductTuple[])
-                    : ((await this.instance.methods
-                          .getProducts(i * chunkSize, chunkSize)
-                          .call()) as ILoanProductTuple[]);
+        for (let i = 0; i < queryCount; i++) {
+            const productTuples: ILoanProductTuple[] = isLegacyLoanContractWithChunkSize
+                ? ((await (this.instance as LegacyLoanManagerInstanceWithChunkSize).methods
+                      .getProducts(i * chunkSize)
+                      .call()) as ILoanProductTuple[])
+                : ((await this.instance.methods.getProducts(i * chunkSize, chunkSize).call()) as ILoanProductTuple[]);
 
-                const productInstances: LoanProduct[] = productTuples
-                    .filter((p: ILoanProductTuple) => p[2] !== "0") // solidity can return only fixed size arrays so 0 terms means no product
-                    .map((tuple: ILoanProductTuple) => new LoanProduct(tuple));
+            const productInstances: LoanProduct[] = productTuples
+                .filter((p: ILoanProductTuple) => p[2] !== "0") // solidity can return only fixed size arrays so 0 terms means no product
+                .map((tuple: ILoanProductTuple) => new LoanProduct(tuple));
 
-                products = products.concat(productInstances);
-            }
-     
-              return products.filter((p: LoanProduct) => p.isActive || !onlyActive);
+            products = products.concat(productInstances);
+        }
+
+        return products.filter((p: LoanProduct) => p.isActive || !onlyActive);
     }
 }
