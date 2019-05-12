@@ -36,6 +36,7 @@
     "@types/node": "^10.14.5",
     "chai": "4.2.0",
     "chai-as-promised": "7.1.1",
+    "chai-exclude": "2.0.1",
     "cross-env": "5.2",
     "eslint": "5.16.0",
     "mocha": "6.1.4",
@@ -60,8 +61,7 @@
     "ganache:run": "scripts/augmint-cli.sh ganache run --blockTime 1"
   },
   "greenkeeper": {
-    "ignore": [
-    ]
+    "ignore": []
   },
   "main": "dist/index.js",
   "module": "dist/index.es.js",

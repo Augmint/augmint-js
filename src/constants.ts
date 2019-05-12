@@ -1,6 +1,7 @@
 import BN from "bn.js";
 
 export const ONE_ETH_IN_WEI: number = 1e18;
+export const BN_ONE_ETH_IN_WEI: BN = new BN("1000000000000000000");
 
 /* augmintToken decimals */
 export const DECIMALS_DIV: number = 100;
@@ -9,6 +10,8 @@ export const DECIMALS: number = 2;
 
 export const PPM_DIV: number = 1000000;
 export const BN_PPM_DIV: BN = new BN(PPM_DIV);
+
+export const E12: BN = new BN("1000000000000");
 
 export const ETHEUR: string = "ETHEUR";
 

@@ -1,6 +1,14 @@
 import BN from "bn.js";
-import { BN_PPM_DIV, MIN_LOAN_AMOUNT_ADJUSTMENT, PPM_DIV } from "./constants";
+import { BN_ONE_ETH_IN_WEI, BN_PPM_DIV, E12, MIN_LOAN_AMOUNT_ADJUSTMENT, PPM_DIV } from "./constants";
 import { AugmintJsError } from "./Errors";
+
+export interface ILoanValues {
+    disbursedAmount: BN;
+    collateralAmount: BN;
+    repaymentAmount: BN;
+    interestAmount: BN;
+    repayBefore: Date;
+}
 
 /**  result from LoanManager contract's getProduct:
  *   [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
@@ -73,5 +81,42 @@ export class LoanProduct {
     }
 
     // calculateLoanFromCollateral(collateralAmount: BN): ILoanValues;
-    // calculateLoanFromDisbursedAmount(disbursedAmount: BN): ILoanValues;
+
+    public calculateLoanFromDisbursedAmount(_disbursedAmount: BN, ethFiatRate: BN): ILoanValues {
+        const disbursedAmount: BN = new BN(_disbursedAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
+        let repaymentAmount: BN = disbursedAmount.mul(BN_PPM_DIV).div(this.discountRate);
+        if (
+            disbursedAmount
+                .mul(BN_PPM_DIV)
+                .mod(this.discountRate)
+                .gt(0)
+        ) {
+            repaymentAmount = repaymentAmount.add(new BN(1)); // ceiling division
+        }
+
+        let collateralValueInTokens: BN = repaymentAmount.mul(BN_PPM_DIV).div(this.collateralRatio);
+        if (
+            repaymentAmount
+                .mul(BN_PPM_DIV)
+                .mod(this.collateralRatio)
+                .gt(0)
+        ) {
+            collateralValueInTokens = collateralValueInTokens.add(new BN(1)); // ceiling division
+        }
+
+        const collateralAmount: BN = collateralValueInTokens.mul(BN_ONE_ETH_IN_WEI).divRound(ethFiatRate);
+
+        const repayBefore: Date = new Date();
+        repayBefore.setSeconds(repayBefore.getSeconds() + this.termInSecs);
+
+        const result: ILoanValues = {
+            disbursedAmount,
+            collateralAmount,
+            repaymentAmount,
+            interestAmount: repaymentAmount.sub(disbursedAmount),
+            repayBefore
+        };
+
+        return result;
+    }
 }
