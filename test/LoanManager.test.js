@@ -80,7 +80,24 @@ describe("LoanProduct", () => {
         assert.deepEqualExcluding(lv, EXPECTED_LOANVALUES, "repayBefore");
     });
 
-    it("should calculate loan values from collateral");
+    it("should calculate loan values from collateral", () => {
+        const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
+        const ETH_FIAT_RATE = new BN("99800");
+        const EXPECTED_REPAY_BEFORE = new Date();
+        EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
+
+        const EXPECTED_LOANVALUES = {
+            disbursedAmount: new BN("10000"),
+            collateralAmount: new BN("173076152304609218"),
+            repaymentAmount: new BN("9500"),
+            interestAmount: new BN("-500"),
+            repayBefore: EXPECTED_REPAY_BEFORE
+        };
+
+        const lv = lp.calculateLoanFromCollateral(EXPECTED_LOANVALUES.collateralAmount, ETH_FIAT_RATE);
+        assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
+        assert.deepEqualExcluding(lv, EXPECTED_LOANVALUES, "repayBefore");
+    });
 
     it("should calculate loan values from disbursed amount (negative interest)", () => {
         const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
@@ -97,12 +114,28 @@ describe("LoanProduct", () => {
         };
 
         const lv = lp.calculateLoanFromDisbursedAmount(EXPECTED_LOANVALUES.disbursedAmount, ETH_FIAT_RATE);
-        console.log(lv);
         assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
         assert.deepEqualExcluding(lv, EXPECTED_LOANVALUES, "repayBefore");
     });
 
-    it("should calculate loan values from collateral (negative interest)");
+    it("should calculate loan values from collateral (negative interest)", () => {
+        const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
+        const ETH_FIAT_RATE = new BN("99800");
+        const EXPECTED_REPAY_BEFORE = new Date();
+        EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
+
+        const EXPECTED_LOANVALUES = {
+            disbursedAmount: new BN("10000"),
+            collateralAmount: new BN("173076152304609218"),
+            repaymentAmount: new BN("9500"),
+            interestAmount: new BN("-500"),
+            repayBefore: EXPECTED_REPAY_BEFORE
+        };
+
+        const lv = lp.calculateLoanFromCollateral(EXPECTED_LOANVALUES.collateralAmount, ETH_FIAT_RATE);
+        assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
+        assert.deepEqualExcluding(lv, EXPECTED_LOANVALUES, "repayBefore");
+    });
 });
 
 describe("LoanManager connection", () => {

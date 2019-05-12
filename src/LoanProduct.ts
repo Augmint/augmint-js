@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { BN_ONE_ETH_IN_WEI, BN_PPM_DIV, E12, MIN_LOAN_AMOUNT_ADJUSTMENT, PPM_DIV } from "./constants";
+import { BN_ONE_ETH_IN_WEI, BN_PPM_DIV, MIN_LOAN_AMOUNT_ADJUSTMENT, PPM_DIV } from "./constants";
 import { AugmintJsError } from "./Errors";
 
 export interface ILoanValues {
@@ -65,7 +65,7 @@ export class LoanProduct {
             minDisbursedAmount
                 .mul(MIN_LOAN_AMOUNT_ADJUSTMENT)
                 .div(BN_PPM_DIV)
-                .toString() // test deepEqual fails otherwise. don't ask. TODO: revisit this when we decided on bigint lib.
+                .toString() // test deepEqual fails otherwise. don't ask.
         );
 
         this.id = parseInt(sId);
@@ -80,7 +80,24 @@ export class LoanProduct {
         this.isActive = sIsActive === "1";
     }
 
-    // calculateLoanFromCollateral(collateralAmount: BN): ILoanValues;
+    public calculateLoanFromCollateral(_collateralAmount: BN, ethFiatRate: BN): ILoanValues {
+        const collateralAmount: BN = new BN(_collateralAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
+        const tokenValue: BN = collateralAmount.mul(ethFiatRate).divRound(BN_ONE_ETH_IN_WEI);
+        const repaymentAmount: BN = tokenValue.mul(this.collateralRatio).div(BN_PPM_DIV);
+        const disbursedAmount: BN = repaymentAmount.mul(this.discountRate).div(BN_PPM_DIV);
+        const interestAmount: BN = repaymentAmount.sub(disbursedAmount);
+
+        const repayBefore: Date = new Date();
+        repayBefore.setSeconds(repayBefore.getSeconds() + this.termInSecs);
+
+        return {
+            disbursedAmount: new BN(disbursedAmount.toString()), // test deepEqual fails otherwise. don't ask.
+            collateralAmount,
+            repaymentAmount: new BN(repaymentAmount.toString()),
+            interestAmount,
+            repayBefore
+        };
+    }
 
     public calculateLoanFromDisbursedAmount(_disbursedAmount: BN, ethFiatRate: BN): ILoanValues {
         const disbursedAmount: BN = new BN(_disbursedAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
