@@ -79,9 +79,9 @@ describe("getMatchingOrders", () => {
             { buy: true, id: 1, price: toPPM(0.9), amount: toWei(1) }
         ];
         const sellOrders = [
-            { buy: false, id: 4, price: toPPM(1.05), amount: new BN(40000) }, // fully filled from id 2
-            { buy: false, id: 5, price: toPPM(1.04), amount: new BN(5455) }, // fully filled from id 2 and no leftover in id 2
-            { buy: false, id: 6, price: toPPM(1.04), amount: new BN(1000) } // no fill...
+            { buy: false, id: 4, price: toPPM(1.04), amount: new BN(40000) }, // fully filled from id 2
+            { buy: false, id: 5, price: toPPM(1.05), amount: new BN(5455) }, // fully filled from id 2 and no leftover in id 2
+            { buy: false, id: 6, price: toPPM(1.05), amount: new BN(1000) } // no fill...
         ];
 
         const matches = new OrderBook(buyOrders, sellOrders).getMatchingOrders(ETHEUR_RATE, GAS_LIMIT);
