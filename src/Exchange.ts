@@ -25,10 +25,11 @@ export class OrderBook {
         if (o1.buy !== o2.buy) {
             throw new Error("compareOrders(): order directions must be the same" + o1 + o2);
         }
-
-        const dir: BN = o1.buy ? new BN(-1) : new BN(1);
-
-        return o1.price.mul(dir).gt(o2.price.mul(dir)) || (o1.price.eq(o2.price) && o1.id > o2.id) ? 1 : -1;
+        const cmp = o1.price.cmp(o2.price);
+        if (cmp !== 0) {
+            return o1.buy ? -cmp : cmp;
+        }
+        return o1.id - o2.id;
     }
 
 
