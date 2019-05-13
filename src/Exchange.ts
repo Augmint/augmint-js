@@ -104,6 +104,7 @@ export class OrderBook {
         return { buyIds, sellIds, gasEstimate };
     }
 
+
 }
 
 export interface IMatchingOrders {
@@ -126,6 +127,13 @@ export interface IExchangeOptions {
     token: AugmintToken;
     rates: Rates;
     ethereumConnection: EthereumConnection;
+}
+
+export interface ISimpleMatchingOrders {
+    tokens: number;
+    ethers: number;
+    limitPrice: number;
+    averagePrice: number;
 }
 
 /**
@@ -293,10 +301,18 @@ export class Exchange extends AbstractContract {
         return transaction;
     }
 
+    /**
+     * calculate price for n amount of token to sell or buy
+     * @param  {n} amount of token to sell or buy
+     * @param  {orders} list of order to calculate from
+     * @param  {buy} buyOrders or sellOrders
+     * @return {object} pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
+     */
+
     public calculateSimpleBuyMatches(
         n: number,
         orders: any[],
-        direction: OrderDirection
+        buy: boolean
     ): ISimpleMatchingOrders {
         let tokens: number = 0;
         let ethers: number = 0;
@@ -321,7 +337,7 @@ export class Exchange extends AbstractContract {
         });
 
 
-        const limitPrice: number = direction === OrderDirection.TOKEN_BUY ? Math.max(...prices.list) : Math.min(...prices.list);
+        const limitPrice: number = buy ? Math.max(...prices.list) : Math.min(...prices.list);
         const averagePrice: number = parseFloat((prices.total / tokens).toFixed(3));
 
         tokens = parseFloat(tokens.toFixed(2));
