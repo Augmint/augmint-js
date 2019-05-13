@@ -3,7 +3,7 @@ import { Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
-import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE } from "./constants";
+import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, E12 } from "./constants";
 import { EthereumConnection } from "./EthereumConnection";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PLACE_ORDER_GAS } from "./gas";
 import { Rates } from "./Rates";
@@ -64,7 +64,6 @@ export class OrderBook {
         let gasEstimate: number = 0;
         let nextGasEstimate: number = MATCH_MULTIPLE_FIRST_MATCH_GAS;
 
-        const E12 = new BN("1000000000000");
         while (buyIdx < buys.length && sellIdx < sells.length && nextGasEstimate <= gasLimit) {
 
             const sell: IOrder = sells[sellIdx];
