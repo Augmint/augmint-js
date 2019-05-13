@@ -17,6 +17,20 @@ if (config.LOG) {
     utils.logger.level = config.LOG;
 }
 
+// deeply normalize all BN properties so they can be compared with deepEquals
+// NOTE: object graph must not have cycles
+function normalizeBN(obj) {
+    Object.keys(obj).map((key, index) => {
+        const o = obj[key];
+        if (o instanceof BN) {
+            obj[key] = new BN(o.toString());
+        } else if (o instanceof Object) {
+            obj[key] = normalizeBN(o);
+        }
+    });
+    return obj;
+}
+
 function mockProd(
     id,
     minDisbursedAmount,
@@ -51,7 +65,7 @@ describe("LoanProduct", () => {
         // Solidity LoanManager contract .getProducts() tuple:
         // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
         const lp = new LoanProduct(["0", "1000", "31536000", "854700", "550000", "50000", "21801", "1"]);
-        assert.deepEqual(lp, expectedProd);
+        assert.deepEqual(normalizeBN(lp), expectedProd);
     });
 
     it("should throw if creating with 0 term ", () => {
@@ -77,7 +91,7 @@ describe("LoanProduct", () => {
 
         const lv = lp.calculateLoanFromDisbursedAmount(EXPECTED_LOANVALUES.disbursedAmount, ETH_FIAT_RATE);
         assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
-        assert.deepEqualExcluding(lv, EXPECTED_LOANVALUES, "repayBefore");
+        assert.deepEqualExcluding(normalizeBN(lv), EXPECTED_LOANVALUES, "repayBefore");
     });
 
     it("should calculate loan values from collateral", () => {
@@ -96,7 +110,7 @@ describe("LoanProduct", () => {
 
         const lv = lp.calculateLoanFromCollateral(EXPECTED_LOANVALUES.collateralAmount, ETH_FIAT_RATE);
         assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
-        assert.deepEqualExcluding(lv, EXPECTED_LOANVALUES, "repayBefore");
+        assert.deepEqualExcluding(normalizeBN(lv), EXPECTED_LOANVALUES, "repayBefore");
     });
 
     it("should calculate loan values from disbursed amount (negative interest)", () => {
@@ -115,7 +129,7 @@ describe("LoanProduct", () => {
 
         const lv = lp.calculateLoanFromDisbursedAmount(EXPECTED_LOANVALUES.disbursedAmount, ETH_FIAT_RATE);
         assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
-        assert.deepEqualExcluding(lv, EXPECTED_LOANVALUES, "repayBefore");
+        assert.deepEqualExcluding(normalizeBN(lv), EXPECTED_LOANVALUES, "repayBefore");
     });
 
     it("should calculate loan values from collateral (negative interest)", () => {
@@ -134,7 +148,7 @@ describe("LoanProduct", () => {
 
         const lv = lp.calculateLoanFromCollateral(EXPECTED_LOANVALUES.collateralAmount, ETH_FIAT_RATE);
         assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
-        assert.deepEqualExcluding(lv, EXPECTED_LOANVALUES, "repayBefore");
+        assert.deepEqualExcluding(normalizeBN(lv), EXPECTED_LOANVALUES, "repayBefore");
     });
 });
 
@@ -200,12 +214,12 @@ describe("LoanManager getters", () => {
 
     it("should return all loan products", async () => {
         const products = await loanManager.getAllProducts();
-        assert.deepEqual(products, EXPECTED_ALL_PRODUCTS);
+        assert.deepEqual(normalizeBN(products), EXPECTED_ALL_PRODUCTS);
     });
 
     it("should return active loan products", async () => {
         const products = await loanManager.getActiveProducts();
-        assert.deepEqual(products, EXPECTED_ACTIVE_PRODUCTS);
+        assert.deepEqual(normalizeBN(products), EXPECTED_ACTIVE_PRODUCTS);
     });
 });
 

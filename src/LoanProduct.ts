@@ -61,12 +61,10 @@ export class LoanProduct {
         const minDisbursedAmount: BN = new BN(sMinDisbursedAmount);
 
         // adjusted minAmount. rational: ETH/EUR rate change in the background while sending the tx resulting tx rejected
-        const adjustedMinDisbursedAmount: BN = new BN(
+        const adjustedMinDisbursedAmount: BN =
             minDisbursedAmount
                 .mul(MIN_LOAN_AMOUNT_ADJUSTMENT)
-                .div(BN_PPM_DIV)
-                .toString() // test deepEqual fails otherwise. don't ask.
-        );
+                .div(BN_PPM_DIV);
 
         this.id = parseInt(sId);
         this.termInSecs = termInSecs;
@@ -91,35 +89,24 @@ export class LoanProduct {
         repayBefore.setSeconds(repayBefore.getSeconds() + this.termInSecs);
 
         return {
-            disbursedAmount: new BN(disbursedAmount.toString()), // test deepEqual fails otherwise. don't ask.
+            disbursedAmount,
             collateralAmount,
-            repaymentAmount: new BN(repaymentAmount.toString()),
+            repaymentAmount,
             interestAmount,
             repayBefore
         };
     }
 
     public calculateLoanFromDisbursedAmount(_disbursedAmount: BN, ethFiatRate: BN): ILoanValues {
-        const disbursedAmount: BN = new BN(_disbursedAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
-        let repaymentAmount: BN = disbursedAmount.mul(BN_PPM_DIV).div(this.discountRate);
-        if (
-            disbursedAmount
-                .mul(BN_PPM_DIV)
-                .mod(this.discountRate)
-                .gt(0)
-        ) {
-            repaymentAmount = repaymentAmount.add(new BN(1)); // ceiling division
+
+        function ceilDiv(dividend: BN, divisor: BN) {
+            return dividend.add(divisor).sub(new BN(1)).div(divisor);
         }
 
-        let collateralValueInTokens: BN = repaymentAmount.mul(BN_PPM_DIV).div(this.collateralRatio);
-        if (
-            repaymentAmount
-                .mul(BN_PPM_DIV)
-                .mod(this.collateralRatio)
-                .gt(0)
-        ) {
-            collateralValueInTokens = collateralValueInTokens.add(new BN(1)); // ceiling division
-        }
+        const disbursedAmount: BN = new BN(_disbursedAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
+        let repaymentAmount: BN = ceilDiv(disbursedAmount.mul(BN_PPM_DIV), this.discountRate);
+
+        let collateralValueInTokens: BN = ceilDiv(repaymentAmount.mul(BN_PPM_DIV), this.collateralRatio);
 
         const collateralAmount: BN = collateralValueInTokens.mul(BN_ONE_ETH_IN_WEI).divRound(ethFiatRate);
 
