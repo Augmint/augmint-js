@@ -4,6 +4,7 @@ const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const { Augmint, utils } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
+const OrderBook = Augmint.Exchange.OrderBook;
 
 if (config.LOG) {
     utils.logger.level = config.LOG;
@@ -85,7 +86,7 @@ describe("getOrderBook", () => {
                     maker: buyMaker.toLowerCase(),
                     price: bnBuyPrice,
                     amount: bn_buyWeiAmount,
-                    direction: Augmint.constants.OrderDirection.TOKEN_BUY
+                    buy: true
                 }
             ],
             sellOrders: [
@@ -94,58 +95,54 @@ describe("getOrderBook", () => {
                     maker: sellMaker.toLowerCase(),
                     price: bnSellPrice,
                     amount: bn_sellTokenAmount,
-                    direction: Augmint.constants.OrderDirection.TOKEN_SELL
+                    buy: false
                 }
             ]
         });
     });
 });
 
-describe("isOrderBetter", () => {
+describe("compareOrders", () => {
     let exchange = null;
-    before(async () => {
-        const myAugmint = await Augmint.create(config);
-        exchange = myAugmint.exchange;
-    });
     it("o2 should be better (SELL price)", () => {
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(2), id: 1 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(1), id: 2 };
-        const result = exchange.isOrderBetter(o1, o2);
-        expect(result).to.be.equal(1);
+        const o1 = { buy: false, price: new BN(2), id: 1 };
+        const o2 = { buy: false, price: new BN(1), id: 2 };
+        const result = OrderBook.compareOrders(o1, o2);
+        expect(result).to.be.above(0);
     });
 
     it("o1 should be better (BUY price)", () => {
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: new BN(2), id: 2 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: new BN(1), id: 1 };
-        const result = exchange.isOrderBetter(o1, o2);
-        expect(result).to.be.equal(-1);
+        const o1 = { buy: true, price: new BN(2), id: 2 };
+        const o2 = { buy: true, price: new BN(1), id: 1 };
+        const result = OrderBook.compareOrders(o1, o2);
+        expect(result).to.be.below(0);
     });
 
     it("o2 should be better (SELL id)", () => {
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(1), id: 2 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(1), id: 1 };
-        const result = exchange.isOrderBetter(o1, o2);
-        expect(result).to.be.equal(1);
+        const o1 = { buy: false, price: new BN(1), id: 2 };
+        const o2 = { buy: false, price: new BN(1), id: 1 };
+        const result = OrderBook.compareOrders(o1, o2);
+        expect(result).to.be.above(0);
     });
 
     it("o2 should be better (BUY id)", () => {
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: new BN(1), id: 2 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: new BN(1), id: 1 };
-        const result = exchange.isOrderBetter(o1, o2);
-        expect(result).to.be.equal(1);
+        const o1 = { buy: true, price: new BN(1), id: 2 };
+        const o2 = { buy: true, price: new BN(1), id: 1 };
+        const result = OrderBook.compareOrders(o1, o2);
+        expect(result).to.be.above(0);
     });
 
-    it("o1 should be better when o1 same as o2", () => {
+    it("should be equal when o1 same as o2", () => {
         // same id for two orders, it shouldn't happen
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(1), id: 1 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(1), id: 1 };
-        const result = exchange.isOrderBetter(o1, o2);
-        expect(result).to.be.equal(-1);
+        const o1 = { buy: false, price: new BN(1), id: 1 };
+        const o2 = { buy: false, price: new BN(1), id: 1 };
+        const result = OrderBook.compareOrders(o1, o2);
+        expect(result).to.be.equal(0);
     });
 
     it("the direction of the two orders should be same", () => {
-        const o1 = { direction: Augmint.constants.OrderDirection.TOKEN_SELL, price: new BN(2), id: 2 };
-        const o2 = { direction: Augmint.constants.OrderDirection.TOKEN_BUY, price: new BN(1), id: 1 };
-        expect(() => exchange.isOrderBetter(o1, o2)).to.throw(/order directions must be the same/);
+        const o1 = { buy: false, price: new BN(2), id: 2 };
+        const o2 = { buy: true, price: new BN(1), id: 1 };
+        expect(() => OrderBook.compareOrders(o1, o2)).to.throw(/order directions must be the same/);
     });
 });

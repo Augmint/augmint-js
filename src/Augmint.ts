@@ -96,6 +96,10 @@ export class Augmint {
         return Transaction;
     }
 
+    static get Exchange(): typeof Exchange {
+        return Exchange;
+    }
+  
     static get LoanManager(): typeof LoanManager {
         return LoanManager;
     }

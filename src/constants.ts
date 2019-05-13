@@ -20,11 +20,6 @@ export const LEGACY_CONTRACTS_CHUNK_SIZE: number = 100;
 // New contracts accept chunksize as param for each fx so it can be adjusted with this constant
 export const CHUNK_SIZE: number = 100;
 
-export enum OrderDirection {
-    TOKEN_BUY,
-    TOKEN_SELL
-}
-
 // rational: it's to avoid loan tx to fail on min loan amount because of an ETH/EUR rate change
 // in the background right while sending the tx
 export const MIN_LOAN_AMOUNT_ADJUSTMENT: number = new BN(1250000); // in PPM
