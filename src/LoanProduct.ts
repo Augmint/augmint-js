@@ -1,6 +1,14 @@
 import BN from "bn.js";
-import { BN_PPM_DIV, MIN_LOAN_AMOUNT_ADJUSTMENT, PPM_DIV } from "./constants";
+import { BN_ONE_ETH_IN_WEI, BN_PPM_DIV, MIN_LOAN_AMOUNT_ADJUSTMENT, PPM_DIV } from "./constants";
 import { AugmintJsError } from "./Errors";
+
+export interface ILoanValues {
+    disbursedAmount: BN;
+    collateralAmount: BN;
+    repaymentAmount: BN;
+    interestAmount: BN;
+    repayBefore: Date;
+}
 
 /**  result from LoanManager contract's getProduct:
  *   [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
@@ -53,12 +61,10 @@ export class LoanProduct {
         const minDisbursedAmount: BN = new BN(sMinDisbursedAmount);
 
         // adjusted minAmount. rational: ETH/EUR rate change in the background while sending the tx resulting tx rejected
-        const adjustedMinDisbursedAmount: BN = new BN(
+        const adjustedMinDisbursedAmount: BN =
             minDisbursedAmount
                 .mul(MIN_LOAN_AMOUNT_ADJUSTMENT)
-                .div(BN_PPM_DIV)
-                .toString() // test deepEqual fails otherwise. don't ask. TODO: revisit this when we decided on bigint lib.
-        );
+                .div(BN_PPM_DIV);
 
         this.id = parseInt(sId);
         this.termInSecs = termInSecs;
@@ -72,6 +78,49 @@ export class LoanProduct {
         this.isActive = sIsActive === "1";
     }
 
-    // calculateLoanFromCollateral(collateralAmount: BN): ILoanValues;
-    // calculateLoanFromDisbursedAmount(disbursedAmount: BN): ILoanValues;
+    public calculateLoanFromCollateral(_collateralAmount: BN, ethFiatRate: BN): ILoanValues {
+        const collateralAmount: BN = new BN(_collateralAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
+        const tokenValue: BN = collateralAmount.mul(ethFiatRate).divRound(BN_ONE_ETH_IN_WEI);
+        const repaymentAmount: BN = tokenValue.mul(this.collateralRatio).div(BN_PPM_DIV);
+        const disbursedAmount: BN = repaymentAmount.mul(this.discountRate).div(BN_PPM_DIV);
+        const interestAmount: BN = repaymentAmount.sub(disbursedAmount);
+
+        const repayBefore: Date = new Date();
+        repayBefore.setSeconds(repayBefore.getSeconds() + this.termInSecs);
+
+        return {
+            disbursedAmount,
+            collateralAmount,
+            repaymentAmount,
+            interestAmount,
+            repayBefore
+        };
+    }
+
+    public calculateLoanFromDisbursedAmount(_disbursedAmount: BN, ethFiatRate: BN): ILoanValues {
+
+        function ceilDiv(dividend: BN, divisor: BN) {
+            return dividend.add(divisor).sub(new BN(1)).div(divisor);
+        }
+
+        const disbursedAmount: BN = new BN(_disbursedAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
+        let repaymentAmount: BN = ceilDiv(disbursedAmount.mul(BN_PPM_DIV), this.discountRate);
+
+        let collateralValueInTokens: BN = ceilDiv(repaymentAmount.mul(BN_PPM_DIV), this.collateralRatio);
+
+        const collateralAmount: BN = collateralValueInTokens.mul(BN_ONE_ETH_IN_WEI).divRound(ethFiatRate);
+
+        const repayBefore: Date = new Date();
+        repayBefore.setSeconds(repayBefore.getSeconds() + this.termInSecs);
+
+        const result: ILoanValues = {
+            disbursedAmount,
+            collateralAmount,
+            repaymentAmount,
+            interestAmount: repaymentAmount.sub(disbursedAmount),
+            repayBefore
+        };
+
+        return result;
+    }
 }

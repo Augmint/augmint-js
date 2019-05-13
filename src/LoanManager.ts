@@ -16,14 +16,6 @@ export interface ILoanManagerOptions {
     ethereumConnection: EthereumConnection;
 }
 
-export interface ILoanValues {
-    disbursedAmount: BN;
-    collateralAmount: BN;
-    interestAmount: BN;
-    defaultingFeeAmount: BN;
-    repayBefore: Date;
-}
-
 /**
  * Augmint LoanManager contract class
  * @class LoanManager

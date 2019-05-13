@@ -1,5 +1,12 @@
-const { assert, expect } = require("chai");
+const chai = require("chai");
+const { assert, expect } = chai;
+chai.use(require("chai-exclude"));
+
 const BN = require("bn.js");
+BN.prototype.inspect = function() {
+    return this.toString();
+};
+
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const { Augmint, utils } = require("../dist/index.js");
 const { AugmintJsError } = Augmint.Errors;
@@ -10,28 +17,19 @@ if (config.LOG) {
     utils.logger.level = config.LOG;
 }
 
-describe("LoanManager connection", () => {
-    let augmint;
-    before(async () => {
-        augmint = await Augmint.create(config);
+// deeply normalize all BN properties so they can be compared with deepEquals
+// NOTE: object graph must not have cycles
+function normalizeBN(obj) {
+    Object.keys(obj).map((key, index) => {
+        const o = obj[key];
+        if (o instanceof BN) {
+            obj[key] = new BN(o.toString());
+        } else if (o instanceof Object) {
+            obj[key] = normalizeBN(o);
+        }
     });
-
-    it("should connect to latest contract", async () => {
-        const loanManager = augmint.loanManager;
-        assert.equal(loanManager.address, "0x213135c85437C23bC529A2eE9c2980646c332fCB");
-    });
-
-    it("should connect to supported legacy LoanManager contracts", () => {
-        const legacyAddresses = Augmint.constants.SUPPORTED_LEGACY_LOANMANAGERS[augmint.deployedEnvironment.name];
-
-        const legacyContracts = augmint.getLegacyLoanManagers(legacyAddresses);
-
-        const connectedAddresses = legacyContracts.map(leg => leg.address.toLowerCase());
-        const lowerCaseLegacyAddresses = legacyAddresses.map(addr => addr.toLowerCase());
-
-        assert.deepEqual(connectedAddresses, lowerCaseLegacyAddresses);
-    });
-});
+    return obj;
+}
 
 function mockProd(
     id,
@@ -58,6 +56,7 @@ function mockProd(
         isActive
     };
 }
+
 describe("LoanProduct", () => {
     const LoanProduct = Augmint.LoanManager.LoanProduct;
 
@@ -66,7 +65,7 @@ describe("LoanProduct", () => {
         // Solidity LoanManager contract .getProducts() tuple:
         // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
         const lp = new LoanProduct(["0", "1000", "31536000", "854700", "550000", "50000", "21801", "1"]);
-        assert.deepEqual(lp, expectedProd);
+        assert.deepEqual(normalizeBN(lp), expectedProd);
     });
 
     it("should throw if creating with 0 term ", () => {
@@ -74,6 +73,105 @@ describe("LoanProduct", () => {
             AugmintJsError,
             /LoanProduct with 0 term/
         );
+    });
+
+    it("should calculate loan values from disbursed amount", () => {
+        const lp = new LoanProduct(["0", "1000", "31536000", "854701", "550000", "50000", "21801", "1"]);
+        const ETH_FIAT_RATE = new BN("99800");
+        const EXPECTED_REPAY_BEFORE = new Date();
+        EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
+
+        const EXPECTED_LOANVALUES = {
+            disbursedAmount: new BN("10000"),
+            collateralAmount: new BN("213156312625250501"),
+            repaymentAmount: new BN("11700"),
+            interestAmount: new BN("1700"),
+            repayBefore: EXPECTED_REPAY_BEFORE
+        };
+
+        const lv = lp.calculateLoanFromDisbursedAmount(EXPECTED_LOANVALUES.disbursedAmount, ETH_FIAT_RATE);
+        assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
+        assert.deepEqualExcluding(normalizeBN(lv), EXPECTED_LOANVALUES, "repayBefore");
+    });
+
+    it("should calculate loan values from collateral", () => {
+        const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
+        const ETH_FIAT_RATE = new BN("99800");
+        const EXPECTED_REPAY_BEFORE = new Date();
+        EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
+
+        const EXPECTED_LOANVALUES = {
+            disbursedAmount: new BN("10000"),
+            collateralAmount: new BN("173076152304609218"),
+            repaymentAmount: new BN("9500"),
+            interestAmount: new BN("-500"),
+            repayBefore: EXPECTED_REPAY_BEFORE
+        };
+
+        const lv = lp.calculateLoanFromCollateral(EXPECTED_LOANVALUES.collateralAmount, ETH_FIAT_RATE);
+        assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
+        assert.deepEqualExcluding(normalizeBN(lv), EXPECTED_LOANVALUES, "repayBefore");
+    });
+
+    it("should calculate loan values from disbursed amount (negative interest)", () => {
+        const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
+        const ETH_FIAT_RATE = new BN("99800");
+        const EXPECTED_REPAY_BEFORE = new Date();
+        EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
+
+        const EXPECTED_LOANVALUES = {
+            disbursedAmount: new BN("10000"),
+            collateralAmount: new BN("173076152304609218"),
+            repaymentAmount: new BN("9500"),
+            interestAmount: new BN("-500"),
+            repayBefore: EXPECTED_REPAY_BEFORE
+        };
+
+        const lv = lp.calculateLoanFromDisbursedAmount(EXPECTED_LOANVALUES.disbursedAmount, ETH_FIAT_RATE);
+        assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
+        assert.deepEqualExcluding(normalizeBN(lv), EXPECTED_LOANVALUES, "repayBefore");
+    });
+
+    it("should calculate loan values from collateral (negative interest)", () => {
+        const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
+        const ETH_FIAT_RATE = new BN("99800");
+        const EXPECTED_REPAY_BEFORE = new Date();
+        EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
+
+        const EXPECTED_LOANVALUES = {
+            disbursedAmount: new BN("10000"),
+            collateralAmount: new BN("173076152304609218"),
+            repaymentAmount: new BN("9500"),
+            interestAmount: new BN("-500"),
+            repayBefore: EXPECTED_REPAY_BEFORE
+        };
+
+        const lv = lp.calculateLoanFromCollateral(EXPECTED_LOANVALUES.collateralAmount, ETH_FIAT_RATE);
+        assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
+        assert.deepEqualExcluding(normalizeBN(lv), EXPECTED_LOANVALUES, "repayBefore");
+    });
+});
+
+describe("LoanManager connection", () => {
+    let augmint;
+    before(async () => {
+        augmint = await Augmint.create(config);
+    });
+
+    it("should connect to latest contract", async () => {
+        const loanManager = augmint.loanManager;
+        assert.equal(loanManager.address, "0x213135c85437C23bC529A2eE9c2980646c332fCB");
+    });
+
+    it("should connect to supported legacy LoanManager contracts", () => {
+        const legacyAddresses = Augmint.constants.SUPPORTED_LEGACY_LOANMANAGERS[augmint.deployedEnvironment.name];
+
+        const legacyContracts = augmint.getLegacyLoanManagers(legacyAddresses);
+
+        const connectedAddresses = legacyContracts.map(leg => leg.address.toLowerCase());
+        const lowerCaseLegacyAddresses = legacyAddresses.map(addr => addr.toLowerCase());
+
+        assert.deepEqual(connectedAddresses, lowerCaseLegacyAddresses);
     });
 });
 
@@ -116,17 +214,13 @@ describe("LoanManager getters", () => {
 
     it("should return all loan products", async () => {
         const products = await loanManager.getAllProducts();
-        assert.deepEqual(products, EXPECTED_ALL_PRODUCTS);
+        assert.deepEqual(normalizeBN(products), EXPECTED_ALL_PRODUCTS);
     });
 
     it("should return active loan products", async () => {
         const products = await loanManager.getActiveProducts();
-        assert.deepEqual(products, EXPECTED_ACTIVE_PRODUCTS);
+        assert.deepEqual(normalizeBN(products), EXPECTED_ACTIVE_PRODUCTS);
     });
-
-    it("should calculate loan values from disbursed loan amount");
-
-    it("should calculate loan values from collateral");
 });
 
 describe("LoanManager events", () => {
@@ -159,22 +253,3 @@ describe("LoanManager events", () => {
 
     it("should callback onNewLoan");
 });
-
-// function debugPrintProducts(products) {
-//     products.forEach(p =>
-//         //     products.forEach(p =>
-//         //         console.log(
-//         //             `id: ${p.id} isActive: ${p.isActive} termInSecs: ${p.termInSecs} interestRatePa: ${p.interestRatePa}
-//         // collateralRatio: ${p.collateralRatio} discountRate: ${p.discountRate.toString()}
-//         // minDisbursedAmount: ${p.minDisbursedAmount} adjustedMinDisbursedAmount: ${p.adjustedMinDisbursedAmount}
-//         // maxLoanAmount: ${p.maxLoanAmount} defaultingFeePt: ${p.defaultingFeePt}`
-//         //         )
-//         //     );
-
-//         console.log(
-//             `mockProd(${p.id}, ${p.termInSecs}, ${p.discountRate}, ${p.interestRatePa}, ${p.collateralRatio}, ${
-//                 p.minDisbursedAmount
-//             }, ${p.adjustedMinDisbursedAmount}, ${p.maxLoanAmount}, ${p.defaultingFeePt}, ${p.isActive}),`
-//         )
-//     );
-// }
