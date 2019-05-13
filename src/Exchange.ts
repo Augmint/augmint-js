@@ -1,13 +1,13 @@
 import BN from "bn.js";
-import { Exchange as ExchangeInstance } from "../generated/index";
-import { TransactionObject } from "../generated/types/types";
-import { AbstractContract } from "./AbstractContract";
-import { AugmintToken } from "./AugmintToken";
-import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, E12 } from "./constants";
-import { EthereumConnection } from "./EthereumConnection";
-import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PLACE_ORDER_GAS } from "./gas";
-import { Rates } from "./Rates";
-import { Transaction } from "./Transaction";
+import {Exchange as ExchangeInstance} from "../generated/index";
+import {TransactionObject} from "../generated/types/types";
+import {AbstractContract} from "./AbstractContract";
+import {AugmintToken} from "./AugmintToken";
+import {CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE, E12} from "./constants";
+import {EthereumConnection} from "./EthereumConnection";
+import {MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PLACE_ORDER_GAS} from "./gas";
+import {Rates} from "./Rates";
+import {Transaction} from "./Transaction";
 
 
 export interface ISimpleMatchingOrders {
@@ -19,7 +19,7 @@ export interface ISimpleMatchingOrders {
 
 
 export class OrderBook {
-    constructor (
+    constructor(
         public buyOrders: IOrder[],
         public sellOrders: IOrder[]
     ) {
@@ -56,7 +56,7 @@ export class OrderBook {
         const buyIds: number[] = [];
 
         if (this.buyOrders.length === 0 || this.sellOrders.length === 0) {
-            return { buyIds, sellIds, gasEstimate: 0 };
+            return {buyIds, sellIds, gasEstimate: 0};
         }
         const lowestSellPrice: BN = this.sellOrders[0].price;
         const highestBuyPrice: BN = this.buyOrders[0].price;
@@ -110,54 +110,54 @@ export class OrderBook {
             nextGasEstimate += MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS;
         }
 
-        return { buyIds, sellIds, gasEstimate };
+        return {buyIds, sellIds, gasEstimate};
     }
+
+    /**
+     * transform order object into structure to calculate simplebuy data from
+     * @param  {tokenAmount} amount of token
+     * @param  {buy} buyOrders or sellOrders
+     * @return {object} order for simple buy { ethers, ...IOrder }
+     */
+
+    public getSimpleBuyOrders(
+        token: number,
+        buy: boolean,
+        ethFiatRate: BN
+    ) {
+        const orders: any[] = buy ? this.sellOrders : this.buyOrders;
+
+
+        return orders.map((order: any) => {
+            if (buy) {
+                order.ethers = (order.amount * order.price) / ethFiatRate;
+            } else {
+                order.ethers = order.amount;
+                order.amount = (ethFiatRate / order.price) * order.ethers;
+            }
+
+            return order;
+        });
+    }
+
 
     /**
      * calculate price for n amount of token to sell or buy
      * @param  {tokenAmount} amount of token to sell or buy
-     * @param  {orders} list of order to calculate from
      * @param  {buy} buyOrders or sellOrders
-     * @return {object} simple buy result { tokens, ethers, limitPrice, averagePrice }
+     * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
      */
 
-    calcMatchResults(token) {
-        const initOrders =
-            this.state.orderDirection === TOKEN_BUY
-                ? this.props.orders.orders.sellOrders
-                : this.props.orders.orders.buyOrders;
-        const orders = this.state.orders.length ? this.state.orders : initOrders;
-        const { ethFiatRate } = this.props.rates.info;
-        const bn_ethFiatRate = ethFiatRate !== null && new BigNumber(ethFiatRate);
-
-        if (this.state.orderList.length > 0) {
-            return matchOrders(token, this.state.orderList, this.state.orderDirection);
-        } else {
-            const orderList = orders.map(order => {
-                if (this.state.orderDirection === TOKEN_BUY) {
-                    order.ethers = (order.amount * order.price) / bn_ethFiatRate;
-                } else {
-                    order.ethers = order.amount;
-                    order.amount = (bn_ethFiatRate / order.price) * order.ethers;
-                }
-
-                return order;
-            });
-            this.setState({ orderList });
-
-            return matchOrders(token, orderList, this.state.orderDirection);
-        }
-    }
-
-
-    public calculateSimpleBuyMatches(
+    public calculateSimpleBuyData(
         tokenAmount: number,
-        orders: any[],
-        buy: boolean
+        buy: boolean,
+        ethFiatRate: BN
     ): ISimpleMatchingOrders {
         let tokens: number = 0;
         let ethers: number = 0;
-        const prices: any = { total: 0, list: [] };
+        const prices: any = {total: 0, list: []};
+
+        const orders: any[] = this.getSimpleBuyOrders(tokenAmount, buy, ethFiatRate)
 
         orders.forEach((item: any) => {
             let addedAmount: number = 0;
@@ -203,11 +203,15 @@ export interface IOrder {
     id: number;
     maker: string;
     buy: boolean;
-    amount: BN /** Buy order amount in Wei | Sell order amount in tokens, without decimals */;
-    price: BN /** price in PPM (parts per million) */;
+    amount: BN /** Buy order amount in Wei | Sell order amount in tokens, without decimals */
+    ;
+    price: BN /** price in PPM (parts per million) */
+    ;
 }
 
-type IOrderTuple = [string, string, string, string]; /** result from contract: [id, maker, price, amount] */
+type IOrderTuple = [string, string, string, string];
+
+/** result from contract: [id, maker, price, amount] */
 
 export interface IExchangeOptions {
     token: AugmintToken;
@@ -298,14 +302,14 @@ export class Exchange extends AbstractContract {
             // prettier-ignore
             result = isLegacyExchangeContract
                 // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
-                ? await this.instance.methods.getActiveBuyOrders(offset).call({ gas: blockGasLimit })
-                : await this.instance.methods.getActiveBuyOrders(offset, chunkSize).call({ gas: blockGasLimit });
+                ? await this.instance.methods.getActiveBuyOrders(offset).call({gas: blockGasLimit})
+                : await this.instance.methods.getActiveBuyOrders(offset, chunkSize).call({gas: blockGasLimit});
         } else {
             // prettier-ignore
             result = isLegacyExchangeContract
                 // @ts-ignore  TODO: remove ts - ignore and handle properly when legacy contract support added
-                ? await this.instance.methods.getActiveSellOrders(offset).call({ gas: blockGasLimit })
-                : await this.instance.methods.getActiveSellOrders(offset, chunkSize).call({ gas: blockGasLimit });
+                ? await this.instance.methods.getActiveSellOrders(offset).call({gas: blockGasLimit})
+                : await this.instance.methods.getActiveSellOrders(offset, chunkSize).call({gas: blockGasLimit});
         }
 
         // result format: [id, maker, price, amount]
