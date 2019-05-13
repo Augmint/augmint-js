@@ -9,6 +9,15 @@ import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PL
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
 
+
+export interface ISimpleMatchingOrders {
+    tokens: number;
+    ethers: number;
+    limitPrice: number;
+    averagePrice: number;
+}
+
+
 export class OrderBook {
     constructor (
         public buyOrders: IOrder[],
@@ -104,7 +113,84 @@ export class OrderBook {
         return { buyIds, sellIds, gasEstimate };
     }
 
+    /**
+     * calculate price for n amount of token to sell or buy
+     * @param  {tokenAmount} amount of token to sell or buy
+     * @param  {orders} list of order to calculate from
+     * @param  {buy} buyOrders or sellOrders
+     * @return {object} simple buy result { tokens, ethers, limitPrice, averagePrice }
+     */
 
+    calcMatchResults(token) {
+        const initOrders =
+            this.state.orderDirection === TOKEN_BUY
+                ? this.props.orders.orders.sellOrders
+                : this.props.orders.orders.buyOrders;
+        const orders = this.state.orders.length ? this.state.orders : initOrders;
+        const { ethFiatRate } = this.props.rates.info;
+        const bn_ethFiatRate = ethFiatRate !== null && new BigNumber(ethFiatRate);
+
+        if (this.state.orderList.length > 0) {
+            return matchOrders(token, this.state.orderList, this.state.orderDirection);
+        } else {
+            const orderList = orders.map(order => {
+                if (this.state.orderDirection === TOKEN_BUY) {
+                    order.ethers = (order.amount * order.price) / bn_ethFiatRate;
+                } else {
+                    order.ethers = order.amount;
+                    order.amount = (bn_ethFiatRate / order.price) * order.ethers;
+                }
+
+                return order;
+            });
+            this.setState({ orderList });
+
+            return matchOrders(token, orderList, this.state.orderDirection);
+        }
+    }
+
+
+    public calculateSimpleBuyMatches(
+        tokenAmount: number,
+        orders: any[],
+        buy: boolean
+    ): ISimpleMatchingOrders {
+        let tokens: number = 0;
+        let ethers: number = 0;
+        const prices: any = { total: 0, list: [] };
+
+        orders.forEach((item: any) => {
+            let addedAmount: number = 0;
+            if (tokens < tokenAmount) {
+                if (item.amount >= tokenAmount + tokens) {
+                    addedAmount = tokenAmount;
+                } else if (item.amount < tokenAmount + tokens && tokenAmount - tokens < item.amount) {
+                    addedAmount = tokenAmount - tokens;
+                } else if (item.amount < tokenAmount + tokens && tokenAmount - tokens >= item.amount) {
+                    addedAmount = item.amount;
+                    ethers += item.ethers;
+                }
+                tokens += addedAmount;
+                ethers += item.ethers * addedAmount / item.amount;
+                prices.total += item.price * addedAmount;
+                prices.list.push(item.price);
+            }
+        });
+
+
+        const limitPrice: number = buy ? Math.max(...prices.list) : Math.min(...prices.list);
+        const averagePrice: number = parseFloat((prices.total / tokens).toFixed(3));
+
+        tokens = parseFloat(tokens.toFixed(2));
+        ethers = parseFloat(ethers.toFixed(5));
+
+        return {
+            tokens,
+            ethers,
+            limitPrice,
+            averagePrice
+        };
+    }
 }
 
 export interface IMatchingOrders {
@@ -127,13 +213,6 @@ export interface IExchangeOptions {
     token: AugmintToken;
     rates: Rates;
     ethereumConnection: EthereumConnection;
-}
-
-export interface ISimpleMatchingOrders {
-    tokens: number;
-    ethers: number;
-    limitPrice: number;
-    averagePrice: number;
 }
 
 /**
@@ -299,56 +378,6 @@ export class Exchange extends AbstractContract {
         });
 
         return transaction;
-    }
-
-    /**
-     * calculate price for n amount of token to sell or buy
-     * @param  {n} amount of token to sell or buy
-     * @param  {orders} list of order to calculate from
-     * @param  {buy} buyOrders or sellOrders
-     * @return {object} pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
-     */
-
-    public calculateSimpleBuyMatches(
-        n: number,
-        orders: any[],
-        buy: boolean
-    ): ISimpleMatchingOrders {
-        let tokens: number = 0;
-        let ethers: number = 0;
-        const prices: any = { total: 0, list: [] };
-
-        orders.forEach((item: any) => {
-            let addedAmount: number = 0;
-            if (tokens < n) {
-                if (item.amount >= n + tokens) {
-                    addedAmount = n;
-                } else if (item.amount < n + tokens && n - tokens < item.amount) {
-                    addedAmount = n - tokens;
-                } else if (item.amount < n + tokens && n - tokens >= item.amount) {
-                    addedAmount = item.amount;
-                    ethers += item.ethers;
-                }
-                tokens += addedAmount;
-                ethers += item.ethers * addedAmount / item.amount;
-                prices.total += item.price * addedAmount;
-                prices.list.push(item.price);
-            }
-        });
-
-
-        const limitPrice: number = buy ? Math.max(...prices.list) : Math.min(...prices.list);
-        const averagePrice: number = parseFloat((prices.total / tokens).toFixed(3));
-
-        tokens = parseFloat(tokens.toFixed(2));
-        ethers = parseFloat(ethers.toFixed(5));
-
-        return {
-            tokens,
-            ethers,
-            limitPrice,
-            averagePrice
-        };
     }
 
     static get OrderBook(): typeof OrderBook {
