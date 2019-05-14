@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-CONTRACTS_VERSION=`node -e "const fs=require('fs');let base=fs.realpathSync('$0').split('/');base.splice(-2,2,'node_modules','@augmint','contracts','package.json');const p=require(base.join('/'));process.stdout.write(p.version)"`
+CONTRACTS_VERSION=`yarn info '@augmint/contracts' version -s`
 DOCKER_IMAGE="augmint/contracts:v$CONTRACTS_VERSION"
 CONTAINER_NAME=ganache
 
