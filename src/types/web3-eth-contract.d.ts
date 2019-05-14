@@ -19,7 +19,7 @@ declare module 'web3-eth-contract' {
      * @date 2018
      */
 
-    import BN = require('bn.js');
+    import { BN } from "bn.js";
     import {provider} from 'web3-providers';
     import {AbiInput, AbiOutput, AbiItem} from 'web3-utils';
     import {PromiEvent} from 'web3-core';

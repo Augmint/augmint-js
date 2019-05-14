@@ -20,7 +20,7 @@
  * @date 2018
  */
 declare module "web3-utils" {
-    import BN = require("bn.js");
+    import { BN } from "bn.js";
     import { Buffer } from "buffer";
 
     export type Unit =

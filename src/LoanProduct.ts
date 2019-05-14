@@ -1,4 +1,4 @@
-import BN from "bn.js";
+import { BN } from "bn.js";
 import { BN_ONE_ETH_IN_WEI, BN_PPM_DIV, MIN_LOAN_AMOUNT_ADJUSTMENT, PPM_DIV } from "./constants";
 import { AugmintJsError } from "./Errors";
 
@@ -79,7 +79,7 @@ export class LoanProduct {
     }
 
     public calculateLoanFromCollateral(_collateralAmount: BN, ethFiatRate: BN): ILoanValues {
-        const collateralAmount: BN = new BN(_collateralAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
+        const collateralAmount: BN = new BN(_collateralAmount.toString(16)); // to make sure we (or someone using the returnValues) don't mutate the arg
         const tokenValue: BN = collateralAmount.mul(ethFiatRate).divRound(BN_ONE_ETH_IN_WEI);
         const repaymentAmount: BN = tokenValue.mul(this.collateralRatio).div(BN_PPM_DIV);
         const disbursedAmount: BN = repaymentAmount.mul(this.discountRate).div(BN_PPM_DIV);
@@ -103,7 +103,7 @@ export class LoanProduct {
             return dividend.add(divisor).sub(new BN(1)).div(divisor);
         }
 
-        const disbursedAmount: BN = new BN(_disbursedAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
+        const disbursedAmount: BN = new BN(_disbursedAmount.toString(16)); // to make sure we (or someone using the returnValues) don't mutate the arg
         let repaymentAmount: BN = ceilDiv(disbursedAmount.mul(BN_PPM_DIV), this.discountRate);
 
         let collateralValueInTokens: BN = ceilDiv(repaymentAmount.mul(BN_PPM_DIV), this.collateralRatio);
