@@ -1,17 +1,4 @@
-import BN from "bn.js";
-
-export const ONE_ETH_IN_WEI: number = 1e18;
-export const BN_ONE_ETH_IN_WEI: BN = new BN("1000000000000000000");
-
-/* augmintToken decimals */
-export const DECIMALS_DIV: number = 100;
-
-export const DECIMALS: number = 2;
-
-export const PPM_DIV: number = 1000000;
-export const BN_PPM_DIV: BN = new BN(PPM_DIV);
-
-export const E12: BN = new BN("1000000000000");
+import { Percent } from "./units";
 
 export const ETHEUR: string = "ETHEUR";
 
@@ -22,7 +9,7 @@ export const CHUNK_SIZE: number = 100;
 
 // rational: it's to avoid loan tx to fail on min loan amount because of an ETH/EUR rate change
 // in the background right while sending the tx
-export const MIN_LOAN_AMOUNT_ADJUSTMENT: number = new BN(1250000); // in PPM
+export const MIN_LOAN_AMOUNT_ADJUSTMENT: Percent = Percent.of(1.25);
 
 export interface ISupportedLegacyContracts {
     [propName: string]: string[];

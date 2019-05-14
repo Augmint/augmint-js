@@ -1,12 +1,12 @@
-import BN from "bn.js";
-import { BN_ONE_ETH_IN_WEI, BN_PPM_DIV, MIN_LOAN_AMOUNT_ADJUSTMENT, PPM_DIV } from "./constants";
+import { Wei, Tokens, Percent } from "./units";
+import { MIN_LOAN_AMOUNT_ADJUSTMENT } from "./constants";
 import { AugmintJsError } from "./Errors";
 
 export interface ILoanValues {
-    disbursedAmount: BN;
-    collateralAmount: BN;
-    repaymentAmount: BN;
-    interestAmount: BN;
+    disbursedAmount: Tokens;
+    collateralAmount: Wei;
+    repaymentAmount: Tokens;
+    interestAmount: Tokens;
     repayBefore: Date;
 }
 
@@ -20,13 +20,13 @@ export class LoanProduct {
     public readonly termInSecs: number;
 
     public readonly interestRatePa: number;
-    public readonly discountRate: BN;
-    public readonly defaultingFeePt: BN;
-    public readonly collateralRatio: BN;
+    public readonly discountRate: Percent;
+    public readonly defaultingFeePt: Percent;
+    public readonly collateralRatio: Percent;
 
-    public readonly minDisbursedAmount: BN;
-    public readonly adjustedMinDisbursedAmount: BN;
-    public readonly maxLoanAmount: BN;
+    public readonly minDisbursedAmount: Tokens;
+    public readonly adjustedMinDisbursedAmount: Tokens;
+    public readonly maxLoanAmount: Tokens;
 
     public readonly isActive: boolean;
 
@@ -51,39 +51,37 @@ export class LoanProduct {
         }
 
         const termInSecs: number = parseInt(sTerm, 10);
+        const discountRate: Percent = Percent.parse(sDiscountRate);
 
         // this is an informative p.a. interest to displayed to the user - not intended to be used for calculations.
         //  The  interest  p.a. can be lower (but only lower or eq) depending on loan amount because of rounding
         const termInDays: number = termInSecs / 60 / 60 / 24;
         const interestRatePa: number =
-            Math.round(((1 / (parseInt(sDiscountRate) / PPM_DIV) - 1) / termInDays) * 365 * 10000) / 10000;
+         // Math.round(((1 / (parseInt(sDiscountRate) / PPM_DIV) - 1) / termInDays) * 365 * 10000) / 10000;
+            Math.round(((1 / discountRate.toNumber() - 1) / termInDays) * 365 * 10000) / 10000;
 
-        const minDisbursedAmount: BN = new BN(sMinDisbursedAmount);
+        const minDisbursedAmount: Tokens = Tokens.parse(sMinDisbursedAmount);
 
         // adjusted minAmount. rational: ETH/EUR rate change in the background while sending the tx resulting tx rejected
-        const adjustedMinDisbursedAmount: BN =
-            minDisbursedAmount
-                .mul(MIN_LOAN_AMOUNT_ADJUSTMENT)
-                .div(BN_PPM_DIV);
+        const adjustedMinDisbursedAmount: Tokens = minDisbursedAmount.mul(MIN_LOAN_AMOUNT_ADJUSTMENT);
 
         this.id = parseInt(sId);
         this.termInSecs = termInSecs;
-        this.discountRate = new BN(sDiscountRate);
+        this.discountRate = discountRate;
         this.interestRatePa = interestRatePa;
-        this.collateralRatio = new BN(sCollateralRatio);
+        this.collateralRatio = Percent.parse(sCollateralRatio);
         this.minDisbursedAmount = minDisbursedAmount;
         this.adjustedMinDisbursedAmount = adjustedMinDisbursedAmount;
-        this.maxLoanAmount = new BN(sMaxLoanAmount);
-        this.defaultingFeePt = new BN(sDefaultingFeePt);
+        this.maxLoanAmount = Tokens.parse(sMaxLoanAmount);
+        this.defaultingFeePt = Percent.parse(sDefaultingFeePt);
         this.isActive = sIsActive === "1";
     }
 
-    public calculateLoanFromCollateral(_collateralAmount: BN, ethFiatRate: BN): ILoanValues {
-        const collateralAmount: BN = new BN(_collateralAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
-        const tokenValue: BN = collateralAmount.mul(ethFiatRate).divRound(BN_ONE_ETH_IN_WEI);
-        const repaymentAmount: BN = tokenValue.mul(this.collateralRatio).div(BN_PPM_DIV);
-        const disbursedAmount: BN = repaymentAmount.mul(this.discountRate).div(BN_PPM_DIV);
-        const interestAmount: BN = repaymentAmount.sub(disbursedAmount);
+    public calculateLoanFromCollateral(collateralAmount: Wei, ethFiatRate: Tokens): ILoanValues {
+        const tokenValue: Tokens = collateralAmount.toTokens(ethFiatRate);
+        const repaymentAmount: Tokens = tokenValue.mul(this.collateralRatio);
+        const disbursedAmount: Tokens = repaymentAmount.mul(this.discountRate);
+        const interestAmount: Tokens = repaymentAmount.sub(disbursedAmount);
 
         const repayBefore: Date = new Date();
         repayBefore.setSeconds(repayBefore.getSeconds() + this.termInSecs);
@@ -97,18 +95,12 @@ export class LoanProduct {
         };
     }
 
-    public calculateLoanFromDisbursedAmount(_disbursedAmount: BN, ethFiatRate: BN): ILoanValues {
+    public calculateLoanFromDisbursedAmount(disbursedAmount: Tokens, ethFiatRate: Tokens): ILoanValues {
 
-        function ceilDiv(dividend: BN, divisor: BN) {
-            return dividend.add(divisor).sub(new BN(1)).div(divisor);
-        }
+        let repaymentAmount: Tokens = disbursedAmount.div(this.discountRate);
 
-        const disbursedAmount: BN = new BN(_disbursedAmount); // to make sure we (or someone using the returnValues) don't mutate the arg
-        let repaymentAmount: BN = ceilDiv(disbursedAmount.mul(BN_PPM_DIV), this.discountRate);
-
-        let collateralValueInTokens: BN = ceilDiv(repaymentAmount.mul(BN_PPM_DIV), this.collateralRatio);
-
-        const collateralAmount: BN = collateralValueInTokens.mul(BN_ONE_ETH_IN_WEI).divRound(ethFiatRate);
+        let collateralValueInTokens: Tokens = repaymentAmount.div(this.collateralRatio);
+        const collateralAmount: Wei = collateralValueInTokens.toWei(ethFiatRate);
 
         const repayBefore: Date = new Date();
         repayBefore.setSeconds(repayBefore.getSeconds() + this.termInSecs);

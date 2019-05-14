@@ -1,7 +1,6 @@
 const { expect, assert } = require("chai");
-const BN = require("bn.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
-const { Augmint, utils } = require("../dist/index.js");
+const { Augmint, utils, Wei, Tokens, Percent } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
 const OrderBook = Augmint.Exchange.OrderBook;
@@ -59,22 +58,18 @@ describe("getOrderBook", () => {
     it("should return orderbook with orders", async () => {
         const buyMaker = myAugmint.ethereumConnection.accounts[1];
         const sellMaker = myAugmint.ethereumConnection.accounts[0];
-        const buyPrice = 1.01;
-        const bnBuyPrice = new BN(buyPrice * Augmint.constants.PPM_DIV);
-        const sellPrice = 1.05;
-        const bnSellPrice = new BN(sellPrice * Augmint.constants.PPM_DIV);
+        const buyPrice = Percent.of(1.01);
+        const sellPrice = Percent.of(1.05);
 
-        const buyEthAmount = 0.1;
-        const bn_buyWeiAmount = new BN(myAugmint.ethereumConnection.web3.utils.toWei(buyEthAmount.toString()));
-        const sellTokenAmount = 10;
-        const bn_sellTokenAmount = new BN(sellTokenAmount * Augmint.constants.DECIMALS_DIV);
+        const buyAmount = Wei.of(0.1);
+        const sellAmount = Tokens.of(10);
 
         await exchange.instance.methods
-            .placeBuyTokenOrder(bnBuyPrice.toString())
-            .send({ from: buyMaker, value: bn_buyWeiAmount.toString(), gas: 1000000 });
+            .placeBuyTokenOrder(buyPrice.toString())
+            .send({ from: buyMaker, value: buyAmount.toString(), gas: 1000000 });
 
         await myAugmint.token.instance.methods
-            .transferAndNotify(exchange.address, bn_sellTokenAmount.toString(), bnSellPrice.toString())
+            .transferAndNotify(exchange.address, sellAmount.toString(), sellPrice.toString())
             .send({ from: sellMaker, gas: 1000000 });
 
         const orderBook = await exchange.getOrderBook();
@@ -84,18 +79,16 @@ describe("getOrderBook", () => {
                 {
                     id: 1,
                     maker: buyMaker.toLowerCase(),
-                    price: bnBuyPrice,
-                    amount: bn_buyWeiAmount,
-                    buy: true
+                    price: buyPrice,
+                    amount: buyAmount,
                 }
             ],
             sellOrders: [
                 {
                     id: 2,
                     maker: sellMaker.toLowerCase(),
-                    price: bnSellPrice,
-                    amount: bn_sellTokenAmount,
-                    buy: false
+                    price: sellPrice,
+                    amount: sellAmount,
                 }
             ]
         });
@@ -105,44 +98,39 @@ describe("getOrderBook", () => {
 describe("compareOrders", () => {
     let exchange = null;
     it("o2 should be better (SELL price)", () => {
-        const o1 = { buy: false, price: new BN(2), id: 1 };
-        const o2 = { buy: false, price: new BN(1), id: 2 };
-        const result = OrderBook.compareOrders(o1, o2);
+        const o1 = { price: Tokens.of(2), id: 1 };
+        const o2 = { price: Tokens.of(1), id: 2 };
+        const result = OrderBook.compareSellOrders(o1, o2);
         expect(result).to.be.above(0);
     });
 
     it("o1 should be better (BUY price)", () => {
-        const o1 = { buy: true, price: new BN(2), id: 2 };
-        const o2 = { buy: true, price: new BN(1), id: 1 };
-        const result = OrderBook.compareOrders(o1, o2);
+        const o1 = { price: Wei.of(2), id: 2 };
+        const o2 = { price: Wei.of(1), id: 1 };
+        const result = OrderBook.compareBuyOrders(o1, o2);
         expect(result).to.be.below(0);
     });
 
     it("o2 should be better (SELL id)", () => {
-        const o1 = { buy: false, price: new BN(1), id: 2 };
-        const o2 = { buy: false, price: new BN(1), id: 1 };
-        const result = OrderBook.compareOrders(o1, o2);
+        const o1 = { price: Tokens.of(1), id: 2 };
+        const o2 = { price: Tokens.of(1), id: 1 };
+        const result = OrderBook.compareSellOrders(o1, o2);
         expect(result).to.be.above(0);
     });
 
     it("o2 should be better (BUY id)", () => {
-        const o1 = { buy: true, price: new BN(1), id: 2 };
-        const o2 = { buy: true, price: new BN(1), id: 1 };
-        const result = OrderBook.compareOrders(o1, o2);
+        const o1 = { price: Wei.of(1), id: 2 };
+        const o2 = { price: Wei.of(1), id: 1 };
+        const result = OrderBook.compareBuyOrders(o1, o2);
         expect(result).to.be.above(0);
     });
 
     it("should be equal when o1 same as o2", () => {
         // same id for two orders, it shouldn't happen
-        const o1 = { buy: false, price: new BN(1), id: 1 };
-        const o2 = { buy: false, price: new BN(1), id: 1 };
-        const result = OrderBook.compareOrders(o1, o2);
+        const o1 = { price: Tokens.of(1), id: 1 };
+        const o2 = { price: Tokens.of(1), id: 1 };
+        const result = OrderBook.compareSellOrders(o1, o2);
         expect(result).to.be.equal(0);
     });
 
-    it("the direction of the two orders should be same", () => {
-        const o1 = { buy: false, price: new BN(2), id: 2 };
-        const o2 = { buy: true, price: new BN(1), id: 1 };
-        expect(() => OrderBook.compareOrders(o1, o2)).to.throw(/order directions must be the same/);
-    });
 });

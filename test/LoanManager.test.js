@@ -8,7 +8,7 @@ BN.prototype.inspect = function() {
 };
 
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
-const { Augmint, utils } = require("../dist/index.js");
+const { Augmint, utils, Wei, Tokens, Percent } = require("../dist/index.js");
 const { AugmintJsError } = Augmint.Errors;
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
@@ -46,13 +46,13 @@ function mockProd(
     return {
         id,
         termInSecs,
-        discountRate: new BN(discountRate),
+        discountRate: Percent.of(discountRate),
         interestRatePa,
-        collateralRatio: new BN(collateralRatio),
-        minDisbursedAmount: new BN(minDisbursedAmount),
-        adjustedMinDisbursedAmount: new BN(adjustedMinDisbursedAmount),
-        maxLoanAmount: new BN(maxLoanAmount),
-        defaultingFeePt: new BN(defaultingFeePt),
+        collateralRatio: Percent.of(collateralRatio),
+        minDisbursedAmount: Tokens.of(minDisbursedAmount),
+        adjustedMinDisbursedAmount: Tokens.of(adjustedMinDisbursedAmount),
+        maxLoanAmount: Tokens.of(maxLoanAmount),
+        defaultingFeePt: Percent.of(defaultingFeePt),
         isActive
     };
 }
@@ -61,7 +61,7 @@ describe("LoanProduct", () => {
     const LoanProduct = Augmint.LoanManager.LoanProduct;
 
     it("should create a LoanProduct from a tuple", async () => {
-        const expectedProd = mockProd(0, 1000, 31536000, 854700, 550000, 50000, 21801, true, 0.17, 1250);
+        const expectedProd = mockProd(0, 10.00, 31536000, 0.8547, 0.55, 0.05, 218.01, true, 0.17, 12.50);
         // Solidity LoanManager contract .getProducts() tuple:
         // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
         const lp = new LoanProduct(["0", "1000", "31536000", "854700", "550000", "50000", "21801", "1"]);
@@ -77,15 +77,15 @@ describe("LoanProduct", () => {
 
     it("should calculate loan values from disbursed amount", () => {
         const lp = new LoanProduct(["0", "1000", "31536000", "854701", "550000", "50000", "21801", "1"]);
-        const ETH_FIAT_RATE = new BN("99800");
+        const ETH_FIAT_RATE = Tokens.of(998.00);
         const EXPECTED_REPAY_BEFORE = new Date();
         EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
 
         const EXPECTED_LOANVALUES = {
-            disbursedAmount: new BN("10000"),
-            collateralAmount: new BN("213156312625250501"),
-            repaymentAmount: new BN("11700"),
-            interestAmount: new BN("1700"),
+            disbursedAmount: Tokens.of(100.00),
+            collateralAmount: Wei.parse("213156312625250501"),
+            repaymentAmount: Tokens.of(117.00),
+            interestAmount: Tokens.of(17.00),
             repayBefore: EXPECTED_REPAY_BEFORE
         };
 
@@ -96,15 +96,15 @@ describe("LoanProduct", () => {
 
     it("should calculate loan values from collateral", () => {
         const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
-        const ETH_FIAT_RATE = new BN("99800");
+        const ETH_FIAT_RATE = Tokens.of(998.00);
         const EXPECTED_REPAY_BEFORE = new Date();
         EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
 
         const EXPECTED_LOANVALUES = {
-            disbursedAmount: new BN("10000"),
-            collateralAmount: new BN("173076152304609218"),
-            repaymentAmount: new BN("9500"),
-            interestAmount: new BN("-500"),
+            disbursedAmount: Tokens.of(100.00),
+            collateralAmount: Wei.parse("173076152304609218"),
+            repaymentAmount: Tokens.of(95.00),
+            interestAmount: Tokens.of(-5.00),
             repayBefore: EXPECTED_REPAY_BEFORE
         };
 
@@ -115,15 +115,15 @@ describe("LoanProduct", () => {
 
     it("should calculate loan values from disbursed amount (negative interest)", () => {
         const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
-        const ETH_FIAT_RATE = new BN("99800");
+        const ETH_FIAT_RATE = Tokens.of(998.00);
         const EXPECTED_REPAY_BEFORE = new Date();
         EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
 
         const EXPECTED_LOANVALUES = {
-            disbursedAmount: new BN("10000"),
-            collateralAmount: new BN("173076152304609218"),
-            repaymentAmount: new BN("9500"),
-            interestAmount: new BN("-500"),
+            disbursedAmount: Tokens.of(100.00),
+            collateralAmount: Wei.parse("173076152304609218"),
+            repaymentAmount: Tokens.of(95.00),
+            interestAmount: Tokens.of(-5.00),
             repayBefore: EXPECTED_REPAY_BEFORE
         };
 
@@ -134,15 +134,15 @@ describe("LoanProduct", () => {
 
     it("should calculate loan values from collateral (negative interest)", () => {
         const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
-        const ETH_FIAT_RATE = new BN("99800");
+        const ETH_FIAT_RATE = Tokens.of(998.00);
         const EXPECTED_REPAY_BEFORE = new Date();
         EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
 
         const EXPECTED_LOANVALUES = {
-            disbursedAmount: new BN("10000"),
-            collateralAmount: new BN("173076152304609218"),
-            repaymentAmount: new BN("9500"),
-            interestAmount: new BN("-500"),
+            disbursedAmount: Tokens.of(100.00),
+            collateralAmount: Wei.parse("173076152304609218"),
+            repaymentAmount: Tokens.of(95.00),
+            interestAmount: Tokens.of(-5.00),
             repayBefore: EXPECTED_REPAY_BEFORE
         };
 
@@ -178,15 +178,15 @@ describe("LoanManager connection", () => {
 describe("LoanManager getters", () => {
     const EXPECTED_ALL_PRODUCTS = [
         // id,minDisbursedAmount,termInSecs,discountRate,collateralRatio,defaultingFeePt,maxLoanAmount,isActive,interestRatePa,adjustedMinDisbursedAmount
-        mockProd(0, 1000, 31536000, 854700, 550000, 50000, 21801, true, 0.17, 1250),
-        mockProd(1, 1000, 15552000, 924752, 550000, 50000, 21801, true, 0.165, 1250),
-        mockProd(2, 1000, 7776000, 962045, 600000, 50000, 21801, false, 0.16, 1250),
-        mockProd(3, 1000, 5184000, 975153, 600000, 50000, 21801, true, 0.155, 1250),
-        mockProd(4, 1000, 2592000, 987821, 600000, 50000, 21801, true, 0.15, 1250),
-        mockProd(5, 1000, 1209600, 994279, 600000, 50000, 21801, false, 0.15, 1250),
-        mockProd(6, 1000, 604800, 997132, 600000, 50000, 21801, true, 0.15, 1250),
-        mockProd(7, 2000, 3600, 999998, 980000, 50000, 21801, true, 0.0175, 2500),
-        mockProd(8, 3000, 1, 999999, 990000, 50000, 21801, true, 31.536, 3750)
+        mockProd(0, 10.00, 31536000, .854700, .55, .05, 218.01, true,    0.17, 12.50),
+        mockProd(1, 10.00, 15552000, .924752, .55, .05, 218.01, true,   0.165, 12.50),
+        mockProd(2, 10.00, 7776000,  .962045, .60, .05, 218.01, false,   0.16, 12.50),
+        mockProd(3, 10.00, 5184000,  .975153, .60, .05, 218.01, true,   0.155, 12.50),
+        mockProd(4, 10.00, 2592000,  .987821, .60, .05, 218.01, true,    0.15, 12.50),
+        mockProd(5, 10.00, 1209600,  .994279, .60, .05, 218.01, false,   0.15, 12.50),
+        mockProd(6, 10.00, 604800,   .997132, .60, .05, 218.01, true,    0.15, 12.50),
+        mockProd(7, 20.00, 3600,     .999998, .98, .05, 218.01, true,  0.0175, 25.00),
+        mockProd(8, 30.00, 1,        .999999, .99, .05, 218.01, true,  31.536, 37.50)
     ];
 
     const EXPECTED_ACTIVE_PRODUCTS = EXPECTED_ALL_PRODUCTS.filter(p => p.isActive);

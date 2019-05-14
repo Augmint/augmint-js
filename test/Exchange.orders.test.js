@@ -1,7 +1,6 @@
-const { BN } = require("bn.js");
 const { assert } = require("chai");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
-const { Augmint, utils } = require("../dist/index.js");
+const { Augmint, utils, Wei, Tokens, Percent } = require("../dist/index.js");
 const { assertEvent } = require("./testHelpers/events");
 const { issueToken } = require("./testHelpers/token");
 const { TransactionSendError } = Augmint.Errors;
@@ -67,8 +66,8 @@ describe("place orders - onchain", () => {
 
     it("placeBuyTokenOrder success", async () => {
         const maker = accounts[1];
-        const price = new BN(1.01 * Augmint.constants.PPM_DIV);
-        const amount = new BN(2000000000);
+        const price = Percent.of(1.01);
+        const amount = Wei.of(2);
         const tx = exchange.placeBuyTokenOrder(price, amount);
         const txReceipt = await tx.send({ from: maker }).getTxReceipt();
 
@@ -85,8 +84,8 @@ describe("place orders - onchain", () => {
 
     it("placeSellTokenOrder success", async () => {
         const maker = accounts[1];
-        const price = new BN(1.02 * Augmint.constants.PPM_DIV);
-        const amount = new BN(1099);
+        const price = Percent.of(1.02);
+        const amount = Tokens.of(10.99);
 
         await issueToken(augmint, accounts[0], maker, amount);
 
@@ -104,6 +103,7 @@ describe("place orders - onchain", () => {
             weiAmount: "0"
         });
     });
+
 });
 
 describe("cancel order ", () => {
