@@ -178,12 +178,12 @@ describe("LoanManager connection", () => {
 describe("LoanManager getters", () => {
     const EXPECTED_ALL_PRODUCTS = [
         // id,minDisbursedAmount,termInSecs,discountRate,collateralRatio,defaultingFeePt,maxLoanAmount,isActive,interestRatePa,adjustedMinDisbursedAmount
-        mockProd(0, 1000, 31536000, 854700, 550000, 50000, 21801, true, 0.17, 1250),
-        mockProd(1, 1000, 15552000, 924752, 550000, 50000, 21801, true, 0.165, 1250),
-        mockProd(2, 1000, 7776000, 962045, 600000, 50000, 21801, false, 0.16, 1250),
-        mockProd(3, 1000, 5184000, 975153, 600000, 50000, 21801, true, 0.155, 1250),
-        mockProd(4, 1000, 2592000, 987821, 600000, 50000, 21801, true, 0.15, 1250),
-        mockProd(5, 1000, 1209600, 994279, 600000, 50000, 21801, false, 0.15, 1250),
+        mockProd(0, 1000, 31536000, 854701, 550000, 50000, 21801, true, 0.17, 1250),
+        mockProd(1, 1000, 15552000, 924753, 550000, 50000, 21801, true, 0.165, 1250),
+        mockProd(2, 1000, 7776000, 962046, 600000, 50000, 21801, false, 0.16, 1250),
+        mockProd(3, 1000, 5184000, 975154, 600000, 50000, 21801, true, 0.155, 1250),
+        mockProd(4, 1000, 2592000, 987822, 600000, 50000, 21801, true, 0.15, 1250),
+        mockProd(5, 1000, 1209600, 994280, 600000, 50000, 21801, false, 0.15, 1250),
         mockProd(6, 1000, 604800, 997132, 600000, 50000, 21801, true, 0.15, 1250),
         mockProd(7, 2000, 3600, 999998, 980000, 50000, 21801, true, 0.0175, 2500),
         mockProd(8, 3000, 1, 999999, 990000, 50000, 21801, true, 31.536, 3750)
