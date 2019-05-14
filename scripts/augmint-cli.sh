@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-DOCKER_IMAGE=augmint/contracts:v1.0.9
+CONTRACTS_VERSION=`node -e "const fs=require('fs');let base=fs.realpathSync('$0').split('/');base.splice(-2,2,'node_modules','@augmint','contracts','package.json');const p=require(base.join('/'));process.stdout.write(p.version)"`
+DOCKER_IMAGE="augmint/contracts:v$CONTRACTS_VERSION"
 CONTAINER_NAME=ganache
 
 echo ""
@@ -34,7 +35,7 @@ function remove_container_if_image_mismatched {
         echo "  It's likely because of an augmint-js upgrade since last local run of container. Removing existing $CONTAINER_NAME container."
 
         stop_container_if_running
-        
+
         docker rm $CONTAINER_NAME
     fi
 }
@@ -50,7 +51,7 @@ function print_instructions {
 case "$1" in
     ganache )
 
-        ADDITIONAL_GANACHE_LAUNCH_FLAGS=${@:3} 
+        ADDITIONAL_GANACHE_LAUNCH_FLAGS=${@:3}
 
         case "$2" in
             run )
@@ -66,7 +67,7 @@ case "$1" in
                 run_ganache
             ;;
 
-            start )     
+            start )
                 remove_container_if_image_mismatched
 
                 if [ "$(docker ps --quiet -all --filter name=^/$CONTAINER_NAME$)" ]; then
