@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-CONTRACTS_VERSION=`yarn info '@augmint/contracts' version -s`
-DOCKER_IMAGE="augmint/contracts:v$CONTRACTS_VERSION"
+CONTRACTS_VERSION=`yarn list --pattern @augmint/contracts --depth=0 -s` # output: └─ @augmint/contracts@1.0.11
+DOCKER_IMAGE="augmint/contracts:v${CONTRACTS_VERSION##*@}"
 CONTAINER_NAME=ganache
 
 echo ""
