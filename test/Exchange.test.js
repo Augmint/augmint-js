@@ -1,6 +1,6 @@
 const { expect, assert } = require("chai");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
-const { Augmint, utils, Wei, Tokens, Percent } = require("../dist/index.js");
+const { Augmint, utils, Wei, Tokens, Ratio } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
 const OrderBook = Augmint.Exchange.OrderBook;
@@ -58,8 +58,8 @@ describe("getOrderBook", () => {
     it("should return orderbook with orders", async () => {
         const buyMaker = myAugmint.ethereumConnection.accounts[1];
         const sellMaker = myAugmint.ethereumConnection.accounts[0];
-        const buyPrice = Percent.of(1.01);
-        const sellPrice = Percent.of(1.05);
+        const buyPrice = Ratio.of(1.01);
+        const sellPrice = Ratio.of(1.05);
 
         const buyAmount = Wei.of(0.1);
         const sellAmount = Tokens.of(10);

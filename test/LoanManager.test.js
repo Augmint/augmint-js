@@ -8,7 +8,7 @@ BN.prototype.inspect = function() {
 };
 
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
-const { Augmint, utils, Wei, Tokens, Percent } = require("../dist/index.js");
+const { Augmint, utils, Wei, Tokens, Ratio } = require("../dist/index.js");
 const { AugmintJsError } = Augmint.Errors;
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
@@ -46,13 +46,13 @@ function mockProd(
     return {
         id,
         termInSecs,
-        discountRate: Percent.of(discountRate),
+        discountRate: Ratio.of(discountRate),
         interestRatePa,
-        collateralRatio: Percent.of(collateralRatio),
+        collateralRatio: Ratio.of(collateralRatio),
         minDisbursedAmount: Tokens.of(minDisbursedAmount),
         adjustedMinDisbursedAmount: Tokens.of(adjustedMinDisbursedAmount),
         maxLoanAmount: Tokens.of(maxLoanAmount),
-        defaultingFeePt: Percent.of(defaultingFeePt),
+        defaultingFeePt: Ratio.of(defaultingFeePt),
         isActive
     };
 }

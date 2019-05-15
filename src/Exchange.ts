@@ -1,5 +1,6 @@
+
 import BN from "bn.js";
-import { Wei, Tokens, Percent } from "./units";
+import { Wei, Tokens, Ratio } from "./units";
 import { Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
@@ -46,8 +47,8 @@ export class OrderBook {
         if (this.buyOrders.length === 0 || this.sellOrders.length === 0) {
             return { buyIds, sellIds, gasEstimate: 0 };
         }
-        const lowestSellPrice: Percent = this.sellOrders[0].price;
-        const highestBuyPrice: Percent = this.buyOrders[0].price;
+        const lowestSellPrice: Ratio = this.sellOrders[0].price;
+        const highestBuyPrice: Ratio = this.buyOrders[0].price;
 
         const clone = o => Object.assign({}, o);
         const buys: IBuyOrder[] = this.buyOrders
@@ -70,7 +71,7 @@ export class OrderBook {
 
             // matching logic follows smart contract _fillOrder implementation
             // see https://github.com/Augmint/augmint-contracts/blob/staging/contracts/Exchange.sol
-            const price: Percent = buy.id > sell.id ? sell.price : buy.price;
+            const price: Ratio = buy.id > sell.id ? sell.price : buy.price;
 
             const sellWei: Wei = sell.amount.toWeiAt(ethFiatRate, price);
 
@@ -112,7 +113,7 @@ export interface IMatchingOrders {
 export interface IOrder {
     id: number;
     maker: string;
-    price: Percent;
+    price: Ratio;
     amount: Tokens | Wei;
 }
 
@@ -233,7 +234,7 @@ export class Exchange extends AbstractContract {
                     res.push({
                         id: parseInt(order[0], 10),
                         maker: `0x${new BN(order[1]).toString(16).padStart(40, "0")}`, // leading 0s if address starts with 0
-                        price: Percent.parse(order[2]),
+                        price: Ratio.parse(order[2]),
                         amount: buy ? new Wei(amount) : new Tokens(amount)
                     });
                 }
@@ -243,7 +244,7 @@ export class Exchange extends AbstractContract {
         );
     }
 
-    public placeSellTokenOrder(price: Percent, amount: Tokens): Transaction {
+    public placeSellTokenOrder(price: Ratio, amount: Tokens): Transaction {
         const web3Tx: TransactionObject<void> = this.token.instance.methods.transferAndNotify(
             this.address,
             amount.toString(),
@@ -258,7 +259,7 @@ export class Exchange extends AbstractContract {
         return transaction;
     }
 
-    public placeBuyTokenOrder(price: Percent, amount: Wei): Transaction {
+    public placeBuyTokenOrder(price: Ratio, amount: Wei): Transaction {
         const web3Tx: TransactionObject<string> = this.instance.methods.placeBuyTokenOrder(price.toString());
 
         const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {

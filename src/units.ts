@@ -30,14 +30,14 @@ abstract class FixedPoint {
         return this.create(this.amount.sub(other.amount));
     }
 
-    public mul(percent: Percent): this {
-        this.check(percent, Percent);
-        return this.create(this.amount.mul(percent.amount).div(Percent.DIV_BN));
+    public mul(ratio: Ratio): this {
+        this.check(ratio, Ratio);
+        return this.create(this.amount.mul(ratio.amount).div(Ratio.DIV_BN));
     }
 
-    public div(percent: Percent): this {
-        this.check(percent, Percent);
-        return this.create(ceilDiv(this.amount.mul(Percent.DIV_BN), percent.amount));
+    public div(ratio: Ratio): this {
+        this.check(ratio, Ratio);
+        return this.create(ceilDiv(this.amount.mul(Ratio.DIV_BN), ratio.amount));
     }
 
     //
@@ -116,9 +116,9 @@ export class Wei extends FixedPoint {
         return new Tokens(this.amount.mul(rate.amount).divRound(Wei.DIV_BN));
     }
 
-    public toTokensAt(rate: Tokens, price: Percent): Tokens {
+    public toTokensAt(rate: Tokens, price: Ratio): Tokens {
         this.check(rate, Tokens);
-        this.check(price, Percent);
+        this.check(price, Ratio);
         return new Tokens(this.amount.mul(rate.amount).divRound(price.amount.mul(E12)));
     }
 
@@ -141,30 +141,30 @@ export class Tokens extends FixedPoint {
         return new Wei(this.amount.mul(Wei.DIV_BN).divRound(rate.amount));
     }
 
-    public toWeiAt(rate: Tokens, price: Percent): Wei {
+    public toWeiAt(rate: Tokens, price: Ratio): Wei {
         this.check(rate, Tokens);
-        this.check(price, Percent);
+        this.check(price, Ratio);
         return new Wei(this.amount.mul(price.amount).mul(E12).divRound(rate.amount));
     }
 
 }
 
 
-export class Percent extends FixedPoint {
+export class Ratio extends FixedPoint {
 
     static readonly DIV: number = 1000000;
-    static readonly DIV_BN: BN = new BN(Percent.DIV);
+    static readonly DIV_BN: BN = new BN(Ratio.DIV);
 
-    public static parse(str: string): Percent {
-        return new Percent(new BN(str));
+    public static parse(str: string): Ratio {
+        return new Ratio(new BN(str));
     }
 
-    public static of(num: number): Percent {
-        return new Percent(new BN(num * Percent.DIV));
+    public static of(num: number): Ratio {
+        return new Ratio(new BN(num * Ratio.DIV));
     }
 
     public toNumber(): number {
-        return this.amount.toNumber() / Percent.DIV;
+        return this.amount.toNumber() / Ratio.DIV;
     }
 
 }

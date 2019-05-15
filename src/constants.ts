@@ -1,4 +1,4 @@
-import { Percent } from "./units";
+import { Ratio } from "./units";
 
 export const ETHEUR: string = "ETHEUR";
 
@@ -9,7 +9,7 @@ export const CHUNK_SIZE: number = 100;
 
 // rational: it's to avoid loan tx to fail on min loan amount because of an ETH/EUR rate change
 // in the background right while sending the tx
-export const MIN_LOAN_AMOUNT_ADJUSTMENT: Percent = Percent.of(1.25);
+export const MIN_LOAN_AMOUNT_ADJUSTMENT: Ratio = Ratio.of(1.25);
 
 export interface ISupportedLegacyContracts {
     [propName: string]: string[];
