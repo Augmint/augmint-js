@@ -10,6 +10,19 @@ import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PL
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
 
+interface ISimpleBuyData {
+    tokens: number;
+    ethers: number;
+    limitPrice: number;
+    averagePrice: number;
+}
+
+interface ISimpleBuyOrder extends IOrder {
+    ethers: BN;
+    amount: BN;
+    price: BN;
+}
+
 export class OrderBook {
     constructor (
         public buyOrders: IBuyOrder[],
@@ -28,7 +41,6 @@ export class OrderBook {
         const cmp = o1.price.cmp(o2.price);
         return cmp !== 0 ? cmp : o1.id - o2.id;
     }
-
 
     /**
      * calculate matching pairs from ordered ordebook for sending in Exchange.matchMultipleOrders ethereum tx
@@ -101,6 +113,78 @@ export class OrderBook {
         return { buyIds, sellIds, gasEstimate };
     }
 
+    /**
+     * transform order object into structure to calculate simplebuy data from
+     * @param  {tokenAmount} amount of token
+     * @param  {buy} buyOrders or sellOrders
+     * @return {object} order for simple buy { ethers, ...IOrder }
+     */
+
+    public getSimpleBuyOrders(token: number, buy: boolean, ethFiatRate: BN): ISimpleBuyOrder[] {
+        const orders: IOrder[] = buy ? this.sellOrders : this.buyOrders;
+
+        return orders.map(
+            (order: IOrder): ISimpleBuyOrder => {
+                const newOrder: ISimpleBuyOrder = Object.assign({ ethers: 0 }, order);
+
+                if (buy) {
+                    newOrder.ethers = newOrder.amount.mul(newOrder.price).div(ethFiatRate);
+                } else {
+                    newOrder.ethers = newOrder.amount;
+                    newOrder.amount = ethFiatRate.div(newOrder.price).mul(newOrder.ethers);
+                }
+
+                return newOrder;
+            }
+        );
+    }
+
+    /**
+     * calculate price for n amount of token to sell or buy
+     * @param  {amount} amount of token to sell or buy
+     * @param  {buy} buyOrders or sellOrders
+     * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
+     */
+
+    public calculateSimpleBuyData(amount: number, buy: boolean, ethFiatRate: BN): ISimpleBuyData {
+        let tokens: BN = new BN(0);
+        let ethers: BN = new BN(0);
+        const tokenAmount: BN = new BN(amount, 10)
+        const prices: any = { total: new BN(0), list: [] };
+
+        const orders: ISimpleBuyOrder[] = this.getSimpleBuyOrders(tokenAmount, buy, ethFiatRate);
+
+        orders.forEach((item: ISimpleBuyOrder) => {
+            let addedAmount: BN = new BN(0);
+            if (tokens.lt(tokenAmount)) {
+                if (item.amount.gte(tokenAmount.add(tokens))) {
+                    addedAmount = tokenAmount;
+                } else if (item.amount.lt(tokenAmount.add(tokens)) && tokenAmount.sub(tokens).lt(item.amount)) {
+                    addedAmount = tokenAmount.sub(tokens);
+                } else if (item.amount.lt(tokenAmount.add(tokens)) && tokenAmount.sub(tokens).gte(item.amount)) {
+                    addedAmount = item.amount;
+                    ethers = ethers.add(item.ethers);
+                }
+                tokens.iadd(addedAmount);
+                ethers.iadd(item.ethers.mul(addedAmount).div(item.amount));
+                prices.total.iadd(item.price.mul(addedAmount));
+                prices.list.push(item.price.toNumber());
+            }
+        });
+
+        const limitPrice: number = buy ? Math.max(...prices.list) : Math.min(...prices.list);
+        const averagePrice: number = prices.total.div(tokens).toNumber();
+
+        tokens = tokens.toNumber();
+        ethers = ethers.toNumber();
+
+        return {
+            tokens,
+            ethers,
+            limitPrice,
+            averagePrice
+        };
+    }
 }
 
 export interface IMatchingOrders {
@@ -124,7 +208,9 @@ export interface ISellOrder extends IOrder {
     amount: Tokens
 }
 
-type IOrderTuple = [string, string, string, string]; /** result from contract: [id, maker, price, amount] */
+type IOrderTuple = [string, string, string, string];
+
+/** result from contract: [id, maker, price, amount] */
 
 export interface IExchangeOptions {
     token: AugmintToken;
@@ -299,5 +385,4 @@ export class Exchange extends AbstractContract {
     static get OrderBook(): typeof OrderBook {
         return OrderBook;
     }
-
 }
