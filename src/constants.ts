@@ -1,4 +1,4 @@
-import BN from 'bn.js';
+import BN from "bn.js";
 
 export const ONE_ETH_IN_WEI: number = 1e18;
 export const BN_ONE_ETH_IN_WEI: BN = new BN("1000000000000000000");
