@@ -4,7 +4,7 @@ const E12: BN = new BN("1000000000000");
 
 const BN_ONE: BN = new BN(1);
 
-function ceilDiv(dividend: BN, divisor: BN) {
+function ceilDiv(dividend: BN, divisor: BN): BN {
     return dividend.add(divisor).sub(BN_ONE).div(divisor);
 }
 
@@ -85,23 +85,31 @@ abstract class FixedPoint {
     // util
     //
 
-    private create(amount: BN): this {
-        return new (<typeof Object>this.constructor)(amount) as this;
-    }
-
-    protected check(other: FixedPoint, type: Function = this.constructor) {
+    protected check(other: FixedPoint, type: Function = this.constructor): void {
         if (!(other instanceof type)) {
             throw new Error("Type error. Expected " + type + " got " + typeof other);
         }
+    }
+
+    private create(amount: BN): this {
+        return new (this.constructor as typeof Object)(amount) as this;
     }
 
 }
 
 export class Wei extends FixedPoint {
 
-    static PRECISION = 1000000;  
-    static DIV_BN = new BN("1000000000000000000");
-    static DIV_PRECISON = Wei.DIV_BN.divn(Wei.PRECISION);
+    static readonly PRECISION: number = 1000000;  
+    static readonly DIV_BN: BN = new BN("1000000000000000000");
+    static readonly DIV_PRECISON: BN = Wei.DIV_BN.divn(Wei.PRECISION);
+
+    public static parse(str: string): Wei {
+        return new Wei(new BN(str));
+    }
+
+    public static of(num: number): Wei {
+        return new Wei(new BN(num * Wei.PRECISION).mul(Wei.DIV_PRECISON));
+    }
 
     public toTokens(rate: Tokens): Tokens {
         this.check(rate, Tokens);
@@ -114,20 +122,20 @@ export class Wei extends FixedPoint {
         return new Tokens(this.amount.mul(rate.amount).divRound(price.amount.mul(E12)));
     }
 
-    public static parse(string: String): Wei {
-        return new Wei(new BN(string));
-    }
-
-    public static of(num: number) {
-        return new Wei(new BN(num * Wei.PRECISION).mul(Wei.DIV_PRECISON));
-    }
-
 }
 
 export class Tokens extends FixedPoint {
 
-    static DIV: number = 100;
+    static readonly DIV: number = 100;
   
+    public static parse(str: string): Tokens {
+        return new Tokens(new BN(str));
+    }
+
+    public static of(num: number): Tokens {
+        return new Tokens(new BN(num * Tokens.DIV));
+    }
+
     public toWei(rate: Tokens): Wei {
         this.check(rate, Tokens);
         return new Wei(this.amount.mul(Wei.DIV_BN).divRound(rate.amount));
@@ -139,27 +147,19 @@ export class Tokens extends FixedPoint {
         return new Wei(this.amount.mul(price.amount).mul(E12).divRound(rate.amount));
     }
 
-    public static parse(string: String): Tokens {
-        return new Tokens(new BN(string));
-    }
-
-    public static of(num: number): Tokens {
-        return new Tokens(new BN(num * Tokens.DIV));
-    }
-
 }
 
 
 export class Percent extends FixedPoint {
 
-    static DIV: number = 1000000;
-    static DIV_BN: BN = new BN(Percent.DIV);
+    static readonly DIV: number = 1000000;
+    static readonly DIV_BN: BN = new BN(Percent.DIV);
 
-    public static parse(string: String) {
-        return new Percent(new BN(string));
+    public static parse(str: string): Percent {
+        return new Percent(new BN(str));
     }
 
-    public static of(num: number) {
+    public static of(num: number): Percent {
         return new Percent(new BN(num * Percent.DIV));
     }
 
