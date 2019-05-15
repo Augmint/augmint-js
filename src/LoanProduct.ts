@@ -1,4 +1,4 @@
-import { BN } from "bn.js";
+import BN from "bn.js";
 import { BN_ONE_ETH_IN_WEI, BN_PPM_DIV, MIN_LOAN_AMOUNT_ADJUSTMENT, PPM_DIV } from "./constants";
 import { AugmintJsError } from "./Errors";
 

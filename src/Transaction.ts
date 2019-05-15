@@ -1,6 +1,6 @@
-import { BN } from "bn.js";
+import BN from 'bn.js';
 import { EventEmitter } from "events";
-import PromiEvent from "web3-core-promievent";
+import { PromiEvent } from "web3-core";
 import { TransactionObject } from "../generated/types/types";
 import { TransactionError, TransactionSendError } from "./Errors";
 import { EthereumConnection } from "./EthereumConnection";

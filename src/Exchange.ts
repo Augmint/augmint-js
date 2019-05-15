@@ -1,4 +1,4 @@
-import { BN } from "bn.js";
+import BN from 'bn.js';
 import { Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
