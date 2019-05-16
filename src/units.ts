@@ -98,7 +98,7 @@ abstract class FixedPoint {
 
 export class Wei extends FixedPoint {
 
-    static readonly PRECISION: number = 1000000;  
+    static readonly PRECISION: number = 1000000;
     static readonly DIV_BN: BN = new BN("1000000000000000000");
     static readonly DIV_PRECISON: BN = Wei.DIV_BN.divn(Wei.PRECISION);
 
@@ -126,7 +126,7 @@ export class Wei extends FixedPoint {
 export class Tokens extends FixedPoint {
 
     static readonly DIV: number = 100;
-  
+
     public static parse(str: string): Tokens {
         return new Tokens(new BN(str));
     }
@@ -152,7 +152,7 @@ export class Tokens extends FixedPoint {
 
     public toRate(ethers: Wei): Tokens {
         this.check(ethers, Wei);
-        return this.amount.mul(Wei.DIV_BN).divRound(ethers.amount);
+        return new Tokens(this.amount.mul(Wei.DIV_BN).divRound(ethers.amount));
     }
 
 }
