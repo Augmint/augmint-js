@@ -1,6 +1,5 @@
 const assert = require("chai").assert;
-const { Augmint } = require("../dist/index.js");
-const BN = require("bn.js");
+const { Augmint, Wei, Tokens } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
 
@@ -34,7 +33,7 @@ describe("Rates setters", () => {
     });
 
     it("setRate - send", async () => {
-        const expectedPrice = new BN(1234.56 * DECIMALS_DIV);
+        const expectedPrice = Tokens.of(1234.56);
 
         const tx = rates.setRate(CCY, expectedPrice);
         const txReceipt = await tx.send({ from: accounts[0] }).getTxReceipt();
@@ -53,7 +52,7 @@ describe("Rates setters", () => {
     it("setRate - signed", async () => {
         // private key of accounts[0] 0x76e7a 0aec3e43211395bbbb6fa059bd6750f83c3with the hardcoded mnemonin for ganache
         const PRIVATE_KEY = "0x85b3d743fbe4ec4e2b58947fa5484da7b2f5538b0ae8e655646f94c95d5fb949";
-        const expectedPrice = new BN(5678.91 * DECIMALS_DIV);
+        const expectedPrice = Tokens.of(5678.91);
 
         const txReceipt = await rates
             .setRate(CCY, expectedPrice)
@@ -76,7 +75,7 @@ describe("Rates setters", () => {
     });
 
     it("setRate = 0", async () => {
-        const expectedPrice = new BN(0 * DECIMALS_DIV);
+        const expectedPrice = Tokens.of(0);
 
         const tx = rates.setRate(CCY, expectedPrice);
         const txReceipt = await tx.send({ from: accounts[0] }).getTxReceipt();
