@@ -1,4 +1,4 @@
-import { Percent } from "./units";
+import { Ratio } from "./units";
 
 export const ETHEUR: string = "ETHEUR";
 

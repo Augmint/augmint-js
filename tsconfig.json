@@ -14,5 +14,6 @@
         "target": "ES6", // specify ECMAScript target version
         "allowSyntheticDefaultImports": true,
         "moduleResolution": "Node"
-    }
+    },
+    "exclude": ["./dist/"]
 }

@@ -1,5 +1,4 @@
 import BN from "bn.js";
-import { Wei, Tokens, Percent } from "./units";
 import { Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
@@ -14,8 +13,8 @@ import { Ratio, Tokens, Wei } from "./units";
 interface ISimpleBuyData {
     tokens: Tokens;
     ethers: Wei;
-    limitPrice: Percent;
-    averagePrice: Percent;
+    limitPrice: Ratio;
+    averagePrice: Ratio;
 }
 
 export class OrderBook {
@@ -34,8 +33,8 @@ export class OrderBook {
         sellOrders.sort(OrderBook.compareSellOrders);
     }
     public getBuySellOrders() : {buys: IBuyOrder[], sells: ISellOrder[]} {
-        const lowestSellPrice: Percent = this.sellOrders[0].price;
-        const highestBuyPrice: Percent = this.buyOrders[0].price;
+        const lowestSellPrice: Ratio = this.sellOrders[0].price;
+        const highestBuyPrice: Ratio = this.buyOrders[0].price;
 
         const clone = o => Object.assign({}, o);
         const buys: IBuyOrder[] = this.buyOrders
@@ -63,13 +62,7 @@ export class OrderBook {
         if (this.buyOrders.length === 0 || this.sellOrders.length === 0) {
             return { buyIds, sellIds, gasEstimate: 0 };
         }
-        const lowestSellPrice: Ratio = this.sellOrders[0].price;
-        const highestBuyPrice: Ratio = this.buyOrders[0].price;
 
-        const clone = o => Object.assign({}, o);
-        const buys: IBuyOrder[] = this.buyOrders.filter(o => o.price.gte(lowestSellPrice)).map(clone);
-
-        const sells: ISellOrder[] = this.sellOrders.filter(o => o.price.lte(highestBuyPrice)).map(clone);
         const {buys, sells} = this.getBuySellOrders();
 
         let buyIdx: number = 0;
@@ -116,122 +109,69 @@ export class OrderBook {
         return { buyIds, sellIds, gasEstimate };
     }
 
+    /**
+     * calculate price for n amount of token to sell or buy
+     * @param  {tokens} amount of token to sell or buy
+     * @param  {rate} current rate
+     * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
+     */
+
     public estimateSimpleBuy(tokens: Tokens, ethFiatRate: Tokens): ISimpleBuyData {
         let remainingTokens: Tokens = tokens;
         let filledEthers: Wei = Wei.of(0);
-        let lastPrice: Percent = Percent.of(0);
+        let lastPrice: Ratio = Ratio.of(0);
 
         for (let i = 0; i <= this.sellOrders.length; i++) {
             const order: ISellOrder = this.sellOrders[i];
             if (remainingTokens.isZero()) {
                 break;
-            } else {
-                const boughtTokens: Tokens = OrderBook.minTokens(remainingTokens, order.amount);
-                const spentEthers: Wei = boughtTokens.toWeiAt(ethFiatRate, order.price);
-                remainingTokens = remainingTokens.sub(boughtTokens);
-                filledEthers = filledEthers.add(spentEthers);
-                lastPrice = order.price
             }
+            const boughtTokens: Tokens = Tokens.min(remainingTokens, order.amount);
+            const spentEthers: Wei = boughtTokens.toWeiAt(ethFiatRate, order.price);
+            remainingTokens = remainingTokens.sub(boughtTokens);
+            filledEthers = filledEthers.add(spentEthers);
+            lastPrice = order.price
         }
         const totalBoughtTokens: Tokens = tokens.sub(remainingTokens);
-        // const averagePrice = filledEthers.div(totalBoughtTokens);
+        const averagePrice: Ratio = totalBoughtTokens.toRate(filledEthers).divToRatio(ethFiatRate);
         return {
             tokens: totalBoughtTokens,
             ethers: filledEthers,
             limitPrice: lastPrice,
-            // averagePrice
+            averagePrice
         };
     }
 
     public estimateSimpleSell(tokens: Tokens, ethFiatRate: Tokens): ISimpleBuyData {
         let remainingTokens: Tokens = tokens;
         let filledEthers: Wei = Wei.of(0);
-        let lastPrice: Percent = Percent.of(0);
+        let lastPrice: Ratio = Ratio.of(0);
 
         for (let i = 0; i <= this.buyOrders.length; i++) {
             const order: IBuyOrder = this.buyOrders[i];
 
             if (remainingTokens.isZero()) {
                 break;
-            } else {
-                const orderTokens: Tokens = order.amount.toTokensAt(ethFiatRate, order.price);
-                const soldTokens: Tokens = OrderBook.minTokens(remainingTokens, orderTokens);
-                const spentEthers: Wei = soldTokens.toWeiAt(ethFiatRate, order.price);
-                remainingTokens = remainingTokens.sub(soldTokens);
-                filledEthers = filledEthers.add(spentEthers);
-                lastPrice = order.price
             }
+
+            const orderTokens: Tokens = order.amount.toTokensAt(ethFiatRate, order.price);
+            const soldTokens: Tokens = Tokens.min(remainingTokens, orderTokens);
+            const spentEthers: Wei = soldTokens.toWeiAt(ethFiatRate, order.price);
+            remainingTokens = remainingTokens.sub(soldTokens);
+            filledEthers = filledEthers.add(spentEthers);
+            lastPrice = order.price
         }
         const totalBoughtTokens: Tokens = tokens.sub(remainingTokens);
-        // const averagePrice = filledEthers.div(totalBoughtTokens);
+        const averagePrice: Ratio = totalBoughtTokens.toRate(filledEthers).divToRatio(ethFiatRate);
         return {
             tokens: totalBoughtTokens,
             ethers: filledEthers,
             limitPrice: lastPrice,
-            // averagePrice
+            averagePrice
         };
     }
 
-    /**
-     * calculate price for n amount of token to sell or buy
-     * @param  {amount} amount of token to sell or buy
-     * @param  {buy} buyOrders or sellOrders
-     * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
-     */
 
-//     public calculateSimpleBuyData(tokenAmount: Tokens, buy: boolean, ethFiatRate: Tokens): ISimpleBuyData {
-//         let filledTokens: Tokens = Tokens.of(0);
-//         let filledEthers: Wei = Wei.of(0);
-//         const prices: any = { total: new Percent(0), list: [] };
-//
-//         const orders = buy ? this.buyOrders : this.sellOrders;
-//
-//         orders.forEach(order => {
-//             let orderEthers;
-//             let orderTokens;
-//             if (buy) {
-//                 const o = order as IBuyOrder;
-//                 orderEthers = o.amount;
-//                 orderTokens = order.amount.toTokensAt(ethFiatRate, order.price);
-//             } else {
-//                 const o = order as ISellOrder;
-//                 orderEthers = o.amount.toWeiAt(ethFiatRate, order.price);
-//                 orderTokens = o.amount;
-//             }
-//
-//
-//             let addedAmount: Tokens = Tokens.of(0);
-//             if (filledTokens.lt(tokenAmount)) {
-//                 if (order.amount.gte(tokenAmount.add(filledTokens))) {
-//                     addedAmount = tokenAmount;
-//                 } else if (order.amount.lt(tokenAmount.add(filledTokens)) && tokenAmount.sub(filledTokens).lt(item.amount)) {
-//                     addedAmount = tokenAmount.sub(filledTokens);
-//                 } else if (order.amount.lt(tokenAmount.add(filledTokens)) && tokenAmount.sub(filledTokens).gte(item.amount)) {
-//                     addedAmount = order.amount;
-//                     ethers = ethers.add(order.ethers);
-//                 }
-//                 // tokens += addedAmount;
-//                 // ethers += item.ethers * addedAmount / item.amount;
-//                 // prices.total += item.price * addedAmount;
-//                 // prices.list.push(item.price);
-//                 filledTokens = filledTokens.add(addedAmount);
-//                 filledEthers = filledEthers.add(item.ethers.mul());
-//                 prices.total = prices.total.add(item.price.mult(Percent.of(addedAmount.toNumber())));
-//                 prices.list.push(item.price.toNumber());
-//             }
-//         });
-//
-//         const limit: number = buy ? Math.max(...prices.list) : Math.min(...prices.list);
-//         const limitPrice: Percent = Percent.of(limit);
-//         const averagePrice: Percent = prices.total.div(Percent.of(tokens.toNumber()));
-//
-//         return {
-//             filledTokens,
-//             filledEthers,
-//             limitPrice,
-//             averagePrice
-//         };
-//     }
 }
 
 export interface IMatchingOrders {
