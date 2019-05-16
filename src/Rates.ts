@@ -1,15 +1,14 @@
-import BN from "bn.js";
 import { Rates as RatesInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
-import { ONE_ETH_IN_WEI } from "./constants";
+import { Wei, Tokens } from "./units";
 import { ZeroRateError } from "./Errors";
 import { EthereumConnection } from "./EthereumConnection";
 import { SET_RATE_GAS_LIMIT } from "./gas";
 import { Transaction } from "./Transaction";
 
 export interface IRateInfo {
-    rate: BN;
+    rate: Tokens;
     lastUpdated: Date;
 }
 
@@ -26,9 +25,9 @@ export class Rates extends AbstractContract {
         this.web3 = this.ethereumConnection.web3;
     }
 
-    public async getEthFiatRate(currency: string): Promise<BN> {
+    public async getEthFiatRate(currency: string): Promise<Tokens> {
         const rate: string = await this.instance.methods
-            .convertFromWei(this.web3.utils.asciiToHex(currency), ONE_ETH_IN_WEI.toString())
+            .convertFromWei(this.web3.utils.asciiToHex(currency), Wei.of(1).toString())
             .call()
             .catch((error: Error) => {
                 if (error.message.includes("revert rates[bSymbol] must be > 0")) {
@@ -40,7 +39,7 @@ export class Rates extends AbstractContract {
                 }
             });
 
-        return new BN(rate);
+        return Tokens.parse(rate);
     }
 
     public async getAugmintRate(currency: string): Promise<IRateInfo> {
@@ -50,12 +49,12 @@ export class Rates extends AbstractContract {
             .call();
 
         return {
-            rate: new BN(storedRateInfo.rate),
+            rate: Tokens.parse(storedRateInfo.rate),
             lastUpdated: new Date(parseInt(storedRateInfo.lastUpdated) * 1000)
         };
     }
 
-    public setRate(currency: string, price: BN): Transaction {
+    public setRate(currency: string, price: Wei): Transaction {
 
         const bytesCCY: string = this.web3.utils.asciiToHex(currency);
 

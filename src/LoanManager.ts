@@ -1,4 +1,3 @@
-import BN from "bn.js";
 import { LoanManager as LoanManagerInstance } from "../generated/index";
 import { LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286 as LegacyLoanManagerInstanceWithChunkSize } from "../generated/types/LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286";
 // import { TransactionObject } from "../generated/types/types";

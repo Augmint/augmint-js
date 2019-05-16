@@ -1,6 +1,5 @@
 const { assert } = require("chai");
-const BN = require("bn.js");
-const { Augmint, utils } = require("../dist/index.js");
+const { Augmint, utils, Tokens } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 
@@ -21,7 +20,7 @@ describe("Rates connection", () => {
 });
 
 describe("Rates getters", () => {
-    const EXPECTED_RATE = new BN(213.14 * DECIMALS_DIV);
+    const EXPECTED_RATE = Tokens.of(213.14);
     let snapshotId;
     let myAugmint;
 
