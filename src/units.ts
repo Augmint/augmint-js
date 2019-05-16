@@ -1,149 +1,179 @@
 import BN from "bn.js";
 
-const BN_ONE: BN = new BN(1);
-
-const PPM_DIV: number = 1000000;
-const BN_PPM_DIV: BN = new BN(PPM_DIV);
-
 const E12: BN = new BN("1000000000000");
 
-const ONE_ETH_IN_WEI = new BN("1000000000000000000");
+const BN_ONE: BN = new BN(1);
 
-const DECIMALS_DIV: number = 100;
-const DECIMALS: number = 2;
-
-function ceilDiv(dividend: BN, divisor: BN) {
-	return dividend.add(divisor).sub(BN_ONE).div(divisor);
+function ceilDiv(dividend: BN, divisor: BN): BN {
+    return dividend.add(divisor).sub(BN_ONE).div(divisor);
 }
 
-// TODO runtime type checks to ensure other is the same class
-// TODO units should know their decimals
-abstract class Unit {
-    constructor (readonly amount: BN) {
-    	// TODO null-check?
-    }
+abstract class FixedPoint {
 
+    constructor (readonly amount: BN) {
+        if (!BN.isBN(amount)) {
+            throw new Error("Not a BN: " + amount);
+        }
+    }
 
     //
     // operations
     //
 
-	private create(amount: BN): this {
-		return new (<typeof Object>this.constructor)(amount) as this;
-	}
+    public add(other: this): this {
+        this.check(other);
+        return this.create(this.amount.add(other.amount));
+    }
 
-	public add(other: this): this {
-		return this.create(this.amount.add(other.amount));
-	}
+    public sub(other: this): this {
+        this.check(other);
+        return this.create(this.amount.sub(other.amount));
+    }
 
-	public sub(other: this): this {
-		return this.create(this.amount.sub(other.amount));
-	}
+    public mul(ratio: Ratio): this {
+        this.check(ratio, Ratio);
+        return this.create(this.amount.mul(ratio.amount).div(Ratio.DIV_BN));
+    }
 
-	public mul(percent: Percent): this {
-		return this.create(this.amount.mul(percent.amount).div(BN_PPM_DIV));
-	}
+    public div(ratio: Ratio): this {
+        this.check(ratio, Ratio);
+        return this.create(ceilDiv(this.amount.mul(Ratio.DIV_BN), ratio.amount));
+    }
 
-	public div(percent: Percent): this {
-		return this.create(ceilDiv(this.amount.mul(BN_PPM_DIV), percent.amount));
-	}
+    //
+    // comparison
+    //
 
-	//
-	// comparison
-	//
+    public isZero(): boolean {
+        return this.amount.isZero();
+    }
 
-	public isZero(): boolean {
-		return this.amount.isZero();
-	}
+    public cmp(other: this): number {
+        this.check(other);
+        return this.amount.cmp(other.amount);
+    }
 
-	public cmp(other: this): number {
-		return this.amount.cmp(other.amount);
-	}
+    public eq(other: this): boolean {
+        this.check(other);
+        return this.amount.eq(other.amount);
+    }
 
-	public eq(other: this): boolean {
-		return this.amount.eq(other.amount);
-	}
+    public gte(other: this): boolean {
+        this.check(other);
+        return this.amount.gte(other.amount);
+    }
 
-	public gte(other: this): boolean {
-		return this.amount.gte(other.amount);
-	}
+    public lte(other: this): boolean {
+        this.check(other);
+        return this.amount.lte(other.amount);
+    }
 
-	public lte(other: this): boolean {
-		return this.amount.lte(other.amount);
-	}
+    //
+    // conversion
+    //
 
-	//
-	// conversion
-	//
+    public toJSON(): string {
+        return this.toString();
+    }
 
-	// public toJSON(): string {
-	// 	return this.toString();
-	// }
+    public toString(radix: number = 10): string {
+        return this.amount.toString(radix);
+    }
 
-	// TODO with base param
-	public toString(): string {
-		return this.amount.toString();
-	}
+    //
+    // util
+    //
+
+    protected check(other: FixedPoint, type: Function = this.constructor): void {
+        if (!(other instanceof type)) {
+            throw new Error("Type error. Expected " + type + " got " + typeof other);
+        }
+    }
+
+    private create(amount: BN): this {
+        return new (this.constructor as typeof Object)(amount) as this;
+    }
 
 }
 
-export class Wei extends Unit {
-  
-	public toTokens(rate: Tokens): Tokens {
-		return new Tokens(this.amount.mul(rate.amount).divRound(ONE_ETH_IN_WEI));
-	}
+export class Wei extends FixedPoint {
 
-    public toTokensAt(rate: Tokens, price: Percent): Tokens {
-	    return new Tokens(this.amount.mul(rate.amount).divRound(price.amount.mul(E12)));
-    }
+    static readonly PRECISION: number = 1000000;
+    static readonly DIV_BN: BN = new BN("1000000000000000000");
+    static readonly DIV_PRECISON: BN = Wei.DIV_BN.divn(Wei.PRECISION);
 
     public static parse(str: string): Wei {
-    	return new Wei(new BN(str));
+        return new Wei(new BN(str));
     }
 
-    public static of(num: number) {
-	    return new Wei(new BN(num * PPM_DIV).mul(ONE_ETH_IN_WEI).div(BN_PPM_DIV));
-	}
+    public static of(num: number): Wei {
+        return new Wei(new BN(num * Wei.PRECISION).mul(Wei.DIV_PRECISON));
+    }
+
+    public toTokens(rate: Tokens): Tokens {
+        this.check(rate, Tokens);
+        return new Tokens(this.amount.mul(rate.amount).divRound(Wei.DIV_BN));
+    }
+
+    public toTokensAt(rate: Tokens, price: Ratio): Tokens {
+        this.check(rate, Tokens);
+        this.check(price, Ratio);
+        return new Tokens(this.amount.mul(rate.amount).divRound(price.amount.mul(E12)));
+    }
 
 }
 
-export class Tokens extends Unit {
+export class Tokens extends FixedPoint {
 
-// TODO refactor
-	public toWei(rate: Tokens): Wei {
-		return new Wei(this.amount.mul(ONE_ETH_IN_WEI).divRound(rate.amount));
-	}
-
-    public toWeiAt(rate: Tokens, price: Percent): Wei {
-	    return new Wei(this.amount.mul(price.amount).mul(E12).divRound(rate.amount));
-    }
+    static readonly DIV: number = 100;
 
     public static parse(str: string): Tokens {
-    	return new Tokens(new BN(str));
+        return new Tokens(new BN(str));
     }
 
     public static of(num: number): Tokens {
-    	return new Tokens(new BN(num * DECIMALS_DIV));
+        return new Tokens(new BN(num * Tokens.DIV));
+    }
+
+    public static min(o1: Tokens, o2: Tokens): Tokens {
+        return o1.lte(o2) ? o1 : o2;
+    }
+
+    public toWei(rate: Tokens): Wei {
+        this.check(rate, Tokens);
+        return new Wei(this.amount.mul(Wei.DIV_BN).divRound(rate.amount));
+    }
+
+    public toWeiAt(rate: Tokens, price: Ratio): Wei {
+        this.check(rate, Tokens);
+        this.check(price, Ratio);
+        return new Wei(this.amount.mul(price.amount).mul(E12).divRound(rate.amount));
+    }
+
+    public toRate(ethers: Wei): Tokens {
+        this.check(ethers, Wei);
+        return new Tokens(this.amount.mul(Wei.DIV_BN).divRound(ethers.amount));
     }
 
 }
 
 
-export class Percent extends Unit {
+export class Ratio extends FixedPoint {
 
-    public static parse(str: string) {
-    	return new Percent(new BN(str));
+    static readonly DIV: number = 1000000;
+    static readonly DIV_BN: BN = new BN(Ratio.DIV);
+
+    public static parse(str: string): Ratio {
+        return new Ratio(new BN(str));
     }
 
-    public static of(num: number) {
-    	return new Percent(new BN(num * PPM_DIV));
+    public static of(num: number): Ratio {
+        return new Ratio(new BN(num * Ratio.DIV));
     }
 
-	public toNumber(): number {
-		return this.amount.toNumber() / PPM_DIV;
-	}
-
-
+    public toNumber(): number {
+        return this.amount.toNumber() / Ratio.DIV;
+    }
 
 }
 

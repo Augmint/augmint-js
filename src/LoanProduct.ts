@@ -1,6 +1,6 @@
-import { Wei, Tokens, Percent } from "./units";
 import { MIN_LOAN_AMOUNT_ADJUSTMENT } from "./constants";
 import { AugmintJsError } from "./Errors";
+import { Ratio, Tokens, Wei } from "./units";
 
 export interface ILoanValues {
     disbursedAmount: Tokens;
@@ -20,9 +20,9 @@ export class LoanProduct {
     public readonly termInSecs: number;
 
     public readonly interestRatePa: number;
-    public readonly discountRate: Percent;
-    public readonly defaultingFeePt: Percent;
-    public readonly collateralRatio: Percent;
+    public readonly discountRate: Ratio;
+    public readonly defaultingFeePt: Ratio;
+    public readonly collateralRatio: Ratio;
 
     public readonly minDisbursedAmount: Tokens;
     public readonly adjustedMinDisbursedAmount: Tokens;
@@ -51,13 +51,12 @@ export class LoanProduct {
         }
 
         const termInSecs: number = parseInt(sTerm, 10);
-        const discountRate: Percent = Percent.parse(sDiscountRate);
+        const discountRate: Ratio = Ratio.parse(sDiscountRate);
 
         // this is an informative p.a. interest to displayed to the user - not intended to be used for calculations.
         //  The  interest  p.a. can be lower (but only lower or eq) depending on loan amount because of rounding
         const termInDays: number = termInSecs / 60 / 60 / 24;
         const interestRatePa: number =
-         // Math.round(((1 / (parseInt(sDiscountRate) / PPM_DIV) - 1) / termInDays) * 365 * 10000) / 10000;
             Math.round(((1 / discountRate.toNumber() - 1) / termInDays) * 365 * 10000) / 10000;
 
         const minDisbursedAmount: Tokens = Tokens.parse(sMinDisbursedAmount);
@@ -69,11 +68,11 @@ export class LoanProduct {
         this.termInSecs = termInSecs;
         this.discountRate = discountRate;
         this.interestRatePa = interestRatePa;
-        this.collateralRatio = Percent.parse(sCollateralRatio);
+        this.collateralRatio = Ratio.parse(sCollateralRatio);
         this.minDisbursedAmount = minDisbursedAmount;
         this.adjustedMinDisbursedAmount = adjustedMinDisbursedAmount;
         this.maxLoanAmount = Tokens.parse(sMaxLoanAmount);
-        this.defaultingFeePt = Percent.parse(sDefaultingFeePt);
+        this.defaultingFeePt = Ratio.parse(sDefaultingFeePt);
         this.isActive = sIsActive === "1";
     }
 
@@ -96,10 +95,9 @@ export class LoanProduct {
     }
 
     public calculateLoanFromDisbursedAmount(disbursedAmount: Tokens, ethFiatRate: Tokens): ILoanValues {
+        const repaymentAmount: Tokens = disbursedAmount.div(this.discountRate);
 
-        let repaymentAmount: Tokens = disbursedAmount.div(this.discountRate);
-
-        let collateralValueInTokens: Tokens = repaymentAmount.div(this.collateralRatio);
+        const collateralValueInTokens: Tokens = repaymentAmount.div(this.collateralRatio);
         const collateralAmount: Wei = collateralValueInTokens.toWei(ethFiatRate);
 
         const repayBefore: Date = new Date();

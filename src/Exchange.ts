@@ -9,9 +9,7 @@ import { EthereumConnection } from "./EthereumConnection";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PLACE_ORDER_GAS } from "./gas";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
-import {IBuyOrder} from "../dist/src/Exchange";
-import {doc} from "prettier";
-import fill = doc.builders.fill;
+import { Ratio, Tokens, Wei } from "./units";
 
 interface ISimpleBuyData {
     tokens: Tokens;
@@ -21,30 +19,20 @@ interface ISimpleBuyData {
 }
 
 export class OrderBook {
-    constructor (
-        public buyOrders: IBuyOrder[],
-        public sellOrders: ISellOrder[]
-    ) {
-        buyOrders.sort(OrderBook.compareBuyOrders);
-        sellOrders.sort(OrderBook.compareSellOrders);
-    }
-
     public static compareBuyOrders(o1: IBuyOrder, o2: IBuyOrder): number {
-        const cmp = o2.price.cmp(o1.price);
+        const cmp: number = o2.price.cmp(o1.price);
         return cmp !== 0 ? cmp : o1.id - o2.id;
     }
 
     public static compareSellOrders(o1: ISellOrder, o2: ISellOrder): number {
-        const cmp = o1.price.cmp(o2.price);
+        const cmp: number = o1.price.cmp(o2.price);
         return cmp !== 0 ? cmp : o1.id - o2.id;
     }
 
-    public static minTokens(t1: Tokens, t2: Tokens): Tokens {
-        const comp = t1.cmp(t2);
-        console.log(comp);
-        return Tokens.of(0);
+    constructor(public buyOrders: IBuyOrder[], public sellOrders: ISellOrder[]) {
+        buyOrders.sort(OrderBook.compareBuyOrders);
+        sellOrders.sort(OrderBook.compareSellOrders);
     }
-
     public getBuySellOrders() : {buys: IBuyOrder[], sells: ISellOrder[]} {
         const lowestSellPrice: Percent = this.sellOrders[0].price;
         const highestBuyPrice: Percent = this.buyOrders[0].price;
@@ -68,17 +56,20 @@ export class OrderBook {
      * @param  {number} gasLimit       return as many matches as it fits to gasLimit based on gas cost estimate.
      * @return {object}                pairs of matching order id , ordered by execution sequence { buyIds: [], sellIds: [], gasEstimate }
      */
-    public getMatchingOrders(
-        ethFiatRate: Tokens,
-        gasLimit: number
-    ): IMatchingOrders {
+    public getMatchingOrders(ethFiatRate: Tokens, gasLimit: number): IMatchingOrders {
         const sellIds: number[] = [];
         const buyIds: number[] = [];
 
         if (this.buyOrders.length === 0 || this.sellOrders.length === 0) {
             return { buyIds, sellIds, gasEstimate: 0 };
         }
+        const lowestSellPrice: Ratio = this.sellOrders[0].price;
+        const highestBuyPrice: Ratio = this.buyOrders[0].price;
 
+        const clone = o => Object.assign({}, o);
+        const buys: IBuyOrder[] = this.buyOrders.filter(o => o.price.gte(lowestSellPrice)).map(clone);
+
+        const sells: ISellOrder[] = this.sellOrders.filter(o => o.price.lte(highestBuyPrice)).map(clone);
         const {buys, sells} = this.getBuySellOrders();
 
         let buyIdx: number = 0;
@@ -87,7 +78,6 @@ export class OrderBook {
         let nextGasEstimate: number = MATCH_MULTIPLE_FIRST_MATCH_GAS;
 
         while (buyIdx < buys.length && sellIdx < sells.length && nextGasEstimate <= gasLimit) {
-
             const sell: ISellOrder = sells[sellIdx];
             const buy: IBuyOrder = buys[buyIdx];
             sellIds.push(sell.id);
@@ -95,7 +85,7 @@ export class OrderBook {
 
             // matching logic follows smart contract _fillOrder implementation
             // see https://github.com/Augmint/augmint-contracts/blob/staging/contracts/Exchange.sol
-            const price: Percent = buy.id > sell.id ? sell.price : buy.price;
+            const price: Ratio = buy.id > sell.id ? sell.price : buy.price;
 
             const sellWei: Wei = sell.amount.toWeiAt(ethFiatRate, price);
 
@@ -253,21 +243,19 @@ export interface IMatchingOrders {
 export interface IOrder {
     id: number;
     maker: string;
-    price: Percent;
+    price: Ratio;
     amount: Tokens | Wei;
 }
 
 export interface IBuyOrder extends IOrder {
-    amount: Wei
+    amount: Wei;
 }
 
 export interface ISellOrder extends IOrder {
-    amount: Tokens
+    amount: Tokens;
 }
 
-type IOrderTuple = [string, string, string, string];
-
-/** result from contract: [id, maker, price, amount] */
+type IOrderTuple = [string, string, string, string]; /** result from contract: [id, maker, price, amount] */
 
 export interface IExchangeOptions {
     token: AugmintToken;
@@ -280,6 +268,7 @@ export interface IExchangeOptions {
  * @class Exchange
  * @extends Contract
  */
+// tslint:disable-next-line:max-classes-per-file
 export class Exchange extends AbstractContract {
     public instance: ExchangeInstance;
     private web3: any;
@@ -301,6 +290,24 @@ export class Exchange extends AbstractContract {
     }
 
     /**
+     * Fetches, parses and orders the current, full orderBook from Exchange
+     *
+     * @returns {Promise<OrderBook>}   the current, ordered orderBook
+     * @memberof Exchange
+     */
+    public async getOrderBook(): Promise<OrderBook> {
+        // TODO: handle when order changes while iterating
+        // @ts-ignore  TODO: remove ts - ignore and handle properly when legacy contract support added
+        const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
+        const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
+        const [buyOrders, sellOrders]: [IBuyOrder[], ISellOrder[]] = await Promise.all([
+            this.getOrders(true, chunkSize) as Promise<IBuyOrder[]>,
+            this.getOrders(false, chunkSize) as Promise<ISellOrder[]>
+        ]);
+        return new OrderBook(buyOrders, sellOrders);
+    }
+
+    /**
      * Fetches current OrderBook and returns as many matching orderIds (at current ETHFiat rate) as fits into the provided gas limit.
      *  if no gasLimit provided then ethereumConnection.safeBlockGasLimit is used
      * The returned matchingOrders can be passed to signAndSendMatchMultiple or matchMultiple functions
@@ -317,22 +324,61 @@ export class Exchange extends AbstractContract {
         return orderBook.getMatchingOrders(ethFiatRate, gasLimit);
     }
 
+    public placeSellTokenOrder(price: Ratio, amount: Tokens): Transaction {
+        const web3Tx: TransactionObject<void> = this.token.instance.methods.transferAndNotify(
+            this.address,
+            amount.toString(),
+            price.toString()
+        );
+
+        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: PLACE_ORDER_GAS,
+            to: this.address
+        });
+
+        return transaction;
+    }
+
+    public placeBuyTokenOrder(price: Ratio, amount: Wei): Transaction {
+        const web3Tx: TransactionObject<string> = this.instance.methods.placeBuyTokenOrder(price.toString());
+
+        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: PLACE_ORDER_GAS,
+            to: this.address,
+            value: amount.amount
+        });
+
+        return transaction;
+    }
+
     /**
-     * Fetches, parses and orders the current, full orderBook from Exchange
+     *  Returns a [Transaction] object with which can be signed and sent or sent to the ethereum network
      *
-     * @returns {Promise<OrderBook>}   the current, ordered orderBook
+     * @param {IMatchingOrders} matchingOrders  use [getMatchingOrders] method to get it
+     * @returns {Transaction}
      * @memberof Exchange
      */
-    public async getOrderBook(): Promise<OrderBook> {
-        // TODO: handle when order changes while iterating
-        // @ts-ignore  TODO: remove ts - ignore and handle properly when legacy contract support added
-        const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
-        const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
-        const [buyOrders, sellOrders] = await Promise.all([
-            this.getOrders(true, chunkSize) as Promise<IBuyOrder[]>,
-            this.getOrders(false, chunkSize) as Promise<ISellOrder[]>
-        ]);
-        return new OrderBook(buyOrders, sellOrders);
+    public matchMultipleOrders(matchingOrders: IMatchingOrders): Transaction {
+        if (matchingOrders.sellIds.length === 0 || matchingOrders.sellIds.length !== matchingOrders.buyIds.length) {
+            throw new Error("invalid buyIds/sellIds recevied - no ids or the the params are not equal.");
+        }
+
+        const web3Tx: TransactionObject<string> = this.instance.methods.matchMultipleOrders(
+            matchingOrders.buyIds,
+            matchingOrders.sellIds
+        );
+        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: matchingOrders.gasEstimate,
+            // to: needs to be set if going to be signed.
+            // (getting unhandled rejection errors if not set even tx is successful on ganache. beta36 )
+            to: this.address
+        });
+
+        return transaction;
+    }
+
+    static get OrderBook(): typeof OrderBook {
+        return OrderBook;
     }
 
     private async getOrders(buy: boolean, chunkSize: number): Promise<IOrder[]> {
@@ -369,77 +415,17 @@ export class Exchange extends AbstractContract {
         }
 
         // result format: [id, maker, price, amount]
-        return result.reduce(
-            (res: IOrder[], order: IOrderTuple) => {
-                const amount: BN = new BN(order[3]);
-                if (!amount.isZero()) {
-                    res.push({
-                        id: parseInt(order[0], 10),
-                        maker: `0x${new BN(order[1]).toString(16).padStart(40, "0")}`, // leading 0s if address starts with 0
-                        price: Percent.parse(order[2]),
-                        amount: buy ? new Wei(amount) : new Tokens(amount)
-                    });
-                }
-                return res;
-            },
-            []
-        );
-    }
-
-    public placeSellTokenOrder(price: Percent, amount: Tokens): Transaction {
-        const web3Tx: TransactionObject<void> = this.token.instance.methods.transferAndNotify(
-            this.address,
-            amount.toString(),
-            price.toString()
-        );
-
-        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
-            gasLimit: PLACE_ORDER_GAS,
-            to: this.address
-        });
-
-        return transaction;
-    }
-
-    public placeBuyTokenOrder(price: Percent, amount: Wei): Transaction {
-        const web3Tx: TransactionObject<string> = this.instance.methods.placeBuyTokenOrder(price.toString());
-
-        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
-            gasLimit: PLACE_ORDER_GAS,
-            to: this.address,
-            value: amount
-        });
-
-        return transaction;
-    }
-
-    /**
-     *  Returns a [Transaction] object with which can be signed and sent or sent to the ethereum network
-     *
-     * @param {IMatchingOrders} matchingOrders  use [getMatchingOrders] method to get it
-     * @returns {Transaction}
-     * @memberof Exchange
-     */
-    public matchMultipleOrders(matchingOrders: IMatchingOrders): Transaction {
-        if (matchingOrders.sellIds.length === 0 || matchingOrders.sellIds.length !== matchingOrders.buyIds.length) {
-            throw new Error("invalid buyIds/sellIds recevied - no ids or the the params are not equal.");
-        }
-
-        const web3Tx: TransactionObject<string> = this.instance.methods.matchMultipleOrders(
-            matchingOrders.buyIds,
-            matchingOrders.sellIds
-        );
-        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
-            gasLimit: matchingOrders.gasEstimate,
-            // to: needs to be set if going to be signed.
-            // (getting unhandled rejection errors if not set even tx is successful on ganache. beta36 )
-            to: this.address
-        });
-
-        return transaction;
-    }
-
-    static get OrderBook(): typeof OrderBook {
-        return OrderBook;
+        return result.reduce((res: IOrder[], order: IOrderTuple) => {
+            const amount: BN = new BN(order[3]);
+            if (!amount.isZero()) {
+                res.push({
+                    id: parseInt(order[0], 10),
+                    maker: `0x${new BN(order[1]).toString(16).padStart(40, "0")}`, // leading 0s if address starts with 0
+                    price: Ratio.parse(order[2]),
+                    amount: buy ? new Wei(amount) : new Tokens(amount)
+                });
+            }
+            return res;
+        }, []);
     }
 }
