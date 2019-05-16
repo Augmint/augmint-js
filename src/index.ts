@@ -1,5 +1,5 @@
 import { Augmint } from "./Augmint";
+import { Ratio, Tokens, Wei } from "./units";
 import * as utils from "./utils/index";
-import { Wei, Tokens, Ratio } from "./units";
 export { Augmint, utils };
 export { Wei, Tokens, Ratio };

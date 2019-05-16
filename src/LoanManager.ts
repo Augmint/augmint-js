@@ -65,7 +65,7 @@ export class LoanManager extends AbstractContract {
         let products: LoanProduct[] = [];
         const queryCount: number = Math.ceil(productCount / chunkSize);
 
-        for (let i = 0; i < queryCount; i++) {
+        for (let i: number = 0; i < queryCount; i++) {
             const productTuples: ILoanProductTuple[] = isLegacyLoanContractWithChunkSize
                 ? ((await (this.instance as LegacyLoanManagerInstanceWithChunkSize).methods
                       .getProducts(i * chunkSize)

@@ -1,6 +1,6 @@
-import { Wei, Tokens, Ratio } from "./units";
 import { MIN_LOAN_AMOUNT_ADJUSTMENT } from "./constants";
 import { AugmintJsError } from "./Errors";
+import { Ratio, Tokens, Wei } from "./units";
 
 export interface ILoanValues {
     disbursedAmount: Tokens;
@@ -95,10 +95,9 @@ export class LoanProduct {
     }
 
     public calculateLoanFromDisbursedAmount(disbursedAmount: Tokens, ethFiatRate: Tokens): ILoanValues {
+        const repaymentAmount: Tokens = disbursedAmount.div(this.discountRate);
 
-        let repaymentAmount: Tokens = disbursedAmount.div(this.discountRate);
-
-        let collateralValueInTokens: Tokens = repaymentAmount.div(this.collateralRatio);
+        const collateralValueInTokens: Tokens = repaymentAmount.div(this.collateralRatio);
         const collateralAmount: Wei = collateralValueInTokens.toWei(ethFiatRate);
 
         const repayBefore: Date = new Date();
