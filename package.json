@@ -61,7 +61,7 @@
     "ganache:run": "scripts/augmint-cli.sh ganache run --blockTime 1"
   },
   "greenkeeper": {
-    "ignore": []
+    "ignore": ["@types/node"]
   },
   "main": "dist/index.js",
   "module": "dist/index.es.js",
