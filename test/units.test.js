@@ -18,8 +18,9 @@ describe("Units", () => {
 
     it("conversions", () => {
         assert.equal(Tokens.of(100.01).toString(), "10001");
+        assert.equal(Tokens.of(100.01).toString(16), "2711");
         assert.equal(Ratio.of(1.01).toNumber(), 1.01);
-        assert.equal(JSON.stringify({tokens: Tokens.of(100.01) }), '{"tokens":"10001"}');
+        assert.equal(JSON.stringify({ tokens: Tokens.of(100.01) }), '{"tokens":"10001"}');
     });
 
 });

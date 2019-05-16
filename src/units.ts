@@ -76,9 +76,8 @@ abstract class FixedPoint {
         return this.toString();
     }
 
-    // TODO with base param
-    public toString(): string {
-        return this.amount.toString();
+    public toString(radix: number = 10): string {
+        return this.amount.toString(radix);
     }
 
     //
