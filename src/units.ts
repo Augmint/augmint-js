@@ -97,8 +97,8 @@ export class Wei extends Unit {
 	    return new Tokens(this.amount.mul(rate.amount).divRound(price.amount.mul(E12)));
     }
 
-    public static parse(string: String): Wei {
-    	return new Wei(new BN(string));
+    public static parse(str: string): Wei {
+    	return new Wei(new BN(str));
     }
 
     public static of(num: number) {
@@ -118,8 +118,8 @@ export class Tokens extends Unit {
 	    return new Wei(this.amount.mul(price.amount).mul(E12).divRound(rate.amount));
     }
 
-    public static parse(string: String): Tokens {
-    	return new Tokens(new BN(string));
+    public static parse(str: string): Tokens {
+    	return new Tokens(new BN(str));
     }
 
     public static of(num: number): Tokens {
@@ -131,8 +131,8 @@ export class Tokens extends Unit {
 
 export class Percent extends Unit {
 
-    public static parse(string: String) {
-    	return new Percent(new BN(string));
+    public static parse(str: string) {
+    	return new Percent(new BN(str));
     }
 
     public static of(num: number) {

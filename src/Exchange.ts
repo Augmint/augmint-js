@@ -9,18 +9,15 @@ import { EthereumConnection } from "./EthereumConnection";
 import { MATCH_MULTIPLE_ADDITIONAL_MATCH_GAS, MATCH_MULTIPLE_FIRST_MATCH_GAS, PLACE_ORDER_GAS } from "./gas";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
+import {IBuyOrder} from "../dist/src/Exchange";
+import {doc} from "prettier";
+import fill = doc.builders.fill;
 
 interface ISimpleBuyData {
-    tokens: number;
-    ethers: number;
-    limitPrice: number;
-    averagePrice: number;
-}
-
-interface ISimpleBuyOrder extends IOrder {
-    ethers: BN;
-    amount: BN;
-    price: BN;
+    tokens: Tokens;
+    ethers: Wei;
+    limitPrice: Percent;
+    averagePrice: Percent;
 }
 
 export class OrderBook {
@@ -42,6 +39,29 @@ export class OrderBook {
         return cmp !== 0 ? cmp : o1.id - o2.id;
     }
 
+    public static minTokens(t1: Tokens, t2: Tokens): Tokens {
+        const comp = t1.cmp(t2);
+        console.log(comp);
+        return Tokens.of(0);
+    }
+
+    public getBuySellOrders() : {buys: IBuyOrder[], sells: ISellOrder[]} {
+        const lowestSellPrice: Percent = this.sellOrders[0].price;
+        const highestBuyPrice: Percent = this.buyOrders[0].price;
+
+        const clone = o => Object.assign({}, o);
+        const buys: IBuyOrder[] = this.buyOrders
+            .filter(o => o.price.gte(lowestSellPrice)).map(clone);
+
+        const sells: ISellOrder[] = this.sellOrders
+            .filter(o => o.price.lte(highestBuyPrice)).map(clone);
+
+        return {
+            buys,
+            sells,
+        }
+    }
+
     /**
      * calculate matching pairs from ordered ordebook for sending in Exchange.matchMultipleOrders ethereum tx
      * @param  {Tokens} ethFiatRate current ETHFiat rate to use for calculation
@@ -58,15 +78,8 @@ export class OrderBook {
         if (this.buyOrders.length === 0 || this.sellOrders.length === 0) {
             return { buyIds, sellIds, gasEstimate: 0 };
         }
-        const lowestSellPrice: Percent = this.sellOrders[0].price;
-        const highestBuyPrice: Percent = this.buyOrders[0].price;
 
-        const clone = o => Object.assign({}, o);
-        const buys: IBuyOrder[] = this.buyOrders
-            .filter(o => o.price.gte(lowestSellPrice)).map(clone);
-
-        const sells: ISellOrder[] = this.sellOrders
-            .filter(o => o.price.lte(highestBuyPrice)).map(clone);
+        const {buys, sells} = this.getBuySellOrders();
 
         let buyIdx: number = 0;
         let sellIdx: number = 0;
@@ -113,30 +126,60 @@ export class OrderBook {
         return { buyIds, sellIds, gasEstimate };
     }
 
-    /**
-     * transform order object into structure to calculate simplebuy data from
-     * @param  {tokenAmount} amount of token
-     * @param  {buy} buyOrders or sellOrders
-     * @return {object} order for simple buy { ethers, ...IOrder }
-     */
+    public estimateSimpleBuy(tokens: Tokens, ethFiatRate: Tokens): ISimpleBuyData {
+        let remainingTokens: Tokens = tokens;
+        let filledEthers: Wei = Wei.of(0);
+        let lastPrice: Percent = Percent.of(0);
 
-    public getSimpleBuyOrders(token: number, buy: boolean, ethFiatRate: BN): ISimpleBuyOrder[] {
-        const orders: IOrder[] = buy ? this.sellOrders : this.buyOrders;
-
-        return orders.map(
-            (order: IOrder): ISimpleBuyOrder => {
-                const newOrder: ISimpleBuyOrder = Object.assign({ ethers: 0 }, order);
-
-                if (buy) {
-                    newOrder.ethers = newOrder.amount.mul(newOrder.price).div(ethFiatRate);
-                } else {
-                    newOrder.ethers = newOrder.amount;
-                    newOrder.amount = ethFiatRate.div(newOrder.price).mul(newOrder.ethers);
-                }
-
-                return newOrder;
+        for (let i = 0; i <= this.sellOrders.length; i++) {
+            const order: ISellOrder = this.sellOrders[i];
+            if (remainingTokens.isZero()) {
+                break;
+            } else {
+                const boughtTokens: Tokens = OrderBook.minTokens(remainingTokens, order.amount);
+                const spentEthers: Wei = boughtTokens.toWeiAt(ethFiatRate, order.price);
+                remainingTokens = remainingTokens.sub(boughtTokens);
+                filledEthers = filledEthers.add(spentEthers);
+                lastPrice = order.price
             }
-        );
+        }
+        const totalBoughtTokens: Tokens = tokens.sub(remainingTokens);
+        // const averagePrice = filledEthers.div(totalBoughtTokens);
+        return {
+            tokens: totalBoughtTokens,
+            ethers: filledEthers,
+            limitPrice: lastPrice,
+            // averagePrice
+        };
+    }
+
+    public estimateSimpleSell(tokens: Tokens, ethFiatRate: Tokens): ISimpleBuyData {
+        let remainingTokens: Tokens = tokens;
+        let filledEthers: Wei = Wei.of(0);
+        let lastPrice: Percent = Percent.of(0);
+
+        for (let i = 0; i <= this.buyOrders.length; i++) {
+            const order: IBuyOrder = this.buyOrders[i];
+
+            if (remainingTokens.isZero()) {
+                break;
+            } else {
+                const orderTokens: Tokens = order.amount.toTokensAt(ethFiatRate, order.price);
+                const soldTokens: Tokens = OrderBook.minTokens(remainingTokens, orderTokens);
+                const spentEthers: Wei = soldTokens.toWeiAt(ethFiatRate, order.price);
+                remainingTokens = remainingTokens.sub(soldTokens);
+                filledEthers = filledEthers.add(spentEthers);
+                lastPrice = order.price
+            }
+        }
+        const totalBoughtTokens: Tokens = tokens.sub(remainingTokens);
+        // const averagePrice = filledEthers.div(totalBoughtTokens);
+        return {
+            tokens: totalBoughtTokens,
+            ethers: filledEthers,
+            limitPrice: lastPrice,
+            // averagePrice
+        };
     }
 
     /**
@@ -146,45 +189,59 @@ export class OrderBook {
      * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
      */
 
-    public calculateSimpleBuyData(amount: number, buy: boolean, ethFiatRate: BN): ISimpleBuyData {
-        let tokens: BN = new BN(0);
-        let ethers: BN = new BN(0);
-        const tokenAmount: BN = new BN(amount, 10)
-        const prices: any = { total: new BN(0), list: [] };
-
-        const orders: ISimpleBuyOrder[] = this.getSimpleBuyOrders(tokenAmount, buy, ethFiatRate);
-
-        orders.forEach((item: ISimpleBuyOrder) => {
-            let addedAmount: BN = new BN(0);
-            if (tokens.lt(tokenAmount)) {
-                if (item.amount.gte(tokenAmount.add(tokens))) {
-                    addedAmount = tokenAmount;
-                } else if (item.amount.lt(tokenAmount.add(tokens)) && tokenAmount.sub(tokens).lt(item.amount)) {
-                    addedAmount = tokenAmount.sub(tokens);
-                } else if (item.amount.lt(tokenAmount.add(tokens)) && tokenAmount.sub(tokens).gte(item.amount)) {
-                    addedAmount = item.amount;
-                    ethers = ethers.add(item.ethers);
-                }
-                tokens.iadd(addedAmount);
-                ethers.iadd(item.ethers.mul(addedAmount).div(item.amount));
-                prices.total.iadd(item.price.mul(addedAmount));
-                prices.list.push(item.price.toNumber());
-            }
-        });
-
-        const limitPrice: number = buy ? Math.max(...prices.list) : Math.min(...prices.list);
-        const averagePrice: number = prices.total.div(tokens).toNumber();
-
-        tokens = tokens.toNumber();
-        ethers = ethers.toNumber();
-
-        return {
-            tokens,
-            ethers,
-            limitPrice,
-            averagePrice
-        };
-    }
+//     public calculateSimpleBuyData(tokenAmount: Tokens, buy: boolean, ethFiatRate: Tokens): ISimpleBuyData {
+//         let filledTokens: Tokens = Tokens.of(0);
+//         let filledEthers: Wei = Wei.of(0);
+//         const prices: any = { total: new Percent(0), list: [] };
+//
+//         const orders = buy ? this.buyOrders : this.sellOrders;
+//
+//         orders.forEach(order => {
+//             let orderEthers;
+//             let orderTokens;
+//             if (buy) {
+//                 const o = order as IBuyOrder;
+//                 orderEthers = o.amount;
+//                 orderTokens = order.amount.toTokensAt(ethFiatRate, order.price);
+//             } else {
+//                 const o = order as ISellOrder;
+//                 orderEthers = o.amount.toWeiAt(ethFiatRate, order.price);
+//                 orderTokens = o.amount;
+//             }
+//
+//
+//             let addedAmount: Tokens = Tokens.of(0);
+//             if (filledTokens.lt(tokenAmount)) {
+//                 if (order.amount.gte(tokenAmount.add(filledTokens))) {
+//                     addedAmount = tokenAmount;
+//                 } else if (order.amount.lt(tokenAmount.add(filledTokens)) && tokenAmount.sub(filledTokens).lt(item.amount)) {
+//                     addedAmount = tokenAmount.sub(filledTokens);
+//                 } else if (order.amount.lt(tokenAmount.add(filledTokens)) && tokenAmount.sub(filledTokens).gte(item.amount)) {
+//                     addedAmount = order.amount;
+//                     ethers = ethers.add(order.ethers);
+//                 }
+//                 // tokens += addedAmount;
+//                 // ethers += item.ethers * addedAmount / item.amount;
+//                 // prices.total += item.price * addedAmount;
+//                 // prices.list.push(item.price);
+//                 filledTokens = filledTokens.add(addedAmount);
+//                 filledEthers = filledEthers.add(item.ethers.mul());
+//                 prices.total = prices.total.add(item.price.mult(Percent.of(addedAmount.toNumber())));
+//                 prices.list.push(item.price.toNumber());
+//             }
+//         });
+//
+//         const limit: number = buy ? Math.max(...prices.list) : Math.min(...prices.list);
+//         const limitPrice: Percent = Percent.of(limit);
+//         const averagePrice: Percent = prices.total.div(Percent.of(tokens.toNumber()));
+//
+//         return {
+//             filledTokens,
+//             filledEthers,
+//             limitPrice,
+//             averagePrice
+//         };
+//     }
 }
 
 export interface IMatchingOrders {
