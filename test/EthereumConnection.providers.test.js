@@ -25,17 +25,19 @@ const testProviders = [
         nonceTestAcc: "0x76e7a0aec3e43211395bbbb6fa059bd6750f83c3", // an account with txs to test getAccountNonce
         testWithGivenProvider: true, // it will create a new web3 instance with a new WebsocketProvider for each test (see beforeEach)
         options: { ETHEREUM_CONNECTION_CHECK_INTERVAL: 0 }
-    },
-    {
-        name: "infura websocket",
-        nonceTestAcc: "0x4A7F6EcbE8B324A55b85adcc45313A412957B8ea", // an account with txs to test getAccountNonce
-        options: {
-            PROVIDER_URL: "wss://rinkeby.infura.io/ws/v3/",
-            PROVIDER_TYPE: "websocket",
-            INFURA_PROJECT_ID: "cb1b0d436be24b0fa654ca34ae6a3645"
-        }
     }
 ];
+/*
+testProviders.push({
+    name: "infura websocket",
+    nonceTestAcc: "0x4A7F6EcbE8B324A55b85adcc45313A412957B8ea", // an account with txs to test getAccountNonce
+    options: {
+        INFURA_PROJECT_ID: "cb1b0d436be24b0fa654ca34ae6a3645",
+        PROVIDER_TYPE: "websocket",
+        PROVIDER_URL: "wss://rinkeby.infura.io/ws/v3/"
+    }
+});
+*/
 
 testProviders.forEach(testProvider => {
     describe("EthereumConnection -" + testProvider.name, function() {

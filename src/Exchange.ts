@@ -203,7 +203,7 @@ export class Exchange extends AbstractContract {
         const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
             gasLimit: PLACE_ORDER_GAS,
             to: this.address,
-            value: amount
+            value: amount.amount
         });
 
         return transaction;
