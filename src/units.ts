@@ -135,6 +135,10 @@ export class Tokens extends FixedPoint {
         return new Tokens(new BN(num * Tokens.DIV));
     }
 
+    public static min(o1: Tokens, o2: Tokens): Tokens {
+        return o1.lte(o2) ? o1 : o2;
+    }
+
     public toWei(rate: Tokens): Wei {
         this.check(rate, Tokens);
         return new Wei(this.amount.mul(Wei.DIV_BN).divRound(rate.amount));
@@ -144,6 +148,11 @@ export class Tokens extends FixedPoint {
         this.check(rate, Tokens);
         this.check(price, Ratio);
         return new Wei(this.amount.mul(price.amount).mul(E12).divRound(rate.amount));
+    }
+
+    public toRate(ethers: Wei): Tokens {
+        this.check(ethers, Wei);
+        return this.amount.mul(Wei.DIV_BN).divRound(ethers.amount);
     }
 
 }
