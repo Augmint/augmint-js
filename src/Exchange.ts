@@ -120,6 +120,7 @@ export class OrderBook {
         let remainingTokens: Tokens = tokens;
         let filledEthers: Wei = Wei.of(0);
         let lastPrice: Ratio = Ratio.of(0);
+        let totalPrice: Ratio = Ratio.of(0);
 
         for (let i = 0; i <= this.sellOrders.length; i++) {
             const order: ISellOrder = this.sellOrders[i];
@@ -130,10 +131,11 @@ export class OrderBook {
             const spentEthers: Wei = boughtTokens.toWeiAt(ethFiatRate, order.price);
             remainingTokens = remainingTokens.sub(boughtTokens);
             filledEthers = filledEthers.add(spentEthers);
-            lastPrice = order.price
+            lastPrice = order.price;
+            totalPrice = totalPrice.add(lastPrice.mulWithTokens(boughtTokens));
         }
         const totalBoughtTokens: Tokens = tokens.sub(remainingTokens);
-        const averagePrice: Ratio = totalBoughtTokens.toRate(filledEthers).divToRatio(ethFiatRate);
+        const averagePrice: Ratio = totalPrice.divWithTokens(totalBoughtTokens);
         return {
             tokens: totalBoughtTokens,
             ethers: filledEthers,
@@ -146,6 +148,7 @@ export class OrderBook {
         let remainingTokens: Tokens = tokens;
         let filledEthers: Wei = Wei.of(0);
         let lastPrice: Ratio = Ratio.of(0);
+        let totalPrice: Ratio = Ratio.of(0);
 
         for (let i = 0; i <= this.buyOrders.length; i++) {
             const order: IBuyOrder = this.buyOrders[i];
@@ -159,12 +162,13 @@ export class OrderBook {
             const spentEthers: Wei = soldTokens.toWeiAt(ethFiatRate, order.price);
             remainingTokens = remainingTokens.sub(soldTokens);
             filledEthers = filledEthers.add(spentEthers);
-            lastPrice = order.price
+            lastPrice = order.price;
+            totalPrice = totalPrice.add(lastPrice.mulWithTokens(soldTokens));
         }
-        const totalBoughtTokens: Tokens = tokens.sub(remainingTokens);
-        const averagePrice: Ratio = totalBoughtTokens.toRate(filledEthers).divToRatio(ethFiatRate);
+        const totalSoldTokens: Tokens = tokens.sub(remainingTokens);
+        const averagePrice: Ratio = totalPrice.divWithTokens(totalSoldTokens);
         return {
-            tokens: totalBoughtTokens,
+            tokens: totalSoldTokens,
             ethers: filledEthers,
             limitPrice: lastPrice,
             averagePrice
