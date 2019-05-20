@@ -107,7 +107,7 @@ export class Wei extends FixedPoint {
     }
 
     public static of(num: number): Wei {
-        return new Wei(new BN(num * Wei.PRECISION).mul(Wei.DIV_PRECISON));
+        return new Wei(new BN(Math.round(num * Wei.PRECISION)).mul(Wei.DIV_PRECISON));
     }
 
     public toTokens(rate: Tokens): Tokens {
@@ -132,7 +132,7 @@ export class Tokens extends FixedPoint {
     }
 
     public static of(num: number): Tokens {
-        return new Tokens(new BN(num * Tokens.DIV));
+        return new Tokens(new BN(Math.round(num * Tokens.DIV)));
     }
 
     public static min(o1: Tokens, o2: Tokens): Tokens {
@@ -168,7 +168,7 @@ export class Ratio extends FixedPoint {
     }
 
     public static of(num: number): Ratio {
-        return new Ratio(new BN(num * Ratio.DIV));
+        return new Ratio(new BN(Math.round(num * Ratio.DIV)));
     }
 
     public toNumber(): number {
