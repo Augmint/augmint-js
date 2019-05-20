@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
         "baseUrl": ".",
-        "paths": { "*": ["types/*"] },
         "declaration": true,
-        "declarationDir": "./dist/", // path to output directory
+        "declarationDir": "./dist/",
+        "declarationMap": true,
         "module": "ES6", // specify module code generation
         "outDir": "./dist/", // path to output directory
         "sourceMap": true, // allow sourcemap support
