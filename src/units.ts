@@ -181,7 +181,7 @@ export class Ratio extends FixedPoint {
 
     public divWithTokens(tokens: Tokens): Ratio {
         this.check(tokens, Tokens);
-        return new Ratio(this.amount.divRound(tokens.amount))
+        return new Ratio(this.amount.div(tokens.amount))
     }
 
     public mulWithTokens(tokens: Tokens): Ratio {
