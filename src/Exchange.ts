@@ -18,6 +18,7 @@ interface ISimpleBuyData {
 }
 
 export class OrderBook {
+
     public static compareBuyOrders(o1: IBuyOrder, o2: IBuyOrder): number {
         const cmp: number = o2.price.cmp(o1.price);
         return cmp !== 0 ? cmp : o1.id - o2.id;
@@ -49,6 +50,13 @@ export class OrderBook {
         }
     }
 
+    public hasMatchingOrders(): boolean {
+        if (this.buyOrders.length === 0 || this.sellOrders.length === 0) {
+            return false;
+        }
+        return this.sellOrders[0].price.lte(this.buyOrders[0].price);
+    }
+
     /**
      * calculate matching pairs from ordered ordebook for sending in Exchange.matchMultipleOrders ethereum tx
      * @param  {Tokens} ethFiatRate current ETHFiat rate to use for calculation
@@ -59,7 +67,7 @@ export class OrderBook {
         const sellIds: number[] = [];
         const buyIds: number[] = [];
 
-        if (this.buyOrders.length === 0 || this.sellOrders.length === 0) {
+        if (!this.hasMatchingOrders()) {
             return { buyIds, sellIds, gasEstimate: 0 };
         }
 
