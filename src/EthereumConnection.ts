@@ -196,56 +196,57 @@ export class EthereumConnection extends EventEmitter {
             this.web3 = new Web3(this.provider);
         }
 
-        if (this.isProviderWithEvents) {
-            const connectedEventPromise: Promise<void> = new Promise(
-                async (resolve: () => void, reject: any): Promise<void> => {
-                    if (await this.isConnected()) {
-                        await this.initAfterProviderConnect();
-                        resolve();
-                    } else {
-                        const tempOnConnected: () => void = async (): Promise<void> => {
-                            this.removeListener("providerError", tempOnproviderError);
-                            this.removeListener("connectionLost", tempOnConnectionLost);
-                            await this.initAfterProviderConnect();
-                            resolve(); // we wait for our custom setup to finish before we resolve connect()
-                        };
-
-                        const tempOnproviderError: () => void = (): void => {
-                            this.removeListener("connected", tempOnConnected);
-                            this.removeListener("connectionLost", tempOnConnectionLost);
-                            reject(
-                                new AugmintJsError(
-                                    "EthereumConnection connect failed. Provider error received instead of connect"
-                                )
-                            );
-                        };
-
-                        const tempOnConnectionLost: (e: any) => void = (e: any): void => {
-                            this.removeListener("connected", tempOnConnected);
-                            this.removeListener("providerError", tempOnproviderError);
-                            reject(
-                                new AugmintJsError(
-                                    `EthereumConnection connect failed. connectionLost received instead of connect. Code: ${
-                                        e.code
-                                    } Reason: ${e.reason}`
-                                )
-                            );
-                        };
-
-                        this.once("connectionLost", tempOnConnectionLost);
-                        this.once("connected", tempOnConnected);
-                        this.once("providerError", tempOnproviderError); // this would be better: this.provider.once("end", e => { .. but web3js has a bug subscrbuing the same event multiple times.
-                    }
-                }
-            );
-
-            await promiseTimeout(this.options.ETHEREUM_CONNECTION_TIMEOUT, connectedEventPromise).catch(error => {
-                throw new AugmintJsError("EthereumConnection connect error. " + error);
-            });
-        } else {
+        if (!this.isProviderWithEvents) {
             // provider doesn't emit connected events so we assume it's immediatly connected
             await this.initAfterProviderConnect();
+            return;
         }
+
+        const connectedEventPromise: Promise<void> = new Promise(
+            async (resolve: () => void, reject: any): Promise<void> => {
+                if (await this.isConnected()) {
+                    await this.initAfterProviderConnect();
+                    resolve();
+                } else {
+                    const tempOnConnected: () => void = async (): Promise<void> => {
+                        this.removeListener("providerError", tempOnproviderError);
+                        this.removeListener("connectionLost", tempOnConnectionLost);
+                        await this.initAfterProviderConnect();
+                        resolve(); // we wait for our custom setup to finish before we resolve connect()
+                    };
+
+                    const tempOnproviderError: () => void = (): void => {
+                        this.removeListener("connected", tempOnConnected);
+                        this.removeListener("connectionLost", tempOnConnectionLost);
+                        reject(
+                            new AugmintJsError(
+                                "EthereumConnection connect failed. Provider error received instead of connect"
+                            )
+                        );
+                    };
+
+                    const tempOnConnectionLost: (e: any) => void = (e: any): void => {
+                        this.removeListener("connected", tempOnConnected);
+                        this.removeListener("providerError", tempOnproviderError);
+                        reject(
+                            new AugmintJsError(
+                                `EthereumConnection connect failed. connectionLost received instead of connect. Code: ${
+                                    e.code
+                                } Reason: ${e.reason}`
+                            )
+                        );
+                    };
+
+                    this.once("connectionLost", tempOnConnectionLost);
+                    this.once("connected", tempOnConnected);
+                    this.once("providerError", tempOnproviderError); // this would be better: this.provider.once("end", e => { .. but web3js has a bug subscrbuing the same event multiple times.
+                }
+            }
+        );
+
+        await promiseTimeout(this.options.ETHEREUM_CONNECTION_TIMEOUT, connectedEventPromise).catch(error => {
+            throw new AugmintJsError("EthereumConnection connect error. " + error);
+        });
     }
 
     public async stop(/*signal*/): Promise<void> {
