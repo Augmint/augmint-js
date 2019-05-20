@@ -23,4 +23,15 @@ describe("Units", () => {
         assert.equal(JSON.stringify({ tokens: Tokens.of(100.01) }), '{"tokens":"10001"}');
     });
 
+    it("rounds Ratio properly", () => {
+        assert.equal(Ratio.of(1.025).toString(), "1025000")
+    })
+
+    it("rounds Wei properly", () => {
+        assert.equal(Wei.of(1.025).toString(), "1025000000000000000")
+    })
+
+    it("rounds Tokens properly", () => {
+        assert.equal(Tokens.of(1.025).toString(), "102.5")
+    })
 });
