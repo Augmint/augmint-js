@@ -20,6 +20,7 @@ const testProviders = [
         nonceTestAcc: "0x76e7a0aec3e43211395bbbb6fa059bd6750f83c3", // an account with txs to test getAccountNonce
         options: { PROVIDER_URL: "ws://localhost:8545", PROVIDER_TYPE: "websocket" }
     },
+
     {
         name: "local web3 websocket givenprovider",
         nonceTestAcc: "0x76e7a0aec3e43211395bbbb6fa059bd6750f83c3", // an account with txs to test getAccountNonce
@@ -39,8 +40,19 @@ testProviders.push({
 });
 */
 
+describe("EthereumConnection providers without events", () => {
+    it("should connect with http provider", async () => {
+        const ethereumConnection = new EthereumConnection({
+            PROVIDER_URL: "http://localhost:8545",
+            PROVIDER_TYPE: "http"
+        });
+        await ethereumConnection.connect();
+        assert(await ethereumConnection.isConnected());
+    });
+});
+
 testProviders.forEach(testProvider => {
-    describe("EthereumConnection -" + testProvider.name, function() {
+    describe("EthereumConnection providers with events -" + testProvider.name, function() {
         this.timeout(TEST_TIMEOUT);
         let web3;
 

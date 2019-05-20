@@ -1,6 +1,6 @@
 {
   "name": "@augmint/js",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Augmint Javascript Library",
   "keywords": [
     "augmint javascript library A-EUR stablecoin web3 dapp"
@@ -44,7 +44,7 @@
     "rollup": "1.12.3",
     "rollup-plugin-node-builtins": "2.1.2",
     "rollup-plugin-node-globals": "1.4.0",
-    "rollup-plugin-typescript2": "0.21.0",
+    "rollup-plugin-typescript2": "0.21.1",
     "sinon": "7.3.2",
     "tslint": "5.16.0",
     "tslint-config-prettier": "1.18.0",
@@ -69,5 +69,5 @@
   "files": [
     "dist"
   ],
-  "types": "dist/index.d.ts"
+  "types": "dist/src/index.d.ts"
 }
