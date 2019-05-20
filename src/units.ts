@@ -125,14 +125,14 @@ export class Wei extends FixedPoint {
 
 export class Tokens extends FixedPoint {
 
-    static readonly DIV: number = 1000;
+    static readonly DIV: number = 100;
 
     public static parse(str: string): Tokens {
         return new Tokens(new BN(str));
     }
 
     public static of(num: number): Tokens {
-        return new Tokens(new BN(Math.round(num * Tokens.DIV)));
+        return new Tokens(new BN(num * Tokens.DIV));
     }
 
     public static min(o1: Tokens, o2: Tokens): Tokens {
