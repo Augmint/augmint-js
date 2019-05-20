@@ -30,4 +30,8 @@ describe("Units", () => {
     it("rounds Wei properly", () => {
         assert.equal(Wei.of(1.025).toString(), "1025000000000000000")
     })
+
+    it("rounds Tokens properly", () => {
+        assert.equal(Tokens.of(1.02).toString(), "102")
+    })
 });

@@ -132,7 +132,7 @@ export class Tokens extends FixedPoint {
     }
 
     public static of(num: number): Tokens {
-        return new Tokens(new BN(num * Tokens.DIV));
+        return new Tokens(new BN(Math.round(num * Tokens.DIV)));
     }
 
     public static min(o1: Tokens, o2: Tokens): Tokens {
