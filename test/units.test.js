@@ -32,6 +32,6 @@ describe("Units", () => {
     })
 
     it("rounds Tokens properly", () => {
-        assert.equal(Tokens.of(1.025).toString(), "102.5")
+        assert.equal(Tokens.of(1.025).toString(), "1025")
     })
 });
