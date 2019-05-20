@@ -9,6 +9,29 @@
 
 Decentralised stable cryptocurrency on Ethereum
 
+## Concept
+
+Decentralized stablecoins targeted to fiat currencies built on Ethereum.
+
+The first Augmint token is AEUR.
+
+**1 AEUR ≈ 1 EUR.**
+
+-   Buy and sell AEUR for ETH or EUR.
+-   Get a loan in AEUR by depositing ETH.
+-   Lock AEUR to earn a premium.
+
+Try it: **[https://www.augmint.org](http://www.augmint.org)**
+
+**[Manifesto](https://www.augmint.org/manifesto)**
+
+**[White Paper](http://bit.ly/augmint-wp)**
+
+### Related repos
+
+-   [Web frontend](https://github.com/Augmint/augmint-web)
+-   [augmint-contracts](https://github.com/Augmint/augmint-contracts)
+
 ## augmint-js lib
 
 This lib is heavily under construction. Anything can happen.
@@ -146,52 +169,30 @@ augmint-cli : start / stop augmint contracts. Docker image: augmint/contracts:vx
 
 Also recreates the container if it exists but image is not as expected (ie. there was a version upgrade)
 
-## Concept
-
-Augmint provides digital tokens, value of each token pegged to a fiat currency.
-
-The first Augmint token is A-EUR (Augmint Euro), pegged to EUR.
-
-The value of 1 A-EUR is always closely around 1 EUR.
-
-**[White paper](http://bit.ly/augmint-wp)**
-
-Try it: **[www.augmint.org](http://www.augmint.org)**
-
-**[Our Trello board](https://trello.com/b/RYGAt2so/augmint-documents)** with a collection of documents about the project.
-
-## Other components
-
-[Web frontend](https://github.com/Augmint/augmint-web)
-
-[Solidity contracts](https://github.com/Augmint/augmint-contracts)
-
 ## Contributions
 
 Augmint is an open and transparent project.
 
-We are seeking for great minds to extend our core team. Contribution in any area is much appreciated: development, testing, UX&UI design, legal, marketing spreading the word etc.
+We are looking for great minds to extend our core team. Contributions in any area is much appreciated: development, testing, UX&UI design, legal, marketing, spreading the word etc.
+
+[Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## Get in touch
 
-Drop us an email: hello@augmint.cc
-
-Say hi on our [Discord server](https://discord.gg/PwDmsnu): [![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu)
-
-Talk to us on [Telegram](https://t.me/augmint)
+-   [hello@augmint.org](mailto:hello@augmint.org)
+-   [Discord server](https://discord.gg/PwDmsnu) [![Discord](https://img.shields.io/discord/407574313810788364.svg)](https://discord.gg/PwDmsnu)
+-   [Telegram](https://t.me/augmint)
 
 ## Authors
 
-Check the team at [www.augmint.org](https://www.augmint.org)
+See team on [www.augmint.org](https://www.augmint.org)
 
-The project was born at [DECENT Labs](http://www.decent.org)
+<img src="https://github.com/Augmint/augmint-web/raw/staging/src/assets/images/decentlabs.png" alt="Decentlabs" width="60" height="60"> The project was born at [DECENT Labs](http://www.decent.org)
 
 ### Concept, initial version
 
 -   [szerintedmi](https://github.com/szerintedmi)
 -   [Charlie](https://github.com/krosza)
-
-Check the whole team on [augmint.org](http://www.augmint.org)
 
 ## Licence
 

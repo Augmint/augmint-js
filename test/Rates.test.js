@@ -1,6 +1,5 @@
 const { assert } = require("chai");
-const BigNumber = require("bignumber.js");
-const { Augmint, utils } = require("../dist/index.js");
+const { Augmint, utils, Tokens } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 
@@ -18,12 +17,10 @@ describe("Rates connection", () => {
 
         assert.equal(myAugmint.rates.instance.options.address, "0xb0a2a8e846b66C7384F52635CECEf5280F766C8B");
     });
-
-    it("should connect to legacy Rates contract");
 });
 
 describe("Rates getters", () => {
-    const EXPECTED_RATE = 213.14;
+    const EXPECTED_RATE = Tokens.of(213.14);
     let snapshotId;
     let myAugmint;
 
@@ -35,7 +32,7 @@ describe("Rates getters", () => {
         const BYTES_CCY = myAugmint.ethereumConnection.web3.utils.asciiToHex(CCY);
         const rates = myAugmint.rates;
 
-        await rates.instance.methods.setRate(BYTES_CCY, EXPECTED_RATE * DECIMALS_DIV).send({
+        await rates.instance.methods.setRate(BYTES_CCY, EXPECTED_RATE.toString()).send({
             from: myAugmint.ethereumConnection.accounts[0]
         });
     });
@@ -44,20 +41,14 @@ describe("Rates getters", () => {
         await revertSnapshot(myAugmint.ethereumConnection.web3, snapshotId);
     });
 
-    it("getBnEthFiatRate", async () => {
-        const bnEthFiatRate = await myAugmint.rates.getBnEthFiatRate(CCY);
-        assert.deepEqual(bnEthFiatRate, new BigNumber(EXPECTED_RATE * DECIMALS_DIV));
-    });
-
     it("getEthFiatRate", async () => {
         const ethFiatRate = await myAugmint.rates.getEthFiatRate(CCY);
-        assert.equal(ethFiatRate, EXPECTED_RATE);
+        assert(EXPECTED_RATE.eq(ethFiatRate));
     });
 
     it("getAugmintRate", async () => {
         const augmintRate = await myAugmint.rates.getAugmintRate(CCY);
-        assert.equal(augmintRate.rate, EXPECTED_RATE);
-        assert.deepEqual(augmintRate.bnRate, new BigNumber(EXPECTED_RATE * DECIMALS_DIV));
+        assert(EXPECTED_RATE.eq(augmintRate.rate));
         assert.instanceOf(augmintRate.lastUpdated, Date);
     });
 });

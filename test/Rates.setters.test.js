@@ -1,6 +1,5 @@
 const assert = require("chai").assert;
-const { Augmint } = require("../dist/index.js");
-const { InvalidPriceError } = Augmint.Errors;
+const { Augmint, Wei, Tokens } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
 
@@ -34,7 +33,7 @@ describe("Rates setters", () => {
     });
 
     it("setRate - send", async () => {
-        const expectedPrice = 1234.56;
+        const expectedPrice = Tokens.of(1234.56);
 
         const tx = rates.setRate(CCY, expectedPrice);
         const txReceipt = await tx.send({ from: accounts[0] }).getTxReceipt();
@@ -42,18 +41,18 @@ describe("Rates setters", () => {
 
         await assertEvent(rates.instance, "RateChanged", {
             symbol: BYTES_CCY.padEnd(66, "0"),
-            newRate: (expectedPrice * DECIMALS_DIV).toString()
+            newRate: expectedPrice.toString()
         });
 
         const newStoredRate = await rates.getAugmintRate(CCY);
 
-        assert.equal(newStoredRate.rate, expectedPrice);
+        assert(expectedPrice.eq(newStoredRate.rate));
     });
 
     it("setRate - signed", async () => {
         // private key of accounts[0] 0x76e7a 0aec3e43211395bbbb6fa059bd6750f83c3with the hardcoded mnemonin for ganache
         const PRIVATE_KEY = "0x85b3d743fbe4ec4e2b58947fa5484da7b2f5538b0ae8e655646f94c95d5fb949";
-        const expectedPrice = 5678.91;
+        const expectedPrice = Tokens.of(5678.91);
 
         const txReceipt = await rates
             .setRate(CCY, expectedPrice)
@@ -67,16 +66,16 @@ describe("Rates setters", () => {
 
         await assertEvent(rates.instance, "RateChanged", {
             symbol: BYTES_CCY.padEnd(66, "0"),
-            newRate: (expectedPrice * DECIMALS_DIV).toString()
+            newRate: expectedPrice.toString()
         });
 
         const newStoredRate = await rates.getAugmintRate(CCY);
 
-        assert.equal(newStoredRate.rate, expectedPrice);
+        assert(expectedPrice.eq(newStoredRate.rate));
     });
 
     it("setRate = 0", async () => {
-        const expectedPrice = 0;
+        const expectedPrice = Tokens.of(0);
 
         const tx = rates.setRate(CCY, expectedPrice);
         const txReceipt = await tx.send({ from: accounts[0] }).getTxReceipt();
@@ -84,14 +83,11 @@ describe("Rates setters", () => {
         assert(txReceipt.status);
         await assertEvent(rates.instance, "RateChanged", {
             symbol: BYTES_CCY.padEnd(66, "0"),
-            newRate: (expectedPrice * DECIMALS_DIV).toString()
+            newRate: expectedPrice.toString()
         });
 
         const newStoredRate = await rates.getAugmintRate(CCY);
-        assert.equal(newStoredRate.rate, expectedPrice);
+        assert(expectedPrice.eq(newStoredRate.rate));
     });
 
-    it("setRate - invalid price", () => {
-        assert.throws(() => rates.setRate(CCY, 1232.222), InvalidPriceError);
-    });
 });

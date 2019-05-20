@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
         "baseUrl": ".",
-        "paths": { "*": ["types/*"] },
         "declaration": true,
-        "declarationDir": "./dist/", // path to output directory
+        "declarationDir": "./dist/",
+        "declarationMap": true,
         "module": "ES6", // specify module code generation
         "outDir": "./dist/", // path to output directory
         "sourceMap": true, // allow sourcemap support
@@ -12,14 +12,7 @@
         // FIXME: rpt2 errors with noUnusedLocals
         //" noUnusedLocals": true
         "target": "ES6", // specify ECMAScript target version
-        "allowSyntheticDefaultImports": true
-    },
-    "include": [
-        "./src/",
-        "./generated/"
-    ],
-    "exclude": [
-        "node_modules",
-        "**/*.spec.ts"
-    ]
+        "allowSyntheticDefaultImports": true,
+        "moduleResolution": "Node"
+    }
 }
