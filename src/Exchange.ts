@@ -10,7 +10,7 @@ import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
 import { Ratio, Tokens, Wei } from "./units";
 
-interface ISimpleBuyData {
+interface ISimpleMatchData {
     tokens: Tokens;
     ethers: Wei;
     limitPrice: Ratio;
@@ -124,11 +124,11 @@ export class OrderBook {
      * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
      */
 
-    public estimateSimpleBuy(tokens: Tokens, ethFiatRate: Tokens): ISimpleBuyData {
+    public estimateSimpleBuy(tokens: Tokens, ethFiatRate: Tokens): ISimpleMatchData {
         let remainingTokens: Tokens = tokens;
         let filledEthers: Wei = Wei.of(0);
         let lastPrice: Ratio = Ratio.of(0);
-        let totalPrice: Ratio = Ratio.of(0);
+        let weightedTotal: Tokens = Tokens.of(0);
 
         for (let i = 0; i <= this.sellOrders.length; i++) {
             const order: ISellOrder = this.sellOrders[i];
@@ -140,10 +140,10 @@ export class OrderBook {
             remainingTokens = remainingTokens.sub(boughtTokens);
             filledEthers = filledEthers.add(spentEthers);
             lastPrice = order.price;
-            totalPrice = totalPrice.add(lastPrice.mulWithTokens(boughtTokens));
+            weightedTotal = weightedTotal.add(boughtTokens.mulWithRatio(lastPrice));
         }
         const totalBoughtTokens: Tokens = tokens.sub(remainingTokens);
-        const averagePrice: Ratio = totalPrice.divWithTokens(totalBoughtTokens);
+        const averagePrice: Ratio = weightedTotal.divToRatio(totalBoughtTokens);
         return {
             tokens: totalBoughtTokens,
             ethers: filledEthers,
@@ -152,11 +152,11 @@ export class OrderBook {
         };
     }
 
-    public estimateSimpleSell(tokens: Tokens, ethFiatRate: Tokens): ISimpleBuyData {
+    public estimateSimpleSell(tokens: Tokens, ethFiatRate: Tokens): ISimpleMatchData {
         let remainingTokens: Tokens = tokens;
         let filledEthers: Wei = Wei.of(0);
         let lastPrice: Ratio = Ratio.of(0);
-        let totalPrice: Ratio = Ratio.of(0);
+        let weightedTotal: Tokens = Tokens.of(0);
 
         for (let i = 0; i <= this.buyOrders.length; i++) {
             const order: IBuyOrder = this.buyOrders[i];
@@ -171,10 +171,13 @@ export class OrderBook {
             remainingTokens = remainingTokens.sub(soldTokens);
             filledEthers = filledEthers.add(spentEthers);
             lastPrice = order.price;
-            totalPrice = totalPrice.add(lastPrice.mulWithTokens(soldTokens));
+            weightedTotal = weightedTotal.add(soldTokens.mulWithRatio(lastPrice));
         }
+
+
+
         const totalSoldTokens: Tokens = tokens.sub(remainingTokens);
-        const averagePrice: Ratio = totalPrice.divWithTokens(totalSoldTokens);
+        const averagePrice: Ratio = weightedTotal.divToRatio(totalSoldTokens);
         return {
             tokens: totalSoldTokens,
             ethers: filledEthers,

@@ -141,7 +141,7 @@ export class Tokens extends FixedPoint {
 
     public divToRatio(other: this): Ratio {
         this.check(other);
-        return new Ratio(this.amount.mul(Ratio.DIV_BN).divRound(other.amount));
+        return new Ratio(this.amount.divRound(other.amount));
     }
 
     public toWei(rate: Tokens): Wei {
@@ -155,9 +155,9 @@ export class Tokens extends FixedPoint {
         return new Wei(this.amount.mul(price.amount).mul(E12).divRound(rate.amount));
     }
 
-    public toRate(ethers: Wei): Tokens {
-        this.check(ethers, Wei);
-        return new Tokens(this.amount.mul(Wei.DIV_BN).divRound(ethers.amount));
+    public mulWithRatio(ratio: Ratio): Tokens {
+        this.check(ratio, Ratio);
+        return new Tokens(this.amount.mul(ratio.amount))
     }
 }
 
@@ -177,16 +177,6 @@ export class Ratio extends FixedPoint {
 
     public toNumber(): number {
         return this.amount.toNumber() / Ratio.DIV;
-    }
-
-    public divWithTokens(tokens: Tokens): Ratio {
-        this.check(tokens, Tokens);
-        return new Ratio(this.amount.div(tokens.amount))
-    }
-
-    public mulWithTokens(tokens: Tokens): Ratio {
-        this.check(tokens, Tokens);
-        return new Ratio(this.amount.mul(tokens.amount))
     }
 }
 
