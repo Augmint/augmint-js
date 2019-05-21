@@ -33,22 +33,6 @@ export class OrderBook {
         buyOrders.sort(OrderBook.compareBuyOrders);
         sellOrders.sort(OrderBook.compareSellOrders);
     }
-    public getBuySellOrders() : {buys: IBuyOrder[], sells: ISellOrder[]} {
-        const lowestSellPrice: Ratio = this.sellOrders[0].price;
-        const highestBuyPrice: Ratio = this.buyOrders[0].price;
-
-        const clone = o => Object.assign({}, o);
-        const buys: IBuyOrder[] = this.buyOrders
-            .filter(o => o.price.gte(lowestSellPrice)).map(clone);
-
-        const sells: ISellOrder[] = this.sellOrders
-            .filter(o => o.price.lte(highestBuyPrice)).map(clone);
-
-        return {
-            buys,
-            sells,
-        }
-    }
 
     public hasMatchingOrders(): boolean {
         if (this.buyOrders.length === 0 || this.sellOrders.length === 0) {
@@ -71,7 +55,15 @@ export class OrderBook {
             return { buyIds, sellIds, gasEstimate: 0 };
         }
 
-        const {buys, sells} = this.getBuySellOrders();
+        const lowestSellPrice: Ratio = this.sellOrders[0].price;
+        const highestBuyPrice: Ratio = this.buyOrders[0].price;
+
+        const clone = o => Object.assign({}, o);
+        const buys: IBuyOrder[] = this.buyOrders
+            .filter(o => o.price.gte(lowestSellPrice)).map(clone);
+
+        const sells: ISellOrder[] = this.sellOrders
+            .filter(o => o.price.lte(highestBuyPrice)).map(clone);
 
         let buyIdx: number = 0;
         let sellIdx: number = 0;
@@ -129,6 +121,7 @@ export class OrderBook {
         let filledEthers: Wei = Wei.of(0);
         let lastPrice: Ratio = Ratio.of(0);
         let weightedTotal: Tokens = Tokens.of(0);
+        const MUL = Ratio.of(1000000);
 
         for (let i = 0; i <= this.sellOrders.length; i++) {
             const order: ISellOrder = this.sellOrders[i];
@@ -140,10 +133,11 @@ export class OrderBook {
             remainingTokens = remainingTokens.sub(boughtTokens);
             filledEthers = filledEthers.add(spentEthers);
             lastPrice = order.price;
-            weightedTotal = weightedTotal.add(boughtTokens.mulWithRatio(lastPrice));
+            weightedTotal = weightedTotal.add(boughtTokens.mul(lastPrice.mul(MUL)));
         }
         const totalBoughtTokens: Tokens = tokens.sub(remainingTokens);
-        const averagePrice: Ratio = weightedTotal.divToRatio(totalBoughtTokens);
+        const averagePrice: Ratio = weightedTotal.divToRatio(totalBoughtTokens).div(MUL);
+
         return {
             tokens: totalBoughtTokens,
             ethers: filledEthers,
@@ -157,6 +151,7 @@ export class OrderBook {
         let filledEthers: Wei = Wei.of(0);
         let lastPrice: Ratio = Ratio.of(0);
         let weightedTotal: Tokens = Tokens.of(0);
+        const MUL = Ratio.of(1000000);
 
         for (let i = 0; i <= this.buyOrders.length; i++) {
             const order: IBuyOrder = this.buyOrders[i];
@@ -171,13 +166,12 @@ export class OrderBook {
             remainingTokens = remainingTokens.sub(soldTokens);
             filledEthers = filledEthers.add(spentEthers);
             lastPrice = order.price;
-            weightedTotal = weightedTotal.add(soldTokens.mulWithRatio(lastPrice));
+            weightedTotal = weightedTotal.add(soldTokens.mul(lastPrice.mul(MUL)));
         }
 
-
-
         const totalSoldTokens: Tokens = tokens.sub(remainingTokens);
-        const averagePrice: Ratio = weightedTotal.divToRatio(totalSoldTokens);
+        const averagePrice: Ratio = weightedTotal.divToRatio(totalSoldTokens).div(MUL);
+
         return {
             tokens: totalSoldTokens,
             ethers: filledEthers,

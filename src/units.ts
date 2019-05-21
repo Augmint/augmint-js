@@ -40,6 +40,11 @@ abstract class FixedPoint {
         return this.create(ceilDiv(this.amount.mul(Ratio.DIV_BN), ratio.amount));
     }
 
+    public divToRatio(other: this): Ratio {
+        this.check(other);
+        return new Ratio(this.amount.divRound(other.amount));
+    }
+
     //
     // comparison
     //
@@ -120,7 +125,6 @@ export class Wei extends FixedPoint {
         this.check(price, Ratio);
         return new Tokens(this.amount.mul(rate.amount).divRound(price.amount.mul(E12)));
     }
-
 }
 
 export class Tokens extends FixedPoint {
@@ -141,7 +145,7 @@ export class Tokens extends FixedPoint {
 
     public divToRatio(other: this): Ratio {
         this.check(other);
-        return new Ratio(this.amount.divRound(other.amount));
+        return new Ratio(this.amount.mul(Ratio.DIV_BN).divRound(other.amount));
     }
 
     public toWei(rate: Tokens): Wei {
@@ -155,9 +159,9 @@ export class Tokens extends FixedPoint {
         return new Wei(this.amount.mul(price.amount).mul(E12).divRound(rate.amount));
     }
 
-    public mulWithRatio(ratio: Ratio): Tokens {
-        this.check(ratio, Ratio);
-        return new Tokens(this.amount.mul(ratio.amount))
+    public toRate(ethers: Wei): Tokens {
+        this.check(ethers, Wei);
+        return new Tokens(ethers.amount.divRound(this.amount));
     }
 }
 
