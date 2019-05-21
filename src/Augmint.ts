@@ -152,6 +152,11 @@ export class Augmint {
         return this._loanManager;
     }
 
+    public getContractInstance(contractName: string) {
+        const contract = this.deployedEnvironment.getLatestContract(contractName);
+        return contract.connect(this.web3)
+    }
+
     public getLegacyTokens(addresses: string[] = []): AugmintToken[] {
         let legacyTokens: Array<DeployedContract<TokenAEur>> = [];
 
