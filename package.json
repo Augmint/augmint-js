@@ -68,7 +68,7 @@
   "module": "dist/index.es.js",
   "files": [
     "dist",
-    "scripts"
+    "scripts/augmint-cli.sh"
   ],
   "types": "dist/src/index.d.ts"
 }
