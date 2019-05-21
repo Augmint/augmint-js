@@ -169,6 +169,20 @@ augmint-cli : start / stop augmint contracts. Docker image: augmint/contracts:vx
 
 Also recreates the container if it exists but image is not as expected (ie. there was a version upgrade)
 
+## Publish NPM package
+
+bump the version property in the package.json
+release a new version as usual
+  - merge staging into master
+  - create a release in github with the vX.X.X tag on master
+
+before npm publish, you need to build the library:
+  - checkout the master(!) branch
+  - `yarn clean`
+  - `yarn build`
+npm publish from master branch. test it with --dry-run
+
+
 ## Contributions
 
 Augmint is an open and transparent project.
