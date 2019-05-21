@@ -1,6 +1,6 @@
 {
   "name": "@augmint/js",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Augmint Javascript Library",
   "keywords": [
     "augmint javascript library A-EUR stablecoin web3 dapp"
@@ -67,7 +67,8 @@
   "main": "dist/index.js",
   "module": "dist/index.es.js",
   "files": [
-    "dist"
+    "dist",
+    "scripts/augmint-cli.sh"
   ],
   "types": "dist/src/index.d.ts"
 }
