@@ -213,6 +213,18 @@ export class Exchange extends AbstractContract {
         });
     }
 
+    public cancelOrder(buy: boolean, orderId: number): Transaction {
+        const web3Tx: TransactionObject<string> = buys
+            ? this.instance.methods.cancelBuyTokenOrder(orderId.toString())
+            : this.instance.methods.cancelSellTokenOrder(orderId.toString());
+
+        return new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: CANCEL_ORDER_GAS,
+            to: this.addresss
+        });
+    }
+
+
     /**
      *  Returns a [Transaction] object with which can be signed and sent or sent to the ethereum network
      *
