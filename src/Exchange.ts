@@ -197,24 +197,20 @@ export class Exchange extends AbstractContract {
             price.toString()
         );
 
-        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+        return new Transaction(this.ethereumConnection, web3Tx, {
             gasLimit: PLACE_ORDER_GAS,
             to: this.address
         });
-
-        return transaction;
     }
 
     public placeBuyTokenOrder(price: Ratio, amount: Wei): Transaction {
         const web3Tx: TransactionObject<string> = this.instance.methods.placeBuyTokenOrder(price.toString());
 
-        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+        return new Transaction(this.ethereumConnection, web3Tx, {
             gasLimit: PLACE_ORDER_GAS,
             to: this.address,
             value: amount.amount
         });
-
-        return transaction;
     }
 
     /**
@@ -233,14 +229,13 @@ export class Exchange extends AbstractContract {
             matchingOrders.buyIds,
             matchingOrders.sellIds
         );
-        const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
+
+        return new Transaction(this.ethereumConnection, web3Tx, {
             gasLimit: matchingOrders.gasEstimate,
             // to: needs to be set if going to be signed.
             // (getting unhandled rejection errors if not set even tx is successful on ganache. beta36 )
             to: this.address
         });
-
-        return transaction;
     }
 
     static get OrderBook(): typeof OrderBook {
