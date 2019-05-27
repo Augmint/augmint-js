@@ -50,6 +50,7 @@
     "tslint-config-prettier": "1.18.0",
     "typechain": "0.3.14",
     "typedoc": "0.14.2",
+    "typedoc-plugin-sourcefile-url": "1.0.4",
     "typescript": "3.4.3",
     "wait-on": "3.2.0"
   },
@@ -61,7 +62,7 @@
     "ganache:start": "scripts/augmint-cli.sh ganache start --blockTime 1",
     "ganache:stop": "scripts/augmint-cli.sh ganache stop",
     "ganache:run": "scripts/augmint-cli.sh ganache run --blockTime 1",
-    "typedoc": "typedoc --out ./build/docs ./src --mode modules --target ES6 --tsconfig ./tsconfig.json --exclude node_modules --ignoreCompilerErrors --excludeExternals --excludePrivate --excludeNotExported"
+    "typedoc": "typedoc --out ./dist/docs ./src --mode modules --target ES6 --tsconfig ./tsconfig.json --exclude node_modules --ignoreCompilerErrors --excludeExternals --excludePrivate --excludeNotExported --sourcefile-url-map sourcefile-map.json"
   },
   "greenkeeper": {
     "ignore": [
