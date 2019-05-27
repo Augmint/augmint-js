@@ -72,6 +72,10 @@ abstract class FixedPoint {
     // conversion
     //
 
+    public zeroToNull(): this | null {
+        return this.isZero() ? null : this;
+    }
+
     public toJSON(): string {
         return this.toString();
     }
@@ -103,7 +107,7 @@ export class Wei extends FixedPoint {
     static readonly DIV_PRECISON: BN = Wei.DIV_BN.divn(Wei.PRECISION);
 
     public static parse(str: string): Wei {
-        return new Wei(new BN(str));
+        return new Wei(new BN(str.toString()));
     }
 
     public static of(num: number): Wei {
@@ -128,7 +132,7 @@ export class Tokens extends FixedPoint {
     static readonly DIV: number = 100;
 
     public static parse(str: string): Tokens {
-        return new Tokens(new BN(str));
+        return new Tokens(new BN(str.toString()));
     }
 
     public static of(num: number): Tokens {
@@ -164,7 +168,7 @@ export class Ratio extends FixedPoint {
     static readonly DIV_BN: BN = new BN(Ratio.DIV);
 
     public static parse(str: string): Ratio {
-        return new Ratio(new BN(str));
+        return new Ratio(new BN(str.toString()));
     }
 
     public static of(num: number): Ratio {
