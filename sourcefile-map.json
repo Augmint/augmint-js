@@ -1,6 +1,6 @@
 [
-  {
-    "pattern": "^",
-    "replace": "https://github.com/Augmint/augmint-js/tree/staging/src/"
-  }
+    {
+      "pattern": "^",
+      "replace":   "/tree//src"
+    }
 ]
