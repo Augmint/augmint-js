@@ -1,6 +1,0 @@
-[
-    {
-      "pattern": "^",
-      "replace":   "/tree//src"
-    }
-]
