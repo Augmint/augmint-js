@@ -1,5 +1,6 @@
 #!/bin/sh
 
+mkdir dist
 cat >./dist/sourcefile-map.json <<EOF
 [
     {
