@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cat >./sourcefile-map.json <<EOF
+cat >./dist/sourcefile-map.json <<EOF
 [
     {
       "pattern": "^",
@@ -19,4 +19,4 @@ typedoc \
 --excludeExternals \
 --excludePrivate \
 --excludeNotExported \
---sourcefile-url-map sourcefile-map.json
+--sourcefile-url-map ./dist/sourcefile-map.json
