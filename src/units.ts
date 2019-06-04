@@ -103,7 +103,8 @@ abstract class FixedPoint {
 export class Wei extends FixedPoint {
 
     static readonly PRECISION: number = 1000000;
-    static readonly DIV_BN: BN = new BN("1000000000000000000");
+    static readonly ONE_ETH_IN_WEI: number = 1000000000000000000;
+    static readonly DIV_BN: BN = new BN(Wei.ONE_ETH_IN_WEI.toString());
     static readonly DIV_PRECISON: BN = Wei.DIV_BN.divn(Wei.PRECISION);
 
     public static parse(str: string): Wei {
@@ -125,6 +126,9 @@ export class Wei extends FixedPoint {
         return new Tokens(this.amount.mul(rate.amount).divRound(price.amount.mul(E12)));
     }
 
+    public toNumber(): number {
+        return this.amount.toNumber() / Wei.ONE_ETH_IN_WEI
+    }
 }
 
 export class Tokens extends FixedPoint {
