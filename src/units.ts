@@ -125,6 +125,9 @@ export class Wei extends FixedPoint {
         return new Tokens(this.amount.mul(rate.amount).divRound(price.amount.mul(E12)));
     }
 
+    public toNumber(): number {
+        return this.amount.toNumber() / Wei.DIV_BN.toNumber()
+    }
 }
 
 export class Tokens extends FixedPoint {
