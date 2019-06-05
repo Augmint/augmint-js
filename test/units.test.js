@@ -8,7 +8,7 @@ describe("Units", () => {
             assert.throws(() => new Type());
             assert.throws(() => new Type(null));
         })
-     });
+    });
 
     it("no operations accross types", () => {
         assert.throws(() => Wei.of(1).add(Tokens.of(100)));
@@ -21,7 +21,12 @@ describe("Units", () => {
         assert.equal(Tokens.of(100.01).toString(16), "2711");
         assert.equal(Ratio.of(1.01).toNumber(), 1.01);
         assert.equal(JSON.stringify({ tokens: Tokens.of(100.01) }), '{"tokens":"10001"}');
-    });
+        assert.equal("10001", Tokens.parse("10001").toString());
+        assert.equal("10001", Tokens.parse(10001).toString());
+        assert.throws(() => Tokens.parse(null));    
+        assert.isNull(Tokens.parse("0").zeroToNull());
+        assert.equal("10001", Tokens.parse(10001).zeroToNull().toString());
+     });
 
     it("rounds Ratio properly", () => {
         assert.equal(Ratio.of(1.025).toString(), "1025000")
