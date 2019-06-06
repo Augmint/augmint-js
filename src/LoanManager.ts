@@ -1,13 +1,14 @@
 import { LoanManager as LoanManagerInstance } from "../generated/index";
 import { LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286 as LegacyLoanManagerInstanceWithChunkSize } from "../generated/types/LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286";
-// import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE } from "./constants";
 import { EthereumConnection } from "./EthereumConnection";
+import { NEW_FIRST_LOAN_GAS, NEW_LOAN_GAS } from "./gas";
+import Loan from "./Loan";
 import { ILoanProductTuple, LoanProduct } from "./LoanProduct";
 import { Rates } from "./Rates";
-// import { Transaction } from "./Transaction";
+import { Tokens, Wei } from "./units";
 
 export interface ILoanManagerOptions {
     token: AugmintToken;
@@ -22,6 +23,9 @@ export interface ILoanManagerOptions {
  */
 export class LoanManager extends AbstractContract {
     public instance: LoanManagerInstance;
+    public augmintTokenAddress: Promise<string>;
+    public ratesAddress: Promise<string>;
+
     private web3: any;
 
     private token: AugmintToken;
@@ -50,7 +54,32 @@ export class LoanManager extends AbstractContract {
         return this.getProducts(false);
     }
 
-    // public async getProduct(productId: number): Promise<ILoanProduct> {}
+    public async newEthBackedLoan(product: LoanProduct, ethAmount: number, userAccount: string) {
+        let gasEstimate: number;
+        const loanCount: number = await this.getLoanCount();
+
+        if (loanCount === 0) {
+            gasEstimate = NEW_FIRST_LOAN_GAS;
+        } else {
+            gasEstimate = NEW_LOAN_GAS;
+        }
+
+        const weiAmount:Wei = Wei.of(ethAmount); //new BigNumber(ethAmount).mul(ONE_ETH_IN_WEI);
+
+        return this.instance.methods
+            .newEthBackedLoan(product.id)
+            .send({ value: weiAmount, from: userAccount, gas: gasEstimate });
+    }
+
+    public async fetchLoansForAccount(userAccount: string): Promise<Loan[]> {
+        return [];
+    }
+    
+    public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string) {}
+
+    public async collectLoans(loans: Loan[], userAccount: string) {}
+
+    public async fetchLoans() {}
 
     private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
         // @ts-ignore  TODO: how to detect better without ts-ignore?
@@ -80,5 +109,12 @@ export class LoanManager extends AbstractContract {
         }
 
         return products.filter((p: LoanProduct) => p.isActive || !onlyActive);
+    }
+
+    private getLoanCount(): Promise<number> {
+        return this.instance.methods
+            .getLoanCount()
+            .call()
+            .then((res: string) => parseInt(res, 10));
     }
 }
