@@ -17,11 +17,6 @@ interface ISimpleMatchData {
     averagePrice: Ratio;
 }
 
-interface ITokenEther {
-    tokens: Tokens,
-    ethers: Wei
-}
-
 export class OrderBook {
 
     public static compareBuyOrders(o1: IBuyOrder, o2: IBuyOrder): number {
@@ -34,25 +29,10 @@ export class OrderBook {
         return cmp !== 0 ? cmp : o1.id - o2.id;
     }
 
-    public static estimateSoldTokenEther<T extends IBuyOrder>(order: T, ethFiatRate: Tokens, acc: Tokens): ITokenEther {
-        const orderTokens: Tokens = order.amount.toTokensAt(ethFiatRate, order.price);
-        const soldTokens: Tokens = Tokens.min(acc, orderTokens);
-        const spentEthers: Wei = soldTokens.toWeiAt(ethFiatRate, order.price);
-
-        return {tokens: soldTokens, ethers: spentEthers}
-    }
-
-    public static estimateBoughTokenEther<T  extends ISellOrder>(order: T, ethFiatRate: Tokens, acc: Tokens): ITokenEther {
-        const boughtTokens: Tokens = Tokens.min(acc, order.amount);
-        const spentEthers: Wei = boughtTokens.toWeiAt(ethFiatRate, order.price);
-
-        return {tokens: boughtTokens, ethers: spentEthers}
-    }
-
-    public static estimateSimpleParams<T extends IOrder>(list: T[],
+    private static estimateSimpleParams<T extends IOrder>(list: T[],
                                                          tokenAmount: Tokens,
                                                          ethFiatRate: Tokens,
-                                                         callback: (order: T, ethFR: Tokens, acc: Tokens) => ITokenEther): ISimpleMatchData {
+                                                         toTokens: (order: T) => Tokens): ISimpleMatchData {
         let remainingTokens: Tokens = tokenAmount;
         let filledEthers: Wei = Wei.of(0);
         let lastPrice: Ratio = Ratio.of(0);
@@ -62,8 +42,9 @@ export class OrderBook {
                 break;
             }
 
-            const {tokens, ethers} = callback(order, ethFiatRate, remainingTokens);
-
+            const tokens: Tokens = Tokens.min(toTokens(order), remainingTokens);
+            const ethers: Wei = tokens.toWeiAt(ethFiatRate, order.price);
+ 
             remainingTokens = remainingTokens.sub(tokens);
             filledEthers = filledEthers.add(ethers);
             lastPrice = order.price;
@@ -165,10 +146,9 @@ export class OrderBook {
      * @param  tokenAmount - amount of token to buy
      * @param ethFiatRate - current rate
      */
-
-
     public estimateSimpleBuy(tokenAmount: Tokens, ethFiatRate: Tokens): ISimpleMatchData {
-        return OrderBook.estimateSimpleParams(this.sellOrders, tokenAmount, ethFiatRate, OrderBook.estimateBoughTokenEther)
+        return OrderBook.estimateSimpleParams(this.sellOrders, tokenAmount, ethFiatRate,
+            order => order.amount);
     }
 
     /**
@@ -177,9 +157,9 @@ export class OrderBook {
      * @param tokenAmount - amount of token to sell
      * @param ethFiatRate - current rate
      */
-
     public estimateSimpleSell(tokenAmount: Tokens, ethFiatRate: Tokens): ISimpleMatchData {
-        return OrderBook.estimateSimpleParams(this.buyOrders, tokenAmount, ethFiatRate, OrderBook.estimateSoldTokenEther)
+        return OrderBook.estimateSimpleParams(this.buyOrders, tokenAmount, ethFiatRate,
+            order => order.amount.toTokensAt(ethFiatRate, order.price));
     }
 }
 
