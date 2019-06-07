@@ -42,7 +42,7 @@ abstract class FixedPoint {
 
     public divToRatio(other: this): Ratio {
         this.check(other);
-        return new Ratio(this.amount.divRound(other.amount));
+        return new Ratio(this.amount.mul(Ratio.DIV_BN).divRound(other.amount));
     }
 
     //
@@ -151,11 +151,6 @@ export class Tokens extends FixedPoint {
         return o1.lte(o2) ? o1 : o2;
     }
 
-    public divToRatio(other: this): Ratio {
-        this.check(other);
-        return new Ratio(this.amount.mul(Ratio.DIV_BN).divRound(other.amount));
-    }
-
     public toWei(rate: Tokens): Wei {
         this.check(rate, Tokens);
         return new Wei(this.amount.mul(Wei.DIV_BN).divRound(rate.amount));
@@ -169,7 +164,7 @@ export class Tokens extends FixedPoint {
 
     public toRate(ethers: Wei): Tokens {
         this.check(ethers, Wei);
-        return new Tokens(ethers.amount.divRound(this.amount));
+        return new Tokens(this.amount.mul(Wei.DIV_BN).divRound(ethers.amount));
     }
 }
 

@@ -10,7 +10,7 @@ if (config.LOG) {
     utils.logger.level = config.LOG;
 }
 
-const RATE = Tokens.of(500.00);
+const RATE = Tokens.of(400.00);
 
 describe("calculate simplebuy", () => {
     it("should return simplebuy data", () => {
@@ -27,13 +27,13 @@ describe("calculate simplebuy", () => {
         ];
 
         const sellResult = {
-            tokens: Tokens.of(4),
-            ethers: Wei.of(0.009168),
+            tokens: Tokens.of(6),
+            ethers: Wei.of(0.016165),
             limitPrice: Ratio.of(1),
-            averagePrice: Ratio.of(1.146)
+            averagePrice: Ratio.of(1.077673)
         };
 
-        const sellMatches = new OrderBook(buyOrders, sellOrders).estimateSimpleSell(Tokens.of(4), RATE);
+        const sellMatches = new OrderBook(buyOrders, sellOrders).estimateSimpleSell(Tokens.of(6), RATE);
 
         expect(sellMatches.tokens.eq(sellResult.tokens)).to.be.equal(true);
         expect(sellMatches.ethers.eq(sellResult.ethers)).to.be.equal(true);
@@ -42,9 +42,9 @@ describe("calculate simplebuy", () => {
 
         const buyResult = {
             tokens: Tokens.of(2),
-            ethers: Wei.of(0.0041),
+            ethers: Wei.of(0.005125),
             limitPrice: Ratio.of(1.03),
-            averagePrice: Ratio.of(1.025)
+            averagePrice: Ratio.of(1.02501)
         };
 
         const buyMatches = new OrderBook(buyOrders, sellOrders).estimateSimpleBuy(Tokens.of(2), RATE);

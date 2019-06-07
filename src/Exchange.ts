@@ -17,6 +17,11 @@ interface ISimpleMatchData {
     averagePrice: Ratio;
 }
 
+interface ITokenEther {
+    tokens: Tokens,
+    ethers: Wei
+}
+
 export class OrderBook {
 
     public static compareBuyOrders(o1: IBuyOrder, o2: IBuyOrder): number {
@@ -27,6 +32,51 @@ export class OrderBook {
     public static compareSellOrders(o1: ISellOrder, o2: ISellOrder): number {
         const cmp: number = o1.price.cmp(o2.price);
         return cmp !== 0 ? cmp : o1.id - o2.id;
+    }
+
+    public static estimateSoldTokenEther<T extends IBuyOrder>(order: T, ethFiatRate: Tokens, acc: Tokens): ITokenEther {
+        const orderTokens: Tokens = order.amount.toTokensAt(ethFiatRate, order.price);
+        const soldTokens: Tokens = Tokens.min(acc, orderTokens);
+        const spentEthers: Wei = soldTokens.toWeiAt(ethFiatRate, order.price);
+
+        return {tokens: soldTokens, ethers: spentEthers}
+    }
+
+    public static estimateBoughTokenEther<T  extends ISellOrder>(order: T, ethFiatRate: Tokens, acc: Tokens): ITokenEther {
+        const boughtTokens: Tokens = Tokens.min(acc, order.amount);
+        const spentEthers: Wei = boughtTokens.toWeiAt(ethFiatRate, order.price);
+
+        return {tokens: boughtTokens, ethers: spentEthers}
+    }
+
+    public static estimateSimpleParams<T extends IOrder>(list: T[],
+                                                         tokenAmount: Tokens,
+                                                         ethFiatRate: Tokens,
+                                                         callback: (order: T, ethFR: Tokens, acc: Tokens) => ITokenEther): ISimpleMatchData {
+        let remainingTokens: Tokens = tokenAmount;
+        let filledEthers: Wei = Wei.of(0);
+        let lastPrice: Ratio = Ratio.of(0);
+
+        for (const order of list) {
+            if (remainingTokens.isZero()) {
+                break;
+            }
+
+            const {tokens, ethers} = callback(order, ethFiatRate, remainingTokens);
+
+            remainingTokens = remainingTokens.sub(tokens);
+            filledEthers = filledEthers.add(ethers);
+            lastPrice = order.price;
+        }
+        const totalTokens: Tokens = tokenAmount.sub(remainingTokens);
+        const averagePrice: Ratio = ethFiatRate.divToRatio(totalTokens.toRate(filledEthers));
+
+        return {
+            tokens: totalTokens,
+            ethers: filledEthers,
+            limitPrice: lastPrice,
+            averagePrice
+        };
     }
 
     constructor(public buyOrders: IBuyOrder[], public sellOrders: ISellOrder[]) {
@@ -110,77 +160,27 @@ export class OrderBook {
     }
 
     /**
-     * calculate price for n amount of token to sell or buy
-     * @param  {tokens} amount of token to sell or buy
-     * @param  {rate} current rate
+     * calculate price for n amount of token to buy
      * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
+     * @param  tokenAmount - amount of token to buy
+     * @param ethFiatRate - current rate
      */
 
-    public estimateSimpleBuy(tokens: Tokens, ethFiatRate: Tokens): ISimpleMatchData {
-        let remainingTokens: Tokens = tokens;
-        let filledEthers: Wei = Wei.of(0);
-        let lastPrice: Ratio = Ratio.of(0);
-        let weightedTotal: Tokens = Tokens.of(0);
-        const MUL = Ratio.of(1000000);
 
-        for (let i = 0; i <= this.sellOrders.length; i++) {
-            const order: ISellOrder = this.sellOrders[i];
-            if (remainingTokens.isZero()) {
-                break;
-            }
-            const boughtTokens: Tokens = Tokens.min(remainingTokens, order.amount);
-            const spentEthers: Wei = boughtTokens.toWeiAt(ethFiatRate, order.price);
-            remainingTokens = remainingTokens.sub(boughtTokens);
-            filledEthers = filledEthers.add(spentEthers);
-            lastPrice = order.price;
-            weightedTotal = weightedTotal.add(boughtTokens.mul(lastPrice.mul(MUL)));
-        }
-        const totalBoughtTokens: Tokens = tokens.sub(remainingTokens);
-        const averagePrice: Ratio = weightedTotal.divToRatio(totalBoughtTokens).div(MUL);
-
-        return {
-            tokens: totalBoughtTokens,
-            ethers: filledEthers,
-            limitPrice: lastPrice,
-            averagePrice
-        };
+    public estimateSimpleBuy(tokenAmount: Tokens, ethFiatRate: Tokens): ISimpleMatchData {
+        return OrderBook.estimateSimpleParams(this.sellOrders, tokenAmount, ethFiatRate, OrderBook.estimateBoughTokenEther)
     }
 
-    public estimateSimpleSell(tokens: Tokens, ethFiatRate: Tokens): ISimpleMatchData {
-        let remainingTokens: Tokens = tokens;
-        let filledEthers: Wei = Wei.of(0);
-        let lastPrice: Ratio = Ratio.of(0);
-        let weightedTotal: Tokens = Tokens.of(0);
-        const MUL = Ratio.of(1000000);
+    /**
+     * calculate price for n amount of token to sell
+     * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
+     * @param tokenAmount - amount of token to sell
+     * @param ethFiatRate - current rate
+     */
 
-        for (let i = 0; i <= this.buyOrders.length; i++) {
-            const order: IBuyOrder = this.buyOrders[i];
-
-            if (remainingTokens.isZero()) {
-                break;
-            }
-
-            const orderTokens: Tokens = order.amount.toTokensAt(ethFiatRate, order.price);
-            const soldTokens: Tokens = Tokens.min(remainingTokens, orderTokens);
-            const spentEthers: Wei = soldTokens.toWeiAt(ethFiatRate, order.price);
-            remainingTokens = remainingTokens.sub(soldTokens);
-            filledEthers = filledEthers.add(spentEthers);
-            lastPrice = order.price;
-            weightedTotal = weightedTotal.add(soldTokens.mul(lastPrice.mul(MUL)));
-        }
-
-        const totalSoldTokens: Tokens = tokens.sub(remainingTokens);
-        const averagePrice: Ratio = weightedTotal.divToRatio(totalSoldTokens).div(MUL);
-
-        return {
-            tokens: totalSoldTokens,
-            ethers: filledEthers,
-            limitPrice: lastPrice,
-            averagePrice
-        };
+    public estimateSimpleSell(tokenAmount: Tokens, ethFiatRate: Tokens): ISimpleMatchData {
+        return OrderBook.estimateSimpleParams(this.buyOrders, tokenAmount, ethFiatRate, OrderBook.estimateSoldTokenEther)
     }
-
-
 }
 
 export interface IMatchingOrders {
