@@ -15,5 +15,4 @@
         "allowSyntheticDefaultImports": true,
         "moduleResolution": "Node"
     }
-//    "exclude": ["./dist/"]
 }
