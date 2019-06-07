@@ -4,11 +4,13 @@ import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE } from "./constants";
 import { EthereumConnection } from "./EthereumConnection";
-import { NEW_FIRST_LOAN_GAS, NEW_LOAN_GAS } from "./gas";
-import Loan from "./Loan";
+import { NEW_FIRST_LOAN_GAS, NEW_LOAN_GAS, PLACE_ORDER_GAS } from "./gas";
+import { Loan, ILoanTuple } from "./Loan";
 import { ILoanProductTuple, LoanProduct } from "./LoanProduct";
 import { Rates } from "./Rates";
 import { Tokens, Wei } from "./units";
+import { TransactionObject } from "../generated/types/types";
+import { Transaction } from "./Transaction";
 
 export interface ILoanManagerOptions {
     token: AugmintToken;
@@ -54,7 +56,7 @@ export class LoanManager extends AbstractContract {
         return this.getProducts(false);
     }
 
-    public async newEthBackedLoan(product: LoanProduct, ethAmount: number, userAccount: string) {
+    public async newEthBackedLoan(product: LoanProduct, ethAmount: number, userAccount: string): Promise<Transaction> {
         let gasEstimate: number;
         const loanCount: number = await this.getLoanCount();
 
@@ -64,17 +66,41 @@ export class LoanManager extends AbstractContract {
             gasEstimate = NEW_LOAN_GAS;
         }
 
-        const weiAmount:Wei = Wei.of(ethAmount); //new BigNumber(ethAmount).mul(ONE_ETH_IN_WEI);
+        const weiAmount:Wei = Wei.of(ethAmount); // new BigNumber(ethAmount).mul(ONE_ETH_IN_WEI);
+        const web3Tx: TransactionObject<void> = this.instance.methods.newEthBackedLoan(product.id);
 
-        return this.instance.methods
-            .newEthBackedLoan(product.id)
-            .send({ value: weiAmount, from: userAccount, gas: gasEstimate });
+        return new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: gasEstimate,
+            from: userAccount,
+            value: weiAmount.amount
+        });
     }
 
     public async fetchLoansForAccount(userAccount: string): Promise<Loan[]> {
-        return [];
+        const loanManagerInstance = this.instance;
+        // TODO: resolve timing of loanManager refresh in order to get loanCount from loanManager:
+        // @ts-ignore  TODO: how to detect better without ts-ignore?
+        const isLegacyLoanContract = typeof loanManagerInstance.methods.CHUNK_SIZE === "function";
+        const chunkSize = isLegacyLoanContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
+        const loanCount = await loanManagerInstance.methods
+            .getLoanCountForAddress(userAccount)
+            .call()
+            .then(res => parseInt(res, 10));
+
+        let loans:Loan[] = [];
+
+        const queryCount = Math.ceil(loanCount / chunkSize);
+
+        for (let i = 0; i < queryCount; i++) {
+            const loansArray:string[][] = isLegacyLoanContract
+                ? await (loanManagerInstance as LegacyLoanManagerInstanceWithChunkSize).methods.getLoansForAddress(userAccount, i * chunkSize).call()
+                : await loanManagerInstance.methods.getLoansForAddress(userAccount, i * chunkSize, chunkSize).call();
+            loans = loans.concat(loansArray.map((loan:ILoanTuple) => new Loan(loan, loanManagerInstance.address)));
+        }
+
+        return loans;
     }
-    
+
     public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string) {}
 
     public async collectLoans(loans: Loan[], userAccount: string) {}
