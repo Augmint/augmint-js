@@ -13,8 +13,8 @@ import { Ratio, Tokens, Wei } from "./units";
 interface IMarketMatch {
     filledTokens: Tokens;
     filledEthers: Wei;
-    limitPrice: Ratio;
-    averagePrice: Ratio;
+    limitPrice?: Ratio;
+    averagePrice?: Ratio;
 }
 
 export class OrderBook {
@@ -33,31 +33,29 @@ export class OrderBook {
                                                          tokens: Tokens,
                                                          rate: Tokens,
                                                          toTokens: (order: T) => Tokens): IMarketMatch {
-        let remainingTokens: Tokens = tokens;
-        let filledEthers: Wei = Wei.of(0);
-        let limitPrice: Ratio = Ratio.of(0);
+        const ret: IMarketMatch = {
+            filledTokens: Tokens.of(0),
+            filledEthers: Wei.of(0)
+        };
 
         for (const order of orders) {
-            if (remainingTokens.isZero()) {
+            const remaining = tokens.sub(ret.filledTokens);
+            if (remaining.isZero()) {
                 break;
             }
 
-            const fillTokens: Tokens = Tokens.min(toTokens(order), remainingTokens);
+            const fillTokens: Tokens = Tokens.min(toTokens(order), remaining);
             const fillEthers: Wei = fillTokens.toWeiAt(rate, order.price);
  
-            remainingTokens = remainingTokens.sub(fillTokens);
-            filledEthers = filledEthers.add(fillEthers);
-            limitPrice = order.price;
+            ret.filledTokens = ret.filledTokens.add(fillTokens);
+            ret.filledEthers = ret.filledEthers.add(fillEthers);
+            ret.limitPrice = order.price;
         }
-        const filledTokens: Tokens = tokens.sub(remainingTokens);
-        const averagePrice: Ratio = rate.divToRatio(filledTokens.toRate(filledEthers));
+        if (ret.limitPrice) {
+            ret.averagePrice = rate.divToRatio(ret.filledTokens.toRate(ret.filledEthers));
+        }
 
-        return {
-            filledTokens,
-            filledEthers,
-            limitPrice,
-            averagePrice
-        };
+        return ret;
     }
 
     constructor(public buyOrders: IBuyOrder[], public sellOrders: ISellOrder[]) {

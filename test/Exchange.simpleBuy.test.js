@@ -1,5 +1,6 @@
 const { assert } = require("chai");
 
+const { normalizeBN } = require("./testHelpers/normalize.js");
 const { Augmint, utils, Wei, Tokens, Ratio } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
 const OrderBook = Augmint.Exchange.OrderBook;
@@ -11,13 +12,6 @@ if (config.LOG) {
 }
 
 const RATE = Tokens.of(400.00);
-
-function assertMatches(expected, actual) {
-    assert(actual.filledTokens.eq(expected.filledTokens));
-    assert(actual.filledEthers.eq(expected.filledEthers));
-    assert(actual.limitPrice.eq(expected.limitPrice));
-    assert(actual.averagePrice.eq(expected.averagePrice));
-}
 
 describe("calculate market orders", () => {
     it("should return matching info", () => {
@@ -32,6 +26,8 @@ describe("calculate market orders", () => {
             { amount: Tokens.of(10), price: Ratio.of(1.03) }
         ];
 
+        const orderBook = new OrderBook(buyOrders, sellOrders);
+
         const sellResult = {
             filledTokens: Tokens.of(6),
             filledEthers: Wei.of(0.016165),
@@ -39,9 +35,9 @@ describe("calculate market orders", () => {
             averagePrice: Ratio.of(1.077673)
         };
 
-        const sellMatches = new OrderBook(buyOrders, sellOrders).estimateMarketSell(Tokens.of(6), RATE);
+        const sellMatches = orderBook.estimateMarketSell(Tokens.of(6), RATE);
 
-        assertMatches(sellResult, sellMatches);
+        assert.deepEqual(normalizeBN(sellResult), normalizeBN(sellMatches));
 
         const buyResult = {
             filledTokens: Tokens.of(2),
@@ -50,8 +46,20 @@ describe("calculate market orders", () => {
             averagePrice: Ratio.of(1.02501)
         };
 
-        const buyMatches = new OrderBook(buyOrders, sellOrders).estimateMarketBuy(Tokens.of(2), RATE);
+        const buyMatches = orderBook.estimateMarketBuy(Tokens.of(2), RATE);
 
-        assertMatches(buyResult, buyMatches);
+        assert.deepEqual(normalizeBN(buyMatches), normalizeBN(buyResult));
+    });
+
+    it("should work on empty order book", () => {
+        const orderBook = new OrderBook([], []);
+        const exp = {
+            filledTokens: Tokens.of(0),
+            filledEthers: Wei.of(0)
+        };
+        const buyMatches = orderBook.estimateMarketBuy(Tokens.of(100), RATE);
+        const sellMatches = orderBook.estimateMarketSell(Tokens.of(100), RATE)
+        assert.deepEqual(normalizeBN(buyMatches), normalizeBN(exp));
+        assert.deepEqual(normalizeBN(sellMatches), normalizeBN(exp));
     });
 });
