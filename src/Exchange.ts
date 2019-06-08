@@ -10,9 +10,9 @@ import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
 import { Ratio, Tokens, Wei } from "./units";
 
-interface ISimpleMatchData {
-    tokens: Tokens;
-    ethers: Wei;
+interface IMarketMatch {
+    filledTokens: Tokens;
+    filledEthers: Wei;
     limitPrice: Ratio;
     averagePrice: Ratio;
 }
@@ -29,33 +29,33 @@ export class OrderBook {
         return cmp !== 0 ? cmp : o1.id - o2.id;
     }
 
-    private static estimateSimpleParams<T extends IOrder>(list: T[],
-                                                         tokenAmount: Tokens,
-                                                         ethFiatRate: Tokens,
-                                                         toTokens: (order: T) => Tokens): ISimpleMatchData {
-        let remainingTokens: Tokens = tokenAmount;
+    private static estimateMarketOrder<T extends IOrder>(orders: T[],
+                                                         tokens: Tokens,
+                                                         rate: Tokens,
+                                                         toTokens: (order: T) => Tokens): IMarketMatch {
+        let remainingTokens: Tokens = tokens;
         let filledEthers: Wei = Wei.of(0);
-        let lastPrice: Ratio = Ratio.of(0);
+        let limitPrice: Ratio = Ratio.of(0);
 
-        for (const order of list) {
+        for (const order of orders) {
             if (remainingTokens.isZero()) {
                 break;
             }
 
-            const tokens: Tokens = Tokens.min(toTokens(order), remainingTokens);
-            const ethers: Wei = tokens.toWeiAt(ethFiatRate, order.price);
+            const fillTokens: Tokens = Tokens.min(toTokens(order), remainingTokens);
+            const fillEthers: Wei = fillTokens.toWeiAt(rate, order.price);
  
-            remainingTokens = remainingTokens.sub(tokens);
-            filledEthers = filledEthers.add(ethers);
-            lastPrice = order.price;
+            remainingTokens = remainingTokens.sub(fillTokens);
+            filledEthers = filledEthers.add(fillEthers);
+            limitPrice = order.price;
         }
-        const totalTokens: Tokens = tokenAmount.sub(remainingTokens);
-        const averagePrice: Ratio = ethFiatRate.divToRatio(totalTokens.toRate(filledEthers));
+        const filledTokens: Tokens = tokens.sub(remainingTokens);
+        const averagePrice: Ratio = rate.divToRatio(filledTokens.toRate(filledEthers));
 
         return {
-            tokens: totalTokens,
-            ethers: filledEthers,
-            limitPrice: lastPrice,
+            filledTokens,
+            filledEthers,
+            limitPrice,
             averagePrice
         };
     }
@@ -143,11 +143,11 @@ export class OrderBook {
     /**
      * calculate price for n amount of token to buy
      * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
-     * @param  tokenAmount - amount of token to buy
+     * @param tokenAmount - amount of token to buy
      * @param ethFiatRate - current rate
      */
-    public estimateSimpleBuy(tokenAmount: Tokens, ethFiatRate: Tokens): ISimpleMatchData {
-        return OrderBook.estimateSimpleParams(this.sellOrders, tokenAmount, ethFiatRate,
+    public estimateMarketBuy(tokenAmount: Tokens, ethFiatRate: Tokens): IMarketMatch {
+        return OrderBook.estimateMarketOrder(this.sellOrders, tokenAmount, ethFiatRate,
             order => order.amount);
     }
 
@@ -157,8 +157,8 @@ export class OrderBook {
      * @param tokenAmount - amount of token to sell
      * @param ethFiatRate - current rate
      */
-    public estimateSimpleSell(tokenAmount: Tokens, ethFiatRate: Tokens): ISimpleMatchData {
-        return OrderBook.estimateSimpleParams(this.buyOrders, tokenAmount, ethFiatRate,
+    public estimateMarketSell(tokenAmount: Tokens, ethFiatRate: Tokens): IMarketMatch {
+        return OrderBook.estimateMarketOrder(this.buyOrders, tokenAmount, ethFiatRate,
             order => order.amount.toTokensAt(ethFiatRate, order.price));
     }
 }

@@ -1,4 +1,4 @@
-const { expect } = require("chai");
+const { assert } = require("chai");
 
 const { Augmint, utils, Wei, Tokens, Ratio } = require("../dist/index.js");
 const loadEnv = require("./testHelpers/loadEnv.js");
@@ -12,46 +12,46 @@ if (config.LOG) {
 
 const RATE = Tokens.of(400.00);
 
-describe("calculate simplebuy", () => {
-    it("should return simplebuy data", () => {
+function assertMatches(expected, actual) {
+    assert(actual.filledTokens.eq(expected.filledTokens));
+    assert(actual.filledEthers.eq(expected.filledEthers));
+    assert(actual.limitPrice.eq(expected.limitPrice));
+    assert(actual.averagePrice.eq(expected.averagePrice));
+}
+
+describe("calculate market orders", () => {
+    it("should return matching info", () => {
         const buyOrders = [
-            { amount: Wei.of(0.0070), buy: true, price: Ratio.of(1.2) },
-            { amount: Wei.of(0.0094), buy: true, price: Ratio.of(1) },
-            { amount: Wei.of(0.0064), buy: true, price: Ratio.of(0.7) }
+            { amount: Wei.of(0.0070), price: Ratio.of(1.2) },
+            { amount: Wei.of(0.0094), price: Ratio.of(1) },
+            { amount: Wei.of(0.0064), price: Ratio.of(0.7) }
         ];
 
-
         const sellOrders = [
-            { amount: Tokens.of(1), buy: false, price: Ratio.of(1.02) },
-            { amount: Tokens.of(10), buy: false, price: Ratio.of(1.03) }
+            { amount: Tokens.of(1), price: Ratio.of(1.02) },
+            { amount: Tokens.of(10), price: Ratio.of(1.03) }
         ];
 
         const sellResult = {
-            tokens: Tokens.of(6),
-            ethers: Wei.of(0.016165),
+            filledTokens: Tokens.of(6),
+            filledEthers: Wei.of(0.016165),
             limitPrice: Ratio.of(1),
             averagePrice: Ratio.of(1.077673)
         };
 
-        const sellMatches = new OrderBook(buyOrders, sellOrders).estimateSimpleSell(Tokens.of(6), RATE);
+        const sellMatches = new OrderBook(buyOrders, sellOrders).estimateMarketSell(Tokens.of(6), RATE);
 
-        expect(sellMatches.tokens.eq(sellResult.tokens)).to.be.equal(true);
-        expect(sellMatches.ethers.eq(sellResult.ethers)).to.be.equal(true);
-        expect(sellMatches.limitPrice.eq(sellResult.limitPrice)).to.be.equal(true);
-        expect(sellMatches.averagePrice.eq(sellResult.averagePrice)).to.be.equal(true);
+        assertMatches(sellResult, sellMatches);
 
         const buyResult = {
-            tokens: Tokens.of(2),
-            ethers: Wei.of(0.005125),
+            filledTokens: Tokens.of(2),
+            filledEthers: Wei.of(0.005125),
             limitPrice: Ratio.of(1.03),
             averagePrice: Ratio.of(1.02501)
         };
 
-        const buyMatches = new OrderBook(buyOrders, sellOrders).estimateSimpleBuy(Tokens.of(2), RATE);
+        const buyMatches = new OrderBook(buyOrders, sellOrders).estimateMarketBuy(Tokens.of(2), RATE);
 
-        expect(buyMatches.tokens.eq(buyResult.tokens)).to.be.equal(true);
-        expect(buyMatches.ethers.eq(buyResult.ethers)).to.be.equal(true);
-        expect(buyMatches.limitPrice.eq(buyResult.limitPrice)).to.be.equal(true);
-        expect(buyMatches.averagePrice.eq(buyResult.averagePrice)).to.be.equal(true);
+        assertMatches(buyResult, buyMatches);
     });
 });
