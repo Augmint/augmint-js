@@ -40,6 +40,11 @@ abstract class FixedPoint {
         return this.create(ceilDiv(this.amount.mul(Ratio.DIV_BN), ratio.amount));
     }
 
+    public divToRatio(other: this): Ratio {
+        this.check(other);
+        return new Ratio(this.amount.mul(Ratio.DIV_BN).divRound(other.amount));
+    }
+
     //
     // comparison
     //
@@ -161,7 +166,6 @@ export class Tokens extends FixedPoint {
         this.check(ethers, Wei);
         return new Tokens(this.amount.mul(Wei.DIV_BN).divRound(ethers.amount));
     }
-
 }
 
 
@@ -181,6 +185,5 @@ export class Ratio extends FixedPoint {
     public toNumber(): number {
         return this.amount.toNumber() / Ratio.DIV;
     }
-
 }
 
