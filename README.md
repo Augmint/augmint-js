@@ -1,4 +1,4 @@
-<span style="display:block;text-align:center">![Augmint](http://www.augmint.cc/android-chrome-192x192.png)
+<span style="display:block;text-align:center">![Augmint](https://www.augmint.org/android-chrome-192x192.png)
 </span>
 
 # Augmint - Stable Digital Tokens - Javascript Library (WIP)
