@@ -1,24 +1,23 @@
+import { Address } from "./Address";
 import { LOAN_STATES } from "./constants";
 import { Tokens, Wei } from "./units";
-import { Address } from "./Address";
 
-const loanStateTexts:string[] = ["Open","Payment Due","Repaid","Defaulted (not yet collected)","Defaulted and collected"];
-const collateralStatusTexts:string[] = ["in escrow","released","in escrow","collected & leftover refunded"];
-const aDay:number = 24 * 60 * 60;
-const sevenDays:number = aDay * 7;
-const threeDays:number = aDay * 3;
+const collateralStatusTexts: string[] = ["in escrow", "released", "in escrow", "collected & leftover refunded"];
+const aDay: number = 24 * 60 * 60;
+const sevenDays: number = aDay * 7;
+const threeDays: number = aDay * 3;
 
-const currentTime:() => number = ():number => Math.floor(Date.now() /1000);
+const currentTime: () => number = (): number => Math.floor(Date.now() / 1000);
 
-export type ILoanTuple = [string,string,string,string,string,string,string,string,string,string]
+export type ILoanTuple = [string, string, string, string, string, string, string, string, string, string];
 export class Loan {
-    public readonly id:number;
+    public readonly id: number;
     public readonly collateralAmount: Wei;
-    public readonly borrower:Address;
-    public readonly productId:number;
-    public readonly state:number;
-    public readonly maturity:number;
-    public readonly disbursementTime:number;
+    public readonly borrower: Address;
+    public readonly productId: number;
+    public readonly state: number;
+    public readonly maturity: number;
+    public readonly disbursementTime: number;
     public readonly interestAmount: Tokens;
     public readonly loanAmount: Tokens;
     public readonly repaymentAmount: Tokens;
@@ -36,7 +35,7 @@ export class Loan {
             configDisbursementTime,
             configLoanAmount,
             configInterestAmount
-        ]:ILoanTuple = loan;
+        ]: ILoanTuple = loan;
 
         this.loanManagerAddress = loanManagerAddress;
 
@@ -44,7 +43,7 @@ export class Loan {
         if (maturity > 0) {
             const disbursementTime = parseInt(configDisbursementTime, 10);
 
-            const state:number = parseInt(configState, 10);
+            const state: number = parseInt(configState, 10);
 
             this.id = parseInt(configId, 10);
             this.collateralAmount = Wei.parse(configCollateralAmount);
@@ -59,19 +58,19 @@ export class Loan {
         }
     }
 
-    get term() {
+    get term(): number {
         return this.maturity - this.disbursementTime;
     }
 
-    get isRepayable():boolean {
+    get isRepayable(): boolean {
         return this.state === LOAN_STATES.Open;
     }
 
-    get isCollectable():boolean {
+    get isCollectable(): boolean {
         return this.state === LOAN_STATES.Defaulted;
     }
 
-    get isDue():boolean {
+    get isDue(): boolean {
         return this.state === LOAN_STATES.Open;
     }
 
@@ -79,26 +78,29 @@ export class Loan {
         switch (this.state) {
             case LOAN_STATES.Open:
                 if (this.maturity - currentTime() < sevenDays) {
-                    return loanStateTexts[1]
+                    return "Payment Due";
                 } else {
-                    return loanStateTexts[0]
+                    return "Open";
                 }
             case LOAN_STATES.Repaid:
-                return loanStateTexts[2];
+                return "Repaid";
             case LOAN_STATES.Defaulted:
-                return loanStateTexts[3];
+                return "Defaulted (not yet collected)";
             case LOAN_STATES.Collected:
-                return loanStateTexts[4];
+                return "Defaulted and collected";
         }
-        return 'Invalid state'
+        return "Invalid state";
     }
 
     get collateralStatus(): string {
-        return collateralStatusTexts[this.state] || 'Invalid status'
+        return collateralStatusTexts[this.state] || "Invalid status";
     }
 
     get dueState(): string {
-        return this.state === LOAN_STATES.Open ? (this.maturity - currentTime() < threeDays ? 'danger' : 'warning') : '';
+        return this.state === LOAN_STATES.Open
+            ? this.maturity - currentTime() < threeDays
+                ? "danger"
+                : "warning"
+            : "";
     }
-
 }

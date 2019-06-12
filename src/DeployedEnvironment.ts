@@ -1,5 +1,6 @@
 import { Contract } from "web3-eth-contract";
 import { DeployedContract } from "./DeployedContract";
+import { MissingContractError } from "./Errors";
 
 export type IDeployedContractList = Array<DeployedContract<Contract>>;
 
@@ -53,4 +54,19 @@ export class DeployedEnvironment {
             (contract: DeployedContract<Contract>) => addresses.indexOf(contract.deployedAddress.toLowerCase()) > -1
         );
     }
+
+    public getContractFromAddress(name: string, address: string): DeployedContract<Contract> {
+        const contractList: IDeployedContractList = this.contracts[name];
+        const contract: DeployedContract<Contract> | undefined = contractList.find(
+            (item: DeployedContract<Contract>) => item.deployedAddress.toLowerCase() === address.toLowerCase()
+        );
+
+        if (!contract) {
+            throw new MissingContractError(name, address);
+        }
+
+        return contract
+    }
+
+
 }

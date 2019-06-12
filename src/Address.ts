@@ -12,6 +12,6 @@ export class Address {
     }
 
     public toString() {
-        return '0x' + this.address.toString(16).padStart(40,"0");
+        return '0x' + this.address.toString(16).padStart(40,"0").toLowerCase();
     }
 }

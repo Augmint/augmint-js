@@ -11,15 +11,13 @@ const connectedInstances = new Map();
 export class DeployedContract<T extends Contract> {
     public abiFileName: string;
     public deployedAddress: string;
-    public current: boolean;
-    private instance:T;
 
     constructor(deployedItem: IDeploymentItem) {
         this.abiFileName = deployedItem.abiFileName;
         this.deployedAddress = deployedItem.deployedAddress;
     }
 
-    get instanceHash() {
+    get instanceHash():string {
         return `${this.abiFileName}_${this.deployedAddress}`;
     }
 

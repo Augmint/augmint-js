@@ -1,22 +1,17 @@
-import { LoanManager as LoanManagerInstance } from "../generated/index";
+import { Contract } from "web3-eth-contract";
+import { AugmintContracts, LoanManager as LoanManagerInstance } from "../generated/index";
 import { LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286 as LegacyLoanManagerInstanceWithChunkSize } from "../generated/types/LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286";
+import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE } from "./constants";
 import { EthereumConnection } from "./EthereumConnection";
-import { NEW_FIRST_LOAN_GAS, NEW_LOAN_GAS, PLACE_ORDER_GAS } from "./gas";
-import { Loan, ILoanTuple } from "./Loan";
+import { NEW_FIRST_LOAN_GAS, NEW_LOAN_GAS, PLACE_ORDER_GAS, REPAY_GAS } from "./gas";
+import { ILoanTuple, Loan } from "./Loan";
 import { ILoanProductTuple, LoanProduct } from "./LoanProduct";
 import { Rates } from "./Rates";
-import { Tokens, Wei } from "./units";
-import { TransactionObject } from "../generated/types/types";
 import { Transaction } from "./Transaction";
-
-export interface ILoanManagerOptions {
-    token: AugmintToken;
-    rates: Rates;
-    ethereumConnection: EthereumConnection;
-}
+import { Tokens, Wei } from "./units";
 
 /**
  * Augmint LoanManager contract class
@@ -24,28 +19,29 @@ export interface ILoanManagerOptions {
  * @extends Contract
  */
 export class LoanManager extends AbstractContract {
+    public static contractName = AugmintContracts.LoanManager;
     public instance: LoanManagerInstance;
     public augmintTokenAddress: Promise<string>;
     public ratesAddress: Promise<string>;
 
     private web3: any;
 
-    private token: AugmintToken;
-    private rates: Rates;
     private ethereumConnection: EthereumConnection;
 
-    constructor(deployedContractInstance: LoanManagerInstance, options: ILoanManagerOptions) {
+    constructor(deployedContractInstance: LoanManagerInstance, ethereumConnection: EthereumConnection) {
         super(deployedContractInstance);
 
         this.instance = deployedContractInstance;
-        this.ethereumConnection = options.ethereumConnection;
+        this.ethereumConnection = ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
-        this.rates = options.rates;
-        this.token = options.token;
     }
 
     static get LoanProduct(): typeof LoanProduct {
         return LoanProduct;
+    }
+
+    get tokenAddress(): Promise<string> {
+        return this.instance.methods.augmintToken().call();
     }
 
     public async getActiveProducts(): Promise<LoanProduct[]> {
@@ -66,7 +62,7 @@ export class LoanManager extends AbstractContract {
             gasEstimate = NEW_LOAN_GAS;
         }
 
-        const weiAmount:Wei = Wei.of(ethAmount); // new BigNumber(ethAmount).mul(ONE_ETH_IN_WEI);
+        const weiAmount: Wei = Wei.of(ethAmount); // new BigNumber(ethAmount).mul(ONE_ETH_IN_WEI);
         const web3Tx: TransactionObject<void> = this.instance.methods.newEthBackedLoan(product.id);
 
         return new Transaction(this.ethereumConnection, web3Tx, {
@@ -76,7 +72,7 @@ export class LoanManager extends AbstractContract {
         });
     }
 
-    public async fetchLoansForAccount(userAccount: string): Promise<Loan[]> {
+    public async getLoansForAccount(userAccount: string): Promise<Loan[]> {
         const loanManagerInstance = this.instance;
         // TODO: resolve timing of loanManager refresh in order to get loanCount from loanManager:
         // @ts-ignore  TODO: how to detect better without ts-ignore?
@@ -87,26 +83,70 @@ export class LoanManager extends AbstractContract {
             .call()
             .then(res => parseInt(res, 10));
 
-        let loans:Loan[] = [];
+        let loans: Loan[] = [];
 
         const queryCount = Math.ceil(loanCount / chunkSize);
 
         for (let i = 0; i < queryCount; i++) {
-            const loansArray:string[][] = isLegacyLoanContract
-                ? await (loanManagerInstance as LegacyLoanManagerInstanceWithChunkSize).methods.getLoansForAddress(userAccount, i * chunkSize).call()
+            const loansArray: string[][] = isLegacyLoanContract
+                ? await (loanManagerInstance as LegacyLoanManagerInstanceWithChunkSize).methods
+                      .getLoansForAddress(userAccount, i * chunkSize)
+                      .call()
                 : await loanManagerInstance.methods.getLoansForAddress(userAccount, i * chunkSize, chunkSize).call();
-            loans = loans.concat(loansArray.map((loan:ILoanTuple) => new Loan(loan, loanManagerInstance.address)));
+            loans = loans.concat(
+                loansArray.map((loan: ILoanTuple) => new Loan(loan, (loanManagerInstance as Contract).address))
+            );
         }
 
         return loans;
     }
 
-    public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string) {}
+    public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string, augmintToken: AugmintToken) {
+        const txName = "Repay loan";
+        const augmintTokenInstance = augmintToken.instance;
 
+        const web3Tx: TransactionObject<void> = augmintTokenInstance.methods.transferAndNotify(
+            (this.instance as Contract).address,
+            repaymentAmount.toString(),
+            loan.id
+        );
+
+        return new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: REPAY_GAS,
+            from: userAccount
+        });
+/*
+        const tx = augmintTokenInstance.methods
+            .transferAndNotify((this.instance as Contract).address, repaymentAmount.toString(), loan.id)
+            .send({ from: userAccount, gas: REPAY_GAS });
+
+        const onReceipt = receipt => {
+            // loan repayment called on AugmintToken and web3 is not parsing event emmitted from LoanManager
+            const web3 = store.getState().web3Connect.web3Instance;
+            const loanRepayedEventInputs = loanManagerInstance.options.jsonInterface.find(
+                val => val.name === "LoanRepayed"
+            ).inputs;
+
+            const decodedArgs = web3.eth.abi.decodeLog(
+                loanRepayedEventInputs,
+                receipt.events[0].raw.data,
+                receipt.events[0].raw.topics.slice(1) // topics[0] is event name
+            );
+            receipt.events.LoanRepayed = receipt.events[0];
+            receipt.events.LoanRepayed.returnValues = decodedArgs;
+            return { loanId: decodedArgs.loanId };
+        };
+
+        const transactionHash = await processTx(tx, txName, REPAY_GAS, onReceipt);
+        return { txName, transactionHash };
+
+ */
+    }
+/*
     public async collectLoans(loans: Loan[], userAccount: string) {}
 
     public async fetchLoans() {}
-
+*/
     private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
         // @ts-ignore  TODO: how to detect better without ts-ignore?
         const isLegacyLoanContractWithChunkSize: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
@@ -129,7 +169,7 @@ export class LoanManager extends AbstractContract {
 
             const productInstances: LoanProduct[] = productTuples
                 .filter((p: ILoanProductTuple) => p[2] !== "0") // solidity can return only fixed size arrays so 0 terms means no product
-                .map((tuple: ILoanProductTuple) => new LoanProduct(tuple));
+                .map((tuple: ILoanProductTuple) => new LoanProduct(tuple, (this.instance as Contract).address));
 
             products = products.concat(productInstances);
         }

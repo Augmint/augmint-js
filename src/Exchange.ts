@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { Exchange as ExchangeInstance } from "../generated/index";
+import { AugmintContracts, Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
@@ -136,6 +136,7 @@ export interface IExchangeOptions {
  */
 // tslint:disable-next-line:max-classes-per-file
 export class Exchange extends AbstractContract {
+    public static contractName = AugmintContracts.Exchange;
     public instance: ExchangeInstance;
     private web3: any;
     private safeBlockGasLimit: number;

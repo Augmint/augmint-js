@@ -1,7 +1,9 @@
-import { TokenAEur } from "../generated/index";
+import { AugmintContracts, TokenAEur } from "../generated/index";
 import { AbstractContract } from "./AbstractContract";
+import { EthereumConnection } from "./EthereumConnection";
 
 export class AugmintToken extends AbstractContract {
+    public static contractName = AugmintContracts.TokenAEur;
     public instance: TokenAEur;
     private _peggedSymbol: Promise<string>;
     private _symbol: Promise<string>;
@@ -10,10 +12,10 @@ export class AugmintToken extends AbstractContract {
     private _feeAccountAddress: Promise<string>;
     private _web3: any;
 
-    constructor(deployedContractInstance: TokenAEur, options: { web3: any }) {
+    constructor(deployedContractInstance: TokenAEur, ethereumConnection: EthereumConnection) {
         super(deployedContractInstance);
         this.instance = deployedContractInstance;
-        this._web3 = options.web3;
+        this._web3 = ethereumConnection.web3;
     }
 
     get peggedSymbol(): Promise<string> {

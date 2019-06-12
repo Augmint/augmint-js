@@ -1,6 +1,7 @@
 import { MIN_LOAN_AMOUNT_ADJUSTMENT } from "./constants";
 import { AugmintJsError } from "./Errors";
 import { Ratio, Tokens, Wei } from "./units";
+import { ILoanTuple } from "./Loan";
 
 export interface ILoanValues {
     disbursedAmount: Tokens;
@@ -29,8 +30,9 @@ export class LoanProduct {
     public readonly maxLoanAmount: Tokens;
 
     public readonly isActive: boolean;
+    public readonly loanManagerAddress: string;
 
-    constructor(loanProductTuple: ILoanProductTuple) {
+    constructor(loanProductTuple: ILoanProductTuple, loanManagerAddress: string) {
         // Solidity LoanManager contract .getProducts() tuple:
         // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
         const [
@@ -74,6 +76,7 @@ export class LoanProduct {
         this.maxLoanAmount = Tokens.parse(sMaxLoanAmount);
         this.defaultingFeePt = Ratio.parse(sDefaultingFeePt);
         this.isActive = sIsActive === "1";
+        this.loanManagerAddress = loanManagerAddress;
     }
 
     public calculateLoanFromCollateral(collateralAmount: Wei, ethFiatRate: Tokens): ILoanValues {
