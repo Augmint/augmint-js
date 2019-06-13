@@ -53,7 +53,8 @@ function mockProd(
         adjustedMinDisbursedAmount: Tokens.of(adjustedMinDisbursedAmount),
         maxLoanAmount: Tokens.of(maxLoanAmount),
         defaultingFeePt: Ratio.of(defaultingFeePt),
-        isActive
+        isActive,
+        loanManagerAddress: undefined
     };
 }
 
