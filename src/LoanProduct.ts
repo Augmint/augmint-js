@@ -1,7 +1,6 @@
 import { MIN_LOAN_AMOUNT_ADJUSTMENT } from "./constants";
 import { AugmintJsError } from "./Errors";
 import { Ratio, Tokens, Wei } from "./units";
-import { ILoanTuple } from "./Loan";
 
 export interface ILoanValues {
     disbursedAmount: Tokens;
@@ -12,9 +11,9 @@ export interface ILoanValues {
 }
 
 /**  result from LoanManager contract's getProduct:
- *   [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
+ *   [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
  */
-export type ILoanProductTuple = [string, string, string, string, string, string, string, string];
+export type ILoanProductTuple = [string, string, string, string, string, string, string, string, string];
 export class LoanProduct {
     public readonly id: number;
 
@@ -31,10 +30,11 @@ export class LoanProduct {
 
     public readonly isActive: boolean;
     public readonly loanManagerAddress: string;
+    public readonly minCollateralRatio: Ratio;
 
     constructor(loanProductTuple: ILoanProductTuple, loanManagerAddress: string) {
         // Solidity LoanManager contract .getProducts() tuple:
-        // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
+        // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
         const [
             sId,
             sMinDisbursedAmount,
@@ -43,7 +43,8 @@ export class LoanProduct {
             sCollateralRatio,
             sDefaultingFeePt,
             sMaxLoanAmount,
-            sIsActive
+            sIsActive,
+            sMinCollateralRatio
         ]: string[] = loanProductTuple;
 
         if (sTerm === "0") {
@@ -76,6 +77,7 @@ export class LoanProduct {
         this.maxLoanAmount = Tokens.parse(sMaxLoanAmount);
         this.defaultingFeePt = Ratio.parse(sDefaultingFeePt);
         this.isActive = sIsActive === "1";
+        this.minCollateralRatio = Ratio.parse(sMinCollateralRatio || '0');
         this.loanManagerAddress = loanManagerAddress;
     }
 
