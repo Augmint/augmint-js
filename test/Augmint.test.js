@@ -34,4 +34,12 @@ describe("Test Augmint interfaces", () => {
         assert.equal(peggedSymbol, CCY);
         assert.equal(legacyPeggedSymbol, CCY);
     });
+
+    it("should list all loan products", async () => {
+        const augmint = await Augmint.create(config);
+        const loanManager = await augmint.deployedEnvironment.getLatestContract("LoanManager");
+        const connected = loanManager.connect(augmint.web3);
+        const loanProducts = await augmint.getLoanProducts();
+        console.log(loanProducts)
+    });
 });
