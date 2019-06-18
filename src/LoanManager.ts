@@ -94,7 +94,7 @@ export class LoanManager extends AbstractContract {
                       .call()
                 : await loanManagerInstance.methods.getLoansForAddress(userAccount, i * chunkSize, chunkSize).call();
             loans = loans.concat(
-                loansArray.map((loan: ILoanTuple) => new Loan(loan, (loanManagerInstance as Contract)._address))
+                loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address))
             );
         }
 
@@ -106,7 +106,7 @@ export class LoanManager extends AbstractContract {
         const augmintTokenInstance = augmintToken.instance;
 
         const web3Tx: TransactionObject<void> = augmintTokenInstance.methods.transferAndNotify(
-            (this.instance as Contract)._address,
+            this.address,
             repaymentAmount.toString(),
             loan.id
         );
@@ -117,7 +117,7 @@ export class LoanManager extends AbstractContract {
         });
 /*
         const tx = augmintTokenInstance.methods
-            .transferAndNotify((this.instance as Contract)._address, repaymentAmount.toString(), loan.id)
+            .transferAndNotify(this.address, repaymentAmount.toString(), loan.id)
             .send({ from: userAccount, gas: REPAY_GAS });
 
         const onReceipt = receipt => {
@@ -169,7 +169,7 @@ export class LoanManager extends AbstractContract {
 
             const productInstances: LoanProduct[] = productTuples
                 .filter((p: ILoanProductTuple) => p[2] !== "0") // solidity can return only fixed size arrays so 0 terms means no product
-                .map((tuple: ILoanProductTuple) => new LoanProduct(tuple, (this.instance as Contract)._address));
+                .map((tuple: ILoanProductTuple) => new LoanProduct(tuple, this.address));
 
             products = products.concat(productInstances);
         }

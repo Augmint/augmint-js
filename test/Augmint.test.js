@@ -37,9 +37,14 @@ describe("Test Augmint interfaces", () => {
 
     it("should list all loan products", async () => {
         const augmint = await Augmint.create(config);
-        const loanManager = await augmint.deployedEnvironment.getLatestContract("LoanManager");
-        const connected = loanManager.connect(augmint.web3);
-        const loanProducts = await augmint.getLoanProducts();
+        const loanProducts = await augmint.getLoanProducts(true);
         console.log(loanProducts)
     });
+
+    it("should list all loans", async () => {
+        const augmint = await Augmint.create(config);
+//        const loans = await augmint.getLoansForAccount()
+//        console.log(loans)
+
+    })
 });
