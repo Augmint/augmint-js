@@ -1,4 +1,3 @@
-import { Address } from "./Address";
 import { LOAN_STATES } from "./constants";
 import { Tokens, Wei } from "./units";
 
@@ -13,7 +12,7 @@ export type ILoanTuple = [string, string, string, string, string, string, string
 export class Loan {
     public readonly id: number;
     public readonly collateralAmount: Wei;
-    public readonly borrower: Address;
+    public readonly borrower: string;
     public readonly productId: number;
     public readonly state: number;
     public readonly maturity: number;
@@ -47,7 +46,7 @@ export class Loan {
 
             this.id = parseInt(configId, 10);
             this.collateralAmount = Wei.parse(configCollateralAmount);
-            this.borrower = Address.parse(configBorrower);
+            this.borrower = configBorrower;
             this.productId = parseInt(configProductId, 10);
             this.state = state;
             this.maturity = maturity;
