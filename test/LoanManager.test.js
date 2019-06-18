@@ -2,11 +2,7 @@ const chai = require("chai");
 const { assert, expect } = chai;
 chai.use(require("chai-exclude"));
 
-const BN = require("bn.js");
-BN.prototype.inspect = function() {
-    return this.toString();
-};
-
+const { normalizeBN } = require("./testHelpers/normalize.js");
 const { takeSnapshot, revertSnapshot } = require("./testHelpers/ganache.js");
 const { Augmint, utils, Wei, Tokens, Ratio } = require("../dist/index.js");
 const { AugmintJsError } = Augmint.Errors;
@@ -15,20 +11,6 @@ const config = loadEnv();
 
 if (config.LOG) {
     utils.logger.level = config.LOG;
-}
-
-// deeply normalize all BN properties so they can be compared with deepEquals
-// NOTE: object graph must not have cycles
-function normalizeBN(obj) {
-    Object.keys(obj).map((key, index) => {
-        const o = obj[key];
-        if (o instanceof BN) {
-            obj[key] = new BN(o.toString());
-        } else if (o instanceof Object) {
-            obj[key] = normalizeBN(o);
-        }
-    });
-    return obj;
 }
 
 function mockProd(

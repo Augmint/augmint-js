@@ -10,6 +10,13 @@ import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
 import { Ratio, Tokens, Wei } from "./units";
 
+interface IMarketMatch {
+    filledTokens: Tokens;
+    filledEthers: Wei;
+    limitPrice?: Ratio;
+    averagePrice?: Ratio;
+}
+
 export class OrderBook {
 
     public static compareBuyOrders(o1: IBuyOrder, o2: IBuyOrder): number {
@@ -20,6 +27,35 @@ export class OrderBook {
     public static compareSellOrders(o1: ISellOrder, o2: ISellOrder): number {
         const cmp: number = o1.price.cmp(o2.price);
         return cmp !== 0 ? cmp : o1.id - o2.id;
+    }
+
+    private static estimateMarketOrder<T extends IOrder>(orders: T[],
+                                                         tokens: Tokens,
+                                                         rate: Tokens,
+                                                         toTokens: (order: T) => Tokens): IMarketMatch {
+        const ret: IMarketMatch = {
+            filledTokens: Tokens.of(0),
+            filledEthers: Wei.of(0)
+        };
+
+        for (const order of orders) {
+            const remaining = tokens.sub(ret.filledTokens);
+            if (remaining.isZero()) {
+                break;
+            }
+
+            const fillTokens: Tokens = Tokens.min(toTokens(order), remaining);
+            const fillEthers: Wei = fillTokens.toWeiAt(rate, order.price);
+ 
+            ret.filledTokens = ret.filledTokens.add(fillTokens);
+            ret.filledEthers = ret.filledEthers.add(fillEthers);
+            ret.limitPrice = order.price;
+        }
+        if (ret.limitPrice) {
+            ret.averagePrice = rate.divToRatio(ret.filledTokens.toRate(ret.filledEthers));
+        }
+
+        return ret;
     }
 
     constructor(public buyOrders: IBuyOrder[], public sellOrders: ISellOrder[]) {
@@ -47,13 +83,16 @@ export class OrderBook {
         if (!this.hasMatchingOrders()) {
             return { buyIds, sellIds, gasEstimate: 0 };
         }
+
         const lowestSellPrice: Ratio = this.sellOrders[0].price;
         const highestBuyPrice: Ratio = this.buyOrders[0].price;
 
         const clone = o => Object.assign({}, o);
-        const buys: IBuyOrder[] = this.buyOrders.filter(o => o.price.gte(lowestSellPrice)).map(clone);
+        const buys: IBuyOrder[] = this.buyOrders
+            .filter(o => o.price.gte(lowestSellPrice)).map(clone);
 
-        const sells: ISellOrder[] = this.sellOrders.filter(o => o.price.lte(highestBuyPrice)).map(clone);
+        const sells: ISellOrder[] = this.sellOrders
+            .filter(o => o.price.lte(highestBuyPrice)).map(clone);
 
         let buyIdx: number = 0;
         let sellIdx: number = 0;
@@ -97,6 +136,28 @@ export class OrderBook {
         }
 
         return { buyIds, sellIds, gasEstimate };
+    }
+
+    /**
+     * calculate price for n amount of token to buy
+     * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
+     * @param tokenAmount - amount of token to buy
+     * @param ethFiatRate - current rate
+     */
+    public estimateMarketBuy(tokenAmount: Tokens, ethFiatRate: Tokens): IMarketMatch {
+        return OrderBook.estimateMarketOrder(this.sellOrders, tokenAmount, ethFiatRate,
+            order => order.amount);
+    }
+
+    /**
+     * calculate price for n amount of token to sell
+     * @return {object} simple buy data { tokens, ethers, limitPrice, averagePrice }
+     * @param tokenAmount - amount of token to sell
+     * @param ethFiatRate - current rate
+     */
+    public estimateMarketSell(tokenAmount: Tokens, ethFiatRate: Tokens): IMarketMatch {
+        return OrderBook.estimateMarketOrder(this.buyOrders, tokenAmount, ethFiatRate,
+            order => order.amount.toTokensAt(ethFiatRate, order.price));
     }
 }
 
