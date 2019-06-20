@@ -18,7 +18,7 @@ import { LoanManager } from "./LoanManager";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
 import { Loan } from "./Loan";
-import { Tokens } from "./units";
+import { Tokens, Wei } from "./units";
 import { LoanProduct } from "./LoanProduct";
 
 interface IDeployedEnvironmentStub {
@@ -255,5 +255,14 @@ export class Augmint {
         );
         const token: AugmintToken = new AugmintToken(tokenContract.connect(this.web3), this.ethereumConnection);
         return loanManager.repayLoan(loan, repaymentAmount, userAccount, token);
+    }
+
+    public async newEthBackedLoan(loanProduct: LoanProduct, weiAmount: Wei, userAccount: string): Promise<Transaction> {
+        const lmContract: DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(
+            AugmintContracts.LoanManager,
+            loanProduct.loanManagerAddress
+        );
+        const loanManager:LoanManager = new LoanManager(lmContract.connect(this.web3), this.ethereumConnection);
+        return loanManager.newEthBackedLoan(loanProduct, weiAmount, userAccount)
     }
 }

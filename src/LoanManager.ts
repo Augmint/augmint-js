@@ -52,7 +52,7 @@ export class LoanManager extends AbstractContract {
         return this.getProducts(false);
     }
 
-    public async newEthBackedLoan(product: LoanProduct, ethAmount: number, userAccount: string): Promise<Transaction> {
+    public async newEthBackedLoan(product: LoanProduct, weiAmount: Wei, userAccount: string): Promise<Transaction> {
         let gasEstimate: number;
         const loanCount: number = await this.getLoanCount();
 
@@ -62,7 +62,6 @@ export class LoanManager extends AbstractContract {
             gasEstimate = NEW_LOAN_GAS;
         }
 
-        const weiAmount: Wei = Wei.of(ethAmount); // new BigNumber(ethAmount).mul(ONE_ETH_IN_WEI);
         const web3Tx: TransactionObject<void> = this.instance.methods.newEthBackedLoan(product.id);
 
         return new Transaction(this.ethereumConnection, web3Tx, {
