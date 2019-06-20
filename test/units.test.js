@@ -1,4 +1,4 @@
-const { assert, expect } = require("chai");
+const { assert } = require("chai");
 const { Wei, Tokens, Ratio } = require("../dist/index.js");
 
 describe("Units", () => {
@@ -13,7 +13,7 @@ describe("Units", () => {
     it("no operations accross types", () => {
         assert.throws(() => Wei.of(1).add(Tokens.of(100)));
         assert.throws(() => Wei.of(1).mul(Tokens.of(100)));
-        assert.throws(() => Wei.of(1).toTokensAt(Ratio.of(1), Tokens.of(100)));    
+        assert.throws(() => Wei.of(1).toTokensAt(Ratio.of(1), Tokens.of(100)));
     });
 
     it("conversions", () => {
@@ -23,7 +23,7 @@ describe("Units", () => {
         assert.equal(JSON.stringify({ tokens: Tokens.of(100.01) }), '{"tokens":"10001"}');
         assert.equal("10001", Tokens.parse("10001").toString());
         assert.equal("10001", Tokens.parse(10001).toString());
-        assert.throws(() => Tokens.parse(null));    
+        assert.throws(() => Tokens.parse(null));
         assert.isNull(Tokens.parse("0").zeroToNull());
         assert.equal("10001", Tokens.parse(10001).zeroToNull().toString());
      });
@@ -33,10 +33,12 @@ describe("Units", () => {
     })
 
     it("rounds Wei properly", () => {
-        assert.equal(Wei.of(1.025).toString(), "1025000000000000000")
+        assert.equal(Wei.of(1.025).toString(), "1025000000000000000");
+        assert.equal(Wei.of(1.025).toNumber(), 1.025);
     })
 
     it("rounds Tokens properly", () => {
-        assert.equal(Tokens.of(1.02).toString(), "102")
+        assert.equal(Tokens.of(1.02).toString(), "102");
+        assert.equal(Tokens.of(1.02).toNumber(), 1.02);
     })
 });

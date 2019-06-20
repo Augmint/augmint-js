@@ -131,7 +131,7 @@ export class Wei extends FixedPoint {
     }
 
     public toNumber(): number {
-        return this.amount.toNumber() / Wei.DIV_BN.toNumber()
+        return this.amount.divRound(Wei.DIV_PRECISON).toNumber() / Wei.PRECISION
     }
 }
 
@@ -165,6 +165,10 @@ export class Tokens extends FixedPoint {
     public toRate(ethers: Wei): Tokens {
         this.check(ethers, Wei);
         return new Tokens(this.amount.mul(Wei.DIV_BN).divRound(ethers.amount));
+    }
+
+    public toNumber(): number {
+        return this.amount.toNumber() / Tokens.DIV;
     }
 }
 
