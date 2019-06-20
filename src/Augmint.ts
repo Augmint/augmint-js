@@ -243,12 +243,11 @@ export class Augmint {
     }
 
     public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string) {
-        const lmAddress: string = loan.loanManagerAddress;
         const lmContract: DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(
             AugmintContracts.LoanManager,
-            lmAddress
+            loan.loanManagerAddress
         );
-        const loanManager:LoanManager = new LoanManager(lmContract[0].connect(this.web3), this.ethereumConnection);
+        const loanManager:LoanManager = new LoanManager(lmContract.connect(this.web3), this.ethereumConnection);
         const tokenAddress: string = await loanManager.tokenAddress;
         const tokenContract: DeployedContract<TokenAEur> = this.deployedEnvironment.getContractFromAddress(
             AugmintContracts.TokenAEur,
