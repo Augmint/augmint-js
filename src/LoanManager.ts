@@ -6,7 +6,7 @@ import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE } from "./constants";
 import { EthereumConnection } from "./EthereumConnection";
-import { NEW_FIRST_LOAN_GAS, NEW_LOAN_GAS, PLACE_ORDER_GAS, REPAY_GAS } from "./gas";
+import { COLLECT_BASE_GAS, COLLECT_ONE_GAS, NEW_FIRST_LOAN_GAS, NEW_LOAN_GAS, REPAY_GAS } from "./gas";
 import { ILoanTuple, Loan } from "./Loan";
 import { ILoanProductTuple, LoanProduct } from "./LoanProduct";
 import { Rates } from "./Rates";
@@ -77,31 +77,33 @@ export class LoanManager extends AbstractContract {
         // @ts-ignore  TODO: how to detect better without ts-ignore?
         const isLegacyLoanContract = typeof loanManagerInstance.methods.CHUNK_SIZE === "function";
         const chunkSize = isLegacyLoanContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
-        const loanCount = await loanManagerInstance.methods
+        const loanCount: number = await loanManagerInstance.methods
             .getLoanCountForAddress(userAccount)
             .call()
-            .then(res => parseInt(res, 10));
+            .then((res: string) => parseInt(res, 10));
 
         let loans: Loan[] = [];
 
-        const queryCount = Math.ceil(loanCount / chunkSize);
+        const queryCount: number = Math.ceil(loanCount / chunkSize);
 
-        for (let i = 0; i < queryCount; i++) {
+        for (let i: number = 0; i < queryCount; i++) {
             const loansArray: string[][] = isLegacyLoanContract
                 ? await (loanManagerInstance as LegacyLoanManagerInstanceWithChunkSize).methods
                       .getLoansForAddress(userAccount, i * chunkSize)
                       .call()
                 : await loanManagerInstance.methods.getLoansForAddress(userAccount, i * chunkSize, chunkSize).call();
-            loans = loans.concat(
-                loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address))
-            );
+            loans = loans.concat(loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address)));
         }
 
         return loans;
     }
 
-    public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string, augmintToken: AugmintToken) {
-        const txName = "Repay loan";
+    public repayLoan(
+        loan: Loan,
+        repaymentAmount: Tokens,
+        userAccount: string,
+        augmintToken: AugmintToken
+    ): Transaction {
         const augmintTokenInstance = augmintToken.instance;
 
         const web3Tx: TransactionObject<void> = augmintTokenInstance.methods.transferAndNotify(
@@ -114,7 +116,7 @@ export class LoanManager extends AbstractContract {
             gasLimit: REPAY_GAS,
             from: userAccount
         });
-/*
+        /*
         const tx = augmintTokenInstance.methods
             .transferAndNotify(this.address, repaymentAmount.toString(), loan.id)
             .send({ from: userAccount, gas: REPAY_GAS });
@@ -141,11 +143,49 @@ export class LoanManager extends AbstractContract {
 
  */
     }
-/*
-    public async collectLoans(loans: Loan[], userAccount: string) {}
 
-    public async fetchLoans() {}
-*/
+    public collectLoans(loansToCollect: Loan[], userAccount: string): Transaction {
+        const gasEstimate: number = COLLECT_BASE_GAS + COLLECT_ONE_GAS * loansToCollect.length;
+
+        const loanIdsToCollect: number[] = loansToCollect.map((loan:Loan) => loan.id);
+
+        const web3Tx: TransactionObject<void> = this.instance.methods.collect(loanIdsToCollect);
+
+        return new Transaction(this.ethereumConnection, web3Tx, {
+            gasLimit: gasEstimate,
+            from: userAccount
+        });
+    }
+
+    public async getAllLoans(): Promise<Loan[]> {
+        try {
+            const loanManagerInstance = this.instance;
+            // @ts-ignore  TODO: how to detect better without ts-ignore?
+            const isLegacyLoanContract = typeof loanManagerInstance.methods.CHUNK_SIZE === "function";
+            const chunkSize = isLegacyLoanContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
+
+            const loanCount: number = await this.getLoanCount();
+
+            let loansToCollect: Loan[] = [];
+
+            const queryCount: number = Math.ceil(loanCount / chunkSize);
+            for (let i: number = 0; i < queryCount; i++) {
+                const loansArray: string[][] = isLegacyLoanContract
+                    ? await (loanManagerInstance as LegacyLoanManagerInstanceWithChunkSize).methods
+                          .getLoans(i * chunkSize)
+                          .call()
+                    : await loanManagerInstance.methods.getLoans(i * chunkSize, chunkSize).call();
+                loansToCollect = loansToCollect.concat(
+                    loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address))
+                );
+            }
+
+            return loansToCollect;
+        } catch (error) {
+            throw new Error("fetchAllLoansTx failed.\n" + error);
+        }
+    }
+
     private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
         // @ts-ignore  TODO: how to detect better without ts-ignore?
         const isLegacyLoanContractWithChunkSize: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
