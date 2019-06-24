@@ -298,6 +298,9 @@ export class Augmint {
             currentAddress = loan.loanManagerAddress;
             loans.push(loan);
         }
+        if (loanManager) {
+            result.push(loanManager.collectLoans(loans, userAccount));
+        }
         return result
     }
 }
