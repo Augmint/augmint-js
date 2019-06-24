@@ -38,9 +38,9 @@ export class Loan {
 
         this.loanManagerAddress = loanManagerAddress;
 
-        const maturity = parseInt(configMaturity, 10);
+        const maturity:number = parseInt(configMaturity, 10);
         if (maturity > 0) {
-            const disbursementTime = parseInt(configDisbursementTime, 10);
+            const disbursementTime:number = parseInt(configDisbursementTime, 10);
 
             const state: number = parseInt(configState, 10);
 
@@ -70,7 +70,7 @@ export class Loan {
     }
 
     get isDue(): boolean {
-        return this.state === LOAN_STATES.Open;
+        return this.state === LOAN_STATES.Open && (this.maturity - currentTime() < sevenDays);
     }
 
     get loanStateText(): string {
