@@ -52,7 +52,7 @@
     "typedoc": "0.14.2",
     "typedoc-plugin-sourcefile-url": "1.0.4",
     "typescript": "3.4.3",
-    "wait-on": "3.2.0"
+    "wait-on": "3.3.0"
   },
   "scripts": {
     "clean": "rm -r ./dist ./generated",
