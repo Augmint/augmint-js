@@ -280,12 +280,12 @@ export class Augmint {
     public collectLoans(loansToCollect: Loan[], userAccount: string): Transaction[] {
         let currentAddress: string | null = null;
         let loanManager: LoanManager | null = null;
-        const result:Transaction[] = [];
-        let loans:Loan[] = [];
+        const result: Transaction[] = [];
+        let loans: Loan[] = [];
         loansToCollect.sort((a: Loan, b: Loan) => (a.loanManagerAddress < b.loanManagerAddress ? 1 : -1));
         for (const loan of loansToCollect) {
             if (currentAddress !== loan.loanManagerAddress) {
-                if(currentAddress!==null && loanManager !== null) {
+                if (currentAddress !== null && loanManager !== null) {
                     result.push(loanManager.collectLoans(loans, userAccount));
                 }
                 const contract: DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(
@@ -293,11 +293,15 @@ export class Augmint {
                     loan.loanManagerAddress
                 );
                 loanManager = new LoanManager(contract.connect(this.web3), this.ethereumConnection);
-                loans = []
+                loans = [];
             }
             currentAddress = loan.loanManagerAddress;
             loans.push(loan);
         }
-        return result
+        if (loanManager) {
+            result.push(loanManager.collectLoans(loans, userAccount))
+        }
+
+        return result;
     }
 }
