@@ -1,17 +1,32 @@
 import { Contract } from "web3-eth-contract";
-import { AugmintContracts, LoanManager as LoanManagerInstance } from "../generated/index";
-import { LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286 as LegacyLoanManagerInstanceWithChunkSize } from "../generated/types/LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286";
+import { AugmintContracts, LoanManager as LoanManagerInstance, TokenAEur } from "../generated/index";
+import { LoanManager_ABI_753a73f4b2140507197a8f80bff47b40 } from "../generated/types/LoanManager_ABI_753a73f4b2140507197a8f80bff47b40";
+import { LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286 } from "../generated/types/LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286";
+import { LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb } from "../generated/types/LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE } from "./constants";
+import { AugmintJsError } from "./Errors";
 import { EthereumConnection } from "./EthereumConnection";
 import { COLLECT_BASE_GAS, COLLECT_ONE_GAS, NEW_FIRST_LOAN_GAS, NEW_LOAN_GAS, REPAY_GAS } from "./gas";
 import { ILoanTuple, Loan } from "./Loan";
 import { ILoanProductTuple, LoanProduct } from "./LoanProduct";
-import { Rates } from "./Rates";
+import { IRateInfo } from "./Rates";
 import { Transaction } from "./Transaction";
 import { Tokens, Wei } from "./units";
+
+type LoanManagerMarginLoan = LoanManager_ABI_753a73f4b2140507197a8f80bff47b40; // margin (rinkeby only)
+// type LoanManagerV1 = LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb; // pre margin
+type LoanManagerPreChukSize = LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286; // pre chunk size
+
+function isLoanManagerV0(instance: LoanManagerInstance): instance is LoanManagerPreChukSize {
+    return (instance as LoanManagerPreChukSize).methods.CHUNK_SIZE !== undefined;
+}
+
+function isLoanManagerMarginLoan(instance: LoanManagerInstance): instance is LoanManagerMarginLoan {
+    return (instance as LoanManagerMarginLoan).methods.addExtraCollateral !== undefined;
+}
 
 /**
  * Augmint LoanManager contract class
@@ -19,7 +34,7 @@ import { Tokens, Wei } from "./units";
  * @extends Contract
  */
 export class LoanManager extends AbstractContract {
-    public static contractName = AugmintContracts.LoanManager;
+    public static contractName: string = AugmintContracts.LoanManager;
     public instance: LoanManagerInstance;
     public augmintTokenAddress: Promise<string>;
     public ratesAddress: Promise<string>;
@@ -52,7 +67,7 @@ export class LoanManager extends AbstractContract {
         return this.getProducts(false);
     }
 
-    public async newEthBackedLoan(product: LoanProduct, weiAmount: Wei, userAccount: string): Promise<Transaction> {
+    public async newEthBackedLoan(product: LoanProduct, weiAmount: Wei, userAccount: string, minRate?: IRateInfo): Promise<Transaction> {
         let gasEstimate: number;
         const loanCount: number = await this.getLoanCount();
 
@@ -62,7 +77,15 @@ export class LoanManager extends AbstractContract {
             gasEstimate = NEW_LOAN_GAS;
         }
 
-        const web3Tx: TransactionObject<void> = this.instance.methods.newEthBackedLoan(product.id);
+        let web3Tx: TransactionObject<void>;
+        if(isLoanManagerMarginLoan(this.instance)) {
+            if(!minRate) {
+                throw new AugmintJsError('missing min rate in loanmanager!')
+            }
+            web3Tx = this.instance.methods.newEthBackedLoan(product.id, minRate.rate.toNumber());
+        } else {
+            web3Tx = this.instance.methods.newEthBackedLoan(product.id)
+        }
 
         return new Transaction(this.ethereumConnection, web3Tx, {
             gasLimit: gasEstimate,
@@ -72,11 +95,8 @@ export class LoanManager extends AbstractContract {
     }
 
     public async getLoansForAccount(userAccount: string): Promise<Loan[]> {
-        const loanManagerInstance = this.instance;
-        // TODO: resolve timing of loanManager refresh in order to get loanCount from loanManager:
-        // @ts-ignore  TODO: how to detect better without ts-ignore?
-        const isLegacyLoanContract = typeof loanManagerInstance.methods.CHUNK_SIZE === "function";
-        const chunkSize = isLegacyLoanContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
+        const loanManagerInstance:LoanManagerInstance = this.instance;
+        const chunkSize: number = isLoanManagerV0(loanManagerInstance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
         const loanCount: number = await loanManagerInstance.methods
             .getLoanCountForAddress(userAccount)
             .call()
@@ -87,8 +107,8 @@ export class LoanManager extends AbstractContract {
         const queryCount: number = Math.ceil(loanCount / chunkSize);
 
         for (let i: number = 0; i < queryCount; i++) {
-            const loansArray: string[][] = isLegacyLoanContract
-                ? await (loanManagerInstance as LegacyLoanManagerInstanceWithChunkSize).methods
+            const loansArray: string[][] = isLoanManagerV0(loanManagerInstance)
+                ? await loanManagerInstance.methods
                       .getLoansForAddress(userAccount, i * chunkSize)
                       .call()
                 : await loanManagerInstance.methods.getLoansForAddress(userAccount, i * chunkSize, chunkSize).call();
@@ -104,7 +124,7 @@ export class LoanManager extends AbstractContract {
         userAccount: string,
         augmintToken: AugmintToken
     ): Transaction {
-        const augmintTokenInstance = augmintToken.instance;
+        const augmintTokenInstance:TokenAEur = augmintToken.instance;
 
         const web3Tx: TransactionObject<void> = augmintTokenInstance.methods.transferAndNotify(
             this.address,
@@ -159,10 +179,9 @@ export class LoanManager extends AbstractContract {
 
     public async getAllLoans(): Promise<Loan[]> {
         try {
-            const loanManagerInstance = this.instance;
+            const loanManagerInstance:LoanManagerInstance = this.instance;
             // @ts-ignore  TODO: how to detect better without ts-ignore?
-            const isLegacyLoanContract = typeof loanManagerInstance.methods.CHUNK_SIZE === "function";
-            const chunkSize = isLegacyLoanContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
+            const chunkSize:number = isLoanManagerV0(loanManagerInstance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
 
             const loanCount: number = await this.getLoanCount();
 
@@ -170,10 +189,8 @@ export class LoanManager extends AbstractContract {
 
             const queryCount: number = Math.ceil(loanCount / chunkSize);
             for (let i: number = 0; i < queryCount; i++) {
-                const loansArray: string[][] = isLegacyLoanContract
-                    ? await (loanManagerInstance as LegacyLoanManagerInstanceWithChunkSize).methods
-                          .getLoans(i * chunkSize)
-                          .call()
+                const loansArray: string[][] = isLoanManagerV0(loanManagerInstance)
+                    ? await loanManagerInstance.methods.getLoans(i * chunkSize).call()
                     : await loanManagerInstance.methods.getLoans(i * chunkSize, chunkSize).call();
                 loansToCollect = loansToCollect.concat(
                     loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address))
@@ -187,9 +204,7 @@ export class LoanManager extends AbstractContract {
     }
 
     private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
-        // @ts-ignore  TODO: how to detect better without ts-ignore?
-        const isLegacyLoanContractWithChunkSize: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
-        const chunkSize: number = isLegacyLoanContractWithChunkSize ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
+        const chunkSize: number = isLoanManagerV0(this.instance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
 
         const productCount: number = await this.instance.methods
             .getProductCount()
@@ -200,10 +215,8 @@ export class LoanManager extends AbstractContract {
         const queryCount: number = Math.ceil(productCount / chunkSize);
 
         for (let i: number = 0; i < queryCount; i++) {
-            const productTuples: ILoanProductTuple[] = isLegacyLoanContractWithChunkSize
-                ? ((await (this.instance as LegacyLoanManagerInstanceWithChunkSize).methods
-                      .getProducts(i * chunkSize)
-                      .call()) as ILoanProductTuple[])
+            const productTuples: ILoanProductTuple[] = isLoanManagerV0(this.instance)
+                ? ((await this.instance.methods.getProducts(i * chunkSize).call()) as ILoanProductTuple[])
                 : ((await this.instance.methods.getProducts(i * chunkSize, chunkSize).call()) as ILoanProductTuple[]);
 
             const productInstances: LoanProduct[] = productTuples
