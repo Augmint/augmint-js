@@ -299,9 +299,8 @@ export class Augmint {
             loans.push(loan);
         }
         if (loanManager) {
-            result.push(loanManager.collectLoans(loans, userAccount))
+            result.push(loanManager.collectLoans(loans, userAccount));
         }
-
-        return result;
+        return result
     }
 }
