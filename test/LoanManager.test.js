@@ -175,14 +175,12 @@ describe("LoanManager connection", () => {
     });
 
     it("should connect to supported legacy LoanManager contracts", () => {
-        const legacyAddresses = Augmint.constants.SUPPORTED_LEGACY_LOANMANAGERS[augmint.deployedEnvironment.name];
-
-        const legacyContracts = augmint.getLegacyLoanManagers(legacyAddresses);
-
-        const connectedAddresses = legacyContracts.map(leg => leg.address.toLowerCase());
-        const lowerCaseLegacyAddresses = legacyAddresses.map(addr => addr.toLowerCase());
-
-        assert.deepEqual(connectedAddresses, lowerCaseLegacyAddresses);
+        const checkSumFun = augmint.ethereumConnection.web3.utils.toChecksumAddress;
+        const legacyAddresses = Augmint.constants.SUPPORTED_LEGACY_LOANMANAGERS[augmint.deployedEnvironment.name]
+            .map(address => checkSumFun(address));
+        const connectedAddresses = augmint.getLegacyLoanManagers(legacyAddresses)
+            .map(contract => checkSumFun(contract.address));
+        assert.deepEqual(connectedAddresses, legacyAddresses);
     });
 });
 
