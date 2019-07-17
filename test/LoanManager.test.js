@@ -9,36 +9,62 @@ const { AugmintJsError } = Augmint.Errors;
 const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
 
+const DAY_IN_SECS = 86400;
+
 if (config.LOG) {
     utils.logger.level = config.LOG;
 }
 
+function calculateInterestRatePa(termInSecs, discountRate) {
+    const termInDays = termInSecs / DAY_IN_SECS;
+    const irpa = (1000000 / discountRate - 1) * (365 / termInDays);
+    return Math.round(irpa * 10000) / 10000;
+}
+
+function calculateAdjustedMinDisbursedAmount(minDisbursedAmount) {
+    return Tokens.of(minDisbursedAmount * Augmint.constants.MIN_LOAN_AMOUNT_ADJUSTMENT.toNumber());
+}
+
+// LoanManager.addLoanProduct:
+// uint32 term                      term (in sec)
+// uint32 discountRate              discountRate
+// uint32 initialCollateralRatio    initialCollateralRatio (ppm)
+// uint minDisbursedAmount          minDisbursedAmount (token)
+// uint32 defaultingFeePt           defaultingFeePt (ppm)
+// bool isActive                    isActive
+// uint32 minCollateralRatio        minCollateralRatio (ppm)
+
 function mockProd(
+    // loanproduct id (zero based index)
     id,
-    minDisbursedAmount,
+
+    // loanproduct properties from contract
     termInSecs,
     discountRate,
-    collateralRatio,
+    initialCollateralRatio,
+    minDisbursedAmount,
     defaultingFeePt,
-    maxLoanAmount,
     isActive,
-    interestRatePa,
-    adjustedMinDisbursedAmount,
-    minCollateralRatio
+    minCollateralRatio,
+
+    // other properties, not from the loanproduct
+    maxLoanAmount,
+    loanManagerAddress
 ) {
+    // Note: you have to return them in this weird order, as deepEqual will assert this specific order.
     return {
         id,
         termInSecs,
         discountRate: Ratio.of(discountRate),
-        interestRatePa,
-        collateralRatio: Ratio.of(collateralRatio),
+        interestRatePa: calculateInterestRatePa(termInSecs, Ratio.of(discountRate)),
+        collateralRatio: Ratio.of(initialCollateralRatio),  // FIXME: it is now called "initialCollateralRatio"
         minDisbursedAmount: Tokens.of(minDisbursedAmount),
-        adjustedMinDisbursedAmount: Tokens.of(adjustedMinDisbursedAmount),
+        adjustedMinDisbursedAmount: calculateAdjustedMinDisbursedAmount(minDisbursedAmount),
         maxLoanAmount: Tokens.of(maxLoanAmount),
         defaultingFeePt: Ratio.of(defaultingFeePt),
-        isActive,
-        loanManagerAddress: undefined,
-        minCollateralRatio: Ratio.of(minCollateralRatio)
+        isActive: isActive,
+        minCollateralRatio: Ratio.of(minCollateralRatio),
+        loanManagerAddress: loanManagerAddress,
     };
 }
 
@@ -46,10 +72,10 @@ describe("LoanProduct", () => {
     const LoanProduct = Augmint.LoanManager.LoanProduct;
 
     it("should create a LoanProduct from a tuple", async () => {
-        const expectedProd = mockProd(0, 10.00, 31536000, 0.8547, 0.55, 0.05, 218.01, true, 0.17, 12.50,0);
+        const expectedProd = mockProd(0, 365 * DAY_IN_SECS, .8547, 1.55, 10.00, .05, true, 1.5, 218.01);
         // Solidity LoanManager contract .getProducts() tuple:
-        // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
-        const lp = new LoanProduct(["0", "1000", "31536000", "854700", "550000", "50000", "21801", "1"]);
+        // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
+        const lp = new LoanProduct(["0", "1000", "31536000", "854700", "1550000", "50000", "21801", "1", "1500000"]);
         assert.deepEqual(normalizeBN(lp), expectedProd);
     });
 
@@ -145,7 +171,7 @@ describe("LoanManager connection", () => {
 
     it("should connect to latest contract", async () => {
         const loanManager = augmint.latestContracts.LoanManager;
-        assert.equal(loanManager.deployedAddress.toLowerCase(), "0x213135c85437C23bC529A2eE9c2980646c332fCB".toLowerCase());
+        assert.equal(augmint.ethereumConnection.web3.utils.toChecksumAddress(loanManager.deployedAddress), "0x213135c85437C23bC529A2eE9c2980646c332fCB");
     });
 
     it("should connect to supported legacy LoanManager contracts", () => {
@@ -160,46 +186,58 @@ describe("LoanManager connection", () => {
     });
 });
 
-// TODO: check the max loan amount: is it valid and came from the monetary supervisor
 describe("LoanManager getters", () => {
-    const EXPECTED_ALL_PRODUCTS = [
-        // id,minDisbursedAmount,termInSecs,discountRate,collateralRatio,defaultingFeePt,maxLoanAmount,isActive,interestRatePa,adjustedMinDisbursedAmount
-        mockProd(0, 10.00, 31536000, .854701, .55, .05, 217.97, true,    0.17, 12.50,1.5),
-//              [ '0',                 '1000',          '31536000',           '854701',       '550000',          '50000',              '21797',         '1',             '1500000' ]
-        mockProd(1, 10.00, 15552000, .924753, .55, .05, 217.97, true,   0.165, 12.50, 1.5),
-//        [ '1', '1000', '15552000', '924753', '550000', '50000', '21797', '1', '1500000' ]
-        mockProd(2, 10.00, 7776000,  .962046, .60, .05, 217.97, false,   0.16, 12.50, 1.2),
-//        [ '2', '1000', '7776000', '962046', '600000', '50000', '21797', '0', '1200000' ]
-        mockProd(3, 10.00, 5184000,  .975154, .60, .05, 217.97, true,   0.155, 12.50, 1.2),
-//        [ '3', '1000', '5184000', '975154', '600000', '50000', '21797', '1', '1200000' ]
-        mockProd(4, 10.00, 2592000,  .987822, .60, .05, 217.97, true,    0.15, 12.50, 1.2),
-//        [ '4', '1000', '2592000', '987822', '600000', '50000', '21797', '1', '1200000' ]
-        mockProd(5, 10.00, 1209600,  .994280, .60, .05, 217.97, false,   0.15, 12.50, 1.2),
-//        [ '5', '1000', '1209600', '994280', '600000', '50000', '21797', '0', '1200000' ]
-        mockProd(6, 10.00, 604800,   .997132, .60, .05, 217.97, true,    0.15, 12.50, 1.2),
-//        [ '6', '1000', '604800', '997132', '600000', '50000', '21797', '1', '1200000' ]
-        mockProd(7, 20.00, 3600,     .999998, .98, .05, 217.97, true,  0.0175, 25.00, 1.01),
-//        [ '7', '2000', '3600', '999998', '980000', '50000', '21797', '1', '1010000' ]
-        mockProd(8, 30.00, 1,        .999999, .99, .05, 217.97, true,  31.536, 37.50, 1.01)
-//      [ '8', '3000', '1', '999999', '990000', '50000', '21797', '1', '1010000' ]
- ]
-;
 
-    const EXPECTED_ACTIVE_PRODUCTS = EXPECTED_ALL_PRODUCTS.filter(p => p.isActive);
+    // TODO: check the max loan amount: is it valid and came from the monetary supervisor
+
+    // localTest_initialSetup:
+    // =======================
+    // // add test loan Products
+    // // term (in sec), discountRate, initialCollateralRatio (ppm), minDisbursedAmount (token), defaultingFeePt (ppm), isActive, minCollateralRatio (ppm)
+    // _loanManager.addLoanProduct(365 days, 854701, 1818182, 1000, 50000, true, 1500000); //  17% p.a., (collateral ratio: initial = ~181%, minimum = 150%)
+    // _loanManager.addLoanProduct(180 days, 924753, 1818182, 1000, 50000, true, 1500000); // 16.5% p.a., (collateral ratio: initial = ~181%, minimum = 150%)
+
+    // _loanManager.addLoanProduct(90 days, 962046, 1666667, 1000, 50000, true, 1200000); // 16%. p.a., (collateral ratio: initial = ~166%, minimum = 120%)
+    // _loanManager.addLoanProduct(60 days, 975154, 1666667, 1000, 50000, true, 1200000); //  15.5% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
+    // _loanManager.addLoanProduct(30 days, 987822, 1666667, 1000, 50000, true, 1200000); //  15% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
+    // _loanManager.addLoanProduct(14 days, 994280, 1666667, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
+    // _loanManager.addLoanProduct(7 days, 997132, 1666667, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
+
+    // _loanManager.addLoanProduct(1 hours, 999998, 1020408, 2000, 50000, true, 1010000); // due in 1hr for testing repayments ~1.75% p.a., (collateral ratio: initial = ~102%, minimum = 101%)
+    // _loanManager.addLoanProduct(1 seconds, 999999, 1010101, 3000, 50000, true, 1010000); // defaults in 1 secs for testing ~3153.6% p.a., (collateral ratio: initial = ~101.01%, minimum = 101%)
+
+    function createMockProducts(loanManagerAddress) {
+        const maxLoanAmount = 218.00;   // where did this come from?
+        return [
+            mockProd(0, 365 * DAY_IN_SECS, .854701, 1.818182, 10.00, .05, true, 1.5, maxLoanAmount, loanManagerAddress),
+            mockProd(1, 180 * DAY_IN_SECS, .924753, 1.818182, 10.00, .05, true, 1.5, maxLoanAmount, loanManagerAddress),
+            mockProd(2, 90 * DAY_IN_SECS, .962046, 1.666667, 10.00, .05, false, 1.2, maxLoanAmount, loanManagerAddress),    // will be disabled by before()
+            mockProd(3, 60 * DAY_IN_SECS, .975154, 1.666667, 10.00, .05, true, 1.2, maxLoanAmount, loanManagerAddress),
+            mockProd(4, 30 * DAY_IN_SECS, .987822, 1.666667, 10.00, .05, true, 1.2, maxLoanAmount, loanManagerAddress),
+            mockProd(5, 14 * DAY_IN_SECS, .994280, 1.666667, 10.00, .05, false, 1.2, maxLoanAmount, loanManagerAddress),    // will be disabled by before()
+            mockProd(6, 7 * DAY_IN_SECS, .997132, 1.666667, 10.00, .05, true, 1.2, maxLoanAmount, loanManagerAddress),
+            mockProd(7, 60 * 60, .999998, 1.020408, 20.00, .05, true, 1.01, maxLoanAmount, loanManagerAddress),
+            mockProd(8, 1, .999999, 1.010101, 30.00, .05, true, 1.01, maxLoanAmount, loanManagerAddress)
+        ]
+    }
 
     let augmint;
     let accounts;
     let loanManager;
     let snapshotId;
 
+    let EXPECTED_ALL_PRODUCTS;
+    let EXPECTED_ACTIVE_PRODUCTS;
+
     before(async () => {
         augmint = await Augmint.create(config);
-        const ethereumConnection = augmint.ethereumConnection;
-        accounts = ethereumConnection.accounts;
-        const loanManagerClass = Augmint.LoanManager;
+        accounts = augmint.ethereumConnection.accounts;
         const loanManagerContract = augmint.latestContracts.LoanManager;
+        loanManager = new Augmint.LoanManager(loanManagerContract.connect(augmint.ethereumConnection.web3), augmint.ethereumConnection);
+        const loanManagerAddress = augmint.ethereumConnection.web3.utils.toChecksumAddress(loanManagerContract.deployedAddress);
 
-        loanManager = new loanManagerClass(loanManagerContract.connect(ethereumConnection.web3), ethereumConnection)
+        EXPECTED_ALL_PRODUCTS = createMockProducts(loanManagerAddress);
+        EXPECTED_ACTIVE_PRODUCTS = EXPECTED_ALL_PRODUCTS.filter(p => p.isActive);
 
         snapshotId = await takeSnapshot(augmint.ethereumConnection.web3);
         await Promise.all([
