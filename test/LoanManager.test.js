@@ -144,8 +144,8 @@ describe("LoanManager connection", () => {
     });
 
     it("should connect to latest contract", async () => {
-        const loanManager = augmint.loanManager;
-        assert.equal(loanManager.address, "0x213135c85437C23bC529A2eE9c2980646c332fCB");
+        const loanManager = augmint.latestContracts.LoanManager;
+        assert.equal(loanManager.deployedAddress.toLowerCase(), "0x213135c85437C23bC529A2eE9c2980646c332fCB".toLowerCase());
     });
 
     it("should connect to supported legacy LoanManager contracts", () => {
