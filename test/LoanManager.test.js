@@ -196,7 +196,7 @@ describe("LoanManager getters", () => {
         augmint = await Augmint.create(config);
         const ethereumConnection = augmint.ethereumConnection;
         accounts = ethereumConnection.accounts;
-        const loanManagerClass = augmint.LoanManager;
+        const loanManagerClass = Augmint.LoanManager;
         const loanManagerContract = augmint.latestContracts.LoanManager;
 
         loanManager = new loanManagerClass(loanManagerContract.connect(ethereumConnection.web3), ethereumConnection)
