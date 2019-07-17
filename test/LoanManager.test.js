@@ -194,8 +194,12 @@ describe("LoanManager getters", () => {
 
     before(async () => {
         augmint = await Augmint.create(config);
-        accounts = augmint.ethereumConnection.accounts;
-        loanManager = augmint.loanManager;
+        const ethereumConnection = augmint.ethereumConnection;
+        accounts = ethereumConnection.accounts;
+        const loanManagerClass = augmint.LoanManager;
+        const loanManagerContract = augmint.latestContracts.LoanManager;
+
+        loanManager = new loanManagerClass(loanManagerContract.connect(ethereumConnection.web3), ethereumConnection)
 
         snapshotId = await takeSnapshot(augmint.ethereumConnection.web3);
         await Promise.all([
