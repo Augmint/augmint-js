@@ -67,7 +67,7 @@ export class LoanManager extends AbstractContract {
         return this.getProducts(false);
     }
 
-    public async newEthBackedLoan(product: LoanProduct, weiAmount: Wei, userAccount: string, minRate?: IRateInfo): Promise<Transaction> {
+    public async newEthBackedLoan(product: LoanProduct, weiAmount: Wei, userAccount: string, minRate?: Tokens): Promise<Transaction> {
         let gasEstimate: number;
         const loanCount: number = await this.getLoanCount();
 
@@ -82,7 +82,7 @@ export class LoanManager extends AbstractContract {
             if(!minRate) {
                 throw new AugmintJsError('missing min rate in loanmanager!')
             }
-            web3Tx = this.instance.methods.newEthBackedLoan(product.id, minRate.rate.toNumber());
+            web3Tx = this.instance.methods.newEthBackedLoan(product.id, minRate.toNumber());
         } else {
             web3Tx = this.instance.methods.newEthBackedLoan(product.id)
         }
