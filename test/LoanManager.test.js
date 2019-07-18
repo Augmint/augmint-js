@@ -153,8 +153,16 @@ describe("LoanProduct", () => {
     it("should create a LoanProduct from a tuple", async () => {
         const expectedProd = mockProd(0, 365 * DAY_IN_SECS, .8547, 1.55, 10.00, .05, true, 1.5, 218.01);
         // Solidity LoanManager contract .getProducts() tuple:
-        // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
+        // [id, minDisbursedAmount, term, discountRate, initialCollateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
         const lp = new LoanProduct(["0", "1000", "31536000", "854700", "1550000", "50000", "21801", "1", "1500000"]);
+        assert.deepEqual(normalizeBN(lp), expectedProd);
+    });
+
+    it("should create a legacy LoanProduct from a tuple", async () => {
+        const expectedProd = mockLegacyProd(0, 365 * DAY_IN_SECS, .8547, .645161, 10.00, .05, true, 218.01);
+        // Solidity LoanManager contract .getProducts() legacy tuple:
+        // [id, minDisbursedAmount, term, discountRate, collateralRatio (inverted), defaultingFeePt, maxLoanAmount, isActive ]
+        const lp = new LoanProduct(["0", "1000", "31536000", "854700", "645161", "50000", "21801", "1"]);
         assert.deepEqual(normalizeBN(lp), expectedProd);
     });
 
