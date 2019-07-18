@@ -203,6 +203,13 @@ export class LoanManager extends AbstractContract {
         }
     }
 
+    public getLoanCount(): Promise<number> {
+        return this.instance.methods
+            .getLoanCount()
+            .call()
+            .then((res: string) => parseInt(res, 10));
+    }
+
     private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
         const chunkSize: number = isLoanManagerV0(this.instance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
 
@@ -229,10 +236,4 @@ export class LoanManager extends AbstractContract {
         return products.filter((p: LoanProduct) => p.isActive || !onlyActive);
     }
 
-    private getLoanCount(): Promise<number> {
-        return this.instance.methods
-            .getLoanCount()
-            .call()
-            .then((res: string) => parseInt(res, 10));
-    }
 }

@@ -25,6 +25,11 @@ interface IDeployedEnvironmentStub {
     [propName: string]: IDeploymentItem[];
 }
 
+interface ILoanCount {
+    loanManagerAddress: string
+    loanCount: number
+}
+
 export class Augmint {
     public static async create(connectionOptions: IOptions, environment?: DeployedEnvironment): Promise<Augmint> {
         const ethereumConnection: EthereumConnection = new EthereumConnection(connectionOptions);
@@ -53,7 +58,6 @@ export class Augmint {
     private _token: AugmintToken;
     private _rates: Rates;
     private _exchange: Exchange;
-    private _loanManager: LoanManager;
 
     private constructor(ethereumConnection: EthereumConnection, environment?: DeployedEnvironment) {
         this.ethereumConnection = ethereumConnection;
@@ -302,5 +306,19 @@ export class Augmint {
             result.push(loanManager.collectLoans(loans, userAccount));
         }
         return result
+    }
+
+    public async getLoanCounts(): Promise<ILoanCount[]> {
+        const loanManagerContracts: Array<DeployedContract<LoanManagerInstance>> = this.deployedEnvironment.contracts[AugmintContracts.LoanManager];
+        const result:ILoanCount[] = [];
+        for (const contract of loanManagerContracts) {
+            const loanManager:LoanManager = new LoanManager(contract.connect(this.web3), this.ethereumConnection);
+            const loanCount:number = await loanManager.getLoanCount();
+            result.push({
+                loanManagerAddress: contract.deployedAddress,
+                loanCount
+            })
+        }
+        return result;
     }
 }
