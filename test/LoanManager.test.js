@@ -98,12 +98,12 @@ function mockProd(
         termInSecs,
         discountRate: Ratio.of(discountRate),
         interestRatePa: calculateInterestRatePa(termInSecs, Ratio.of(discountRate)),
-        collateralRatio: Ratio.of(initialCollateralRatio),  // FIXME: it is now called "initialCollateralRatio"
         minDisbursedAmount: Tokens.of(minDisbursedAmount),
         adjustedMinDisbursedAmount: calculateAdjustedMinDisbursedAmount(minDisbursedAmount),
         maxLoanAmount: Tokens.of(maxLoanAmount),
         defaultingFeePt: Ratio.of(defaultingFeePt),
         isActive: isActive,
+        initialCollateralRatio: Ratio.of(initialCollateralRatio),
         minCollateralRatio: Ratio.of(minCollateralRatio),
         loanManagerAddress: loanManagerAddress,
     };
@@ -128,7 +128,6 @@ function mockLegacyProd(
         interestRatePa: calculateInterestRatePa(termInSecs, Ratio.of(discountRate)),
         collateralRatio: Ratio.of(collateralRatio),
         minDisbursedAmount: Tokens.of(minDisbursedAmount),
-        minCollateralRatio: Ratio.of(0),  // FIXME: should not be here, there was no such property in that version
         adjustedMinDisbursedAmount: calculateAdjustedMinDisbursedAmount(minDisbursedAmount),
         maxLoanAmount: Tokens.of(maxLoanAmount),
         defaultingFeePt: Ratio.of(defaultingFeePt),
