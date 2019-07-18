@@ -30,7 +30,10 @@ export class LoanProduct {
 
     public readonly isActive: boolean;
     public readonly loanManagerAddress: string;
+
+    public readonly initialCollateralRatio: Ratio;
     public readonly minCollateralRatio: Ratio;
+
 
     constructor(loanProductTuple: ILoanProductTuple, loanManagerAddress: string) {
         // Solidity LoanManager contract .getProducts() tuple:
@@ -71,14 +74,25 @@ export class LoanProduct {
         this.termInSecs = termInSecs;
         this.discountRate = discountRate;
         this.interestRatePa = interestRatePa;
-        this.collateralRatio = Ratio.parse(sCollateralRatio);
         this.minDisbursedAmount = minDisbursedAmount;
         this.adjustedMinDisbursedAmount = adjustedMinDisbursedAmount;
         this.maxLoanAmount = Tokens.parse(sMaxLoanAmount);
         this.defaultingFeePt = Ratio.parse(sDefaultingFeePt);
         this.isActive = sIsActive === "1";
-        this.minCollateralRatio = Ratio.parse(sMinCollateralRatio || '0');
+
+        if(sMinCollateralRatio) {
+            this.initialCollateralRatio = Ratio.parse(sCollateralRatio);
+            this.minCollateralRatio = Ratio.parse(sMinCollateralRatio);
+        } else {
+            this.collateralRatio = Ratio.parse(sCollateralRatio);
+        }
+
+
         this.loanManagerAddress = loanManagerAddress;
+    }
+
+    get isMarginLoan(): boolean {
+        return !!(this.minCollateralRatio && this.initialCollateralRatio)
     }
 
     public calculateLoanFromCollateral(collateralAmount: Wei, ethFiatRate: Tokens): ILoanValues {
