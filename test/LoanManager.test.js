@@ -314,13 +314,11 @@ describe("LoanManager getters", () => {
         assert.deepEqual(normalizeBN(products), EXPECTED_ACTIVE_PRODUCTS);
     });
 
-    // FIXME: legacy loanmanager returns new loanproduct type, not legacy
     it("should return all legacy loan products", async () => {
         const products = await legacyLoanManager.getAllProducts();
         assert.deepEqual(normalizeBN(products), EXPECTED_ALL_LEGACY_PRODUCTS);
     });
 
-    // FIXME: legacy loanmanager returns new loanproduct type, not legacy
     it("should return active legacy loan products", async () => {
         const products = await legacyLoanManager.getActiveProducts();
         assert.deepEqual(normalizeBN(products), EXPECTED_ACTIVE_LEGACY_PRODUCTS);
