@@ -250,13 +250,13 @@ export class Augmint {
         return loanManager.repayLoan(loan, repaymentAmount, userAccount, token);
     }
 
-    public async newEthBackedLoan(loanProduct: LoanProduct, weiAmount: Wei, userAccount: string): Promise<Transaction> {
+    public async newEthBackedLoan(loanProduct: LoanProduct, weiAmount: Wei, userAccount: string, minRate?:Tokens): Promise<Transaction> {
         const lmContract: DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(
             AugmintContracts.LoanManager,
             loanProduct.loanManagerAddress
         );
         const loanManager: LoanManager = new LoanManager(lmContract.connect(this.web3), this.ethereumConnection);
-        return loanManager.newEthBackedLoan(loanProduct, weiAmount, userAccount);
+        return loanManager.newEthBackedLoan(loanProduct, weiAmount, userAccount, minRate);
     }
 
     public async getAllLoans(): Promise<Loan[]> {
