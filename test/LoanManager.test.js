@@ -128,6 +128,7 @@ function mockLegacyProd(
         interestRatePa: calculateInterestRatePa(termInSecs, Ratio.of(discountRate)),
         collateralRatio: Ratio.of(collateralRatio),
         minDisbursedAmount: Tokens.of(minDisbursedAmount),
+        minCollateralRatio: Ratio.of(0),  // FIXME: should not be here, there was no such property in that version
         adjustedMinDisbursedAmount: calculateAdjustedMinDisbursedAmount(minDisbursedAmount),
         maxLoanAmount: Tokens.of(maxLoanAmount),
         defaultingFeePt: Ratio.of(defaultingFeePt),
@@ -315,13 +316,13 @@ describe("LoanManager getters", () => {
     });
 
     // FIXME: legacy loanmanager returns new loanproduct type, not legacy
-    it.skip("should return all legacy loan products", async () => {
+    it("should return all legacy loan products", async () => {
         const products = await legacyLoanManager.getAllProducts();
         assert.deepEqual(normalizeBN(products), EXPECTED_ALL_LEGACY_PRODUCTS);
     });
 
     // FIXME: legacy loanmanager returns new loanproduct type, not legacy
-    it.skip("should return active legacy loan products", async () => {
+    it("should return active legacy loan products", async () => {
         const products = await legacyLoanManager.getActiveProducts();
         assert.deepEqual(normalizeBN(products), EXPECTED_ACTIVE_LEGACY_PRODUCTS);
     });
