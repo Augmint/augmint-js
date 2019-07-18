@@ -64,7 +64,7 @@ function createLegacyMockProducts(augmint, loanManager) {
     const maxLoanAmount = 218.00;
     return [
         mockLegacyProd(0, 1, .999999, .990000, 10.00, .05, true, maxLoanAmount, loanManagerAddress),
-        mockLegacyProd(1, 60 * 60, .999989, .980000, 10.00, .05, true, maxLoanAmount, loanManagerAddress),    // will be disabled by before()
+        mockLegacyProd(1, 60 * 60, .999989, .980000, 10.00, .05, false, maxLoanAmount, loanManagerAddress),    // will be disabled by before()
         mockLegacyProd(2, 365 * DAY_IN_SECS, .860000, .550000, 10.00, .05, true, maxLoanAmount, loanManagerAddress)
     ];
 }
