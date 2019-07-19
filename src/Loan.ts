@@ -8,7 +8,14 @@ const threeDays: number = aDay * 3;
 
 const currentTime: () => number = (): number => Math.floor(Date.now() / 1000);
 
+/*
+// [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime, loanAmount, interestAmount]
 export type ILoanTuple = [string, string, string, string, string, string, string, string, string, string];
+*/
+
+// [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime, loanAmount, interestAmount, marginCallRate, isCollectable]
+export type ILoanTuple = [string, string, string, string, string, string, string, string, string, string, string, string];
+
 export class Loan {
     public readonly id: number;
     public readonly collateralAmount: Wei;
@@ -21,6 +28,8 @@ export class Loan {
     public readonly loanAmount: Tokens;
     public readonly repaymentAmount: Tokens;
     public readonly loanManagerAddress: string;
+    public readonly marginCallRate: Tokens;
+    private readonly _isCollectable: boolean;
 
     constructor(loan: ILoanTuple, loanManagerAddress: string) {
         const [
@@ -33,7 +42,9 @@ export class Loan {
             configMaturity,
             configDisbursementTime,
             configLoanAmount,
-            configInterestAmount
+            configInterestAmount,
+            configMarginCallRate,
+            configIsCollectable
         ]: ILoanTuple = loan;
 
         this.loanManagerAddress = loanManagerAddress;
@@ -54,7 +65,17 @@ export class Loan {
             this.interestAmount = Tokens.parse(configInterestAmount);
             this.loanAmount = Tokens.parse(configLoanAmount);
             this.repaymentAmount = Tokens.parse(configRepaymentAmount);
+
+            if(configMarginCallRate) {
+                this.marginCallRate = Tokens.parse(configMarginCallRate);
+                this._isCollectable = configIsCollectable === '1';
+            }
         }
+    }
+
+
+    get isMarginLoan(): boolean {
+        return !!this.marginCallRate
     }
 
     get term(): number {
@@ -66,7 +87,7 @@ export class Loan {
     }
 
     get isCollectable(): boolean {
-        return this.state === LOAN_STATES.Defaulted;
+        return this.isMarginLoan ? this._isCollectable : this.state === LOAN_STATES.Defaulted;
     }
 
     get isDue(): boolean {
