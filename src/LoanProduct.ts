@@ -95,9 +95,10 @@ export class LoanProduct {
         return !!(this.minCollateralRatio && this.initialCollateralRatio)
     }
 
+    // Note: "disbursedAmount" is the loanAmount
     public calculateLoanFromCollateral(collateralAmount: Wei, ethFiatRate: Tokens): ILoanValues {
         const tokenValue: Tokens = collateralAmount.toTokens(ethFiatRate);
-        const repaymentAmount: Tokens = tokenValue.mul(this.collateralRatio);
+        const repaymentAmount: Tokens = tokenValue.div(this.getInitialCollateralRatio());
         const disbursedAmount: Tokens = repaymentAmount.mul(this.discountRate);
         const interestAmount: Tokens = repaymentAmount.sub(disbursedAmount);
 
@@ -113,10 +114,11 @@ export class LoanProduct {
         };
     }
 
+    // Note: "disbursedAmount" is the loanAmount
     public calculateLoanFromDisbursedAmount(disbursedAmount: Tokens, ethFiatRate: Tokens): ILoanValues {
         const repaymentAmount: Tokens = disbursedAmount.div(this.discountRate);
 
-        const collateralValueInTokens: Tokens = repaymentAmount.div(this.collateralRatio);
+        const collateralValueInTokens: Tokens = repaymentAmount.mul(this.getInitialCollateralRatio());
         const collateralAmount: Wei = collateralValueInTokens.toWei(ethFiatRate);
 
         const repayBefore: Date = new Date();
@@ -131,5 +133,9 @@ export class LoanProduct {
         };
 
         return result;
+    }
+
+    public getInitialCollateralRatio(): Ratio {
+        return this.isMarginLoan ? this.initialCollateralRatio : Ratio.of(1).div(this.collateralRatio);
     }
 }
