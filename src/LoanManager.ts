@@ -82,7 +82,7 @@ export class LoanManager extends AbstractContract {
             if(!minRate) {
                 throw new AugmintJsError('missing min rate in loanmanager!')
             }
-            web3Tx = this.instance.methods.newEthBackedLoan(product.id, minRate.amount.toString());
+            web3Tx = this.instance.methods.newEthBackedLoan(product.id, minRate.toString());
         } else {
             web3Tx = this.instance.methods.newEthBackedLoan(product.id)
         }
