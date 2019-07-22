@@ -321,4 +321,14 @@ export class Augmint {
         }
         return result;
     }
+
+    public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string ): Transaction | undefined {
+        const lmContract: DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(
+            AugmintContracts.LoanManager,
+            loan.loanManagerAddress
+        );
+        const loanManager: LoanManager = new LoanManager(lmContract.connect(this.web3), this.ethereumConnection);
+        return loanManager.addExtraCollateral(loan, weiAmount, userAccount)
+    }
+
 }
