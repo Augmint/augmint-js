@@ -30,14 +30,36 @@ abstract class FixedPoint {
         return this.create(this.amount.sub(other.amount));
     }
 
+    // rounding mode: floor
     public mul(ratio: Ratio): this {
         this.check(ratio, Ratio);
         return this.create(this.amount.mul(ratio.amount).div(Ratio.DIV_BN));
     }
 
+    // rounding mode: round
+    public mulRound(ratio: Ratio): this {
+        this.check(ratio, Ratio);
+        return this.create(this.amount.mul(ratio.amount).divRound(Ratio.DIV_BN));
+    }
+
+    // our default div is ceilDiv
+    // rounding mode: ceil
     public div(ratio: Ratio): this {
         this.check(ratio, Ratio);
         return this.create(ceilDiv(this.amount.mul(Ratio.DIV_BN), ratio.amount));
+    }
+
+    // divFloor uses bignumber's default div (floor)
+    // rounding mode: floor
+    public divFloor(ratio: Ratio): this {
+        this.check(ratio, Ratio);
+        return this.create(this.amount.mul(Ratio.DIV_BN).div(ratio.amount));
+    }
+
+    // rounding mode: round
+    public divRound(ratio: Ratio): this {
+        this.check(ratio, Ratio);
+        return this.create(this.amount.mul(Ratio.DIV_BN).divRound(ratio.amount));
     }
 
     public divToRatio(other: this): Ratio {

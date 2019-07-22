@@ -72,6 +72,56 @@ describe("Units", () => {
         assert.strictEqual(Wei.parse(450000000000000000000).div(Ratio.parse(1500000)).toString(), "300000000000000000000");
     })
 
+    it("multiplication rounding modes", () => {
+        assert.strictEqual(Tokens.of(10.00).mul(Ratio.of(3/2)).toNumber(), 15.00);
+        assert.strictEqual(Tokens.of(10.00).mul(Ratio.of(3/2)).toString(), "1500");
+
+        // .mul() uses floor rounding
+        assert.strictEqual(Tokens.of(10.00).mul(Ratio.of(2/3)).toNumber(), 6.66);
+        assert.strictEqual(Tokens.of(10.00).mul(Ratio.of(2/3)).toString(), "666");
+
+        // proper rounding gives 6.67
+        assert.strictEqual(Tokens.of(10.00).mulRound(Ratio.of(2/3)).toNumber(), 6.67);
+        assert.strictEqual(Tokens.of(10.00).mulRound(Ratio.of(2/3)).toString(), "667");
+
+        // floor
+        assert.strictEqual(Tokens.of(10.00).mul(Ratio.of(1/3)).toNumber(), 3.33);
+        assert.strictEqual(Tokens.of(10.00).mul(Ratio.of(1/3)).toString(), "333");
+
+        // round
+        assert.strictEqual(Tokens.of(10.00).mulRound(Ratio.of(1/3)).toNumber(), 3.33);
+        assert.strictEqual(Tokens.of(10.00).mulRound(Ratio.of(1/3)).toString(), "333");
+    })
+
+    it("division rounding modes", () => {
+        assert.strictEqual(Tokens.of(10.00).div(Ratio.of(2/3)).toNumber(), 15.00);
+        assert.strictEqual(Tokens.of(10.00).div(Ratio.of(2/3)).toString(), "1500");
+
+        // floor
+        assert.strictEqual(Tokens.of(10.00).divFloor(Ratio.of(3/2)).toNumber(), 6.66);
+        assert.strictEqual(Tokens.of(10.00).divFloor(Ratio.of(3/2)).toString(), "666");
+
+        // proper rounding
+        assert.strictEqual(Tokens.of(10.00).divRound(Ratio.of(3/2)).toNumber(), 6.67);
+        assert.strictEqual(Tokens.of(10.00).divRound(Ratio.of(3/2)).toString(), "667");
+
+        // .div() uses ceil rounding
+        assert.strictEqual(Tokens.of(10.00).div(Ratio.of(3/2)).toNumber(), 6.67);
+        assert.strictEqual(Tokens.of(10.00).div(Ratio.of(3/2)).toString(), "667");
+
+        // floor
+        assert.strictEqual(Tokens.of(10.00).divFloor(Ratio.of(3)).toNumber(), 3.33);
+        assert.strictEqual(Tokens.of(10.00).divFloor(Ratio.of(3)).toString(), "333");
+
+        // proper rounding
+        assert.strictEqual(Tokens.of(10.00).divRound(Ratio.of(3)).toNumber(), 3.33);
+        assert.strictEqual(Tokens.of(10.00).divRound(Ratio.of(3)).toString(), "333");
+
+        // .div() uses ceil rounding
+        assert.strictEqual(Tokens.of(10.00).div(Ratio.of(3)).toNumber(), 3.34);
+        assert.strictEqual(Tokens.of(10.00).div(Ratio.of(3)).toString(), "334");
+    })
+
     it("addition beyond MAX_SAFE_INTEGER", () => {
         // add 1 ETH and 1 WEI
         assert.strictEqual(Wei.of(1).add(Wei.parse(1)).toString(), "1000000000000000001");
