@@ -210,6 +210,16 @@ export class LoanManager extends AbstractContract {
             .then((res: string) => parseInt(res, 10));
     }
 
+    public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string): Transaction | undefined {
+        if (loan.isMarginLoan && isLoanManagerMarginLoan(this.instance)) {
+            const web3Tx: TransactionObject<void> = this.instance.methods.addExtraCollateral(loan.id);
+            return new Transaction(this.ethereumConnection, web3Tx, {
+                from: userAccount,
+                value: weiAmount.amount
+            });
+        }
+    }
+
     private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
         const chunkSize: number = isLoanManagerV0(this.instance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
 

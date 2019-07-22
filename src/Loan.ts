@@ -94,6 +94,7 @@ export class Loan {
         return this.state === LOAN_STATES.Open && (this.maturity - currentTime() < sevenDays);
     }
 
+    // TODO: update for margin loans!!!
     get loanStateText(): string {
         switch (this.state) {
             case LOAN_STATES.Open:
