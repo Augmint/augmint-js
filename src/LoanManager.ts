@@ -2,7 +2,6 @@ import { Contract } from "web3-eth-contract";
 import { AugmintContracts, LoanManager as LoanManagerInstance, TokenAEur } from "../generated/index";
 import { LoanManager_ABI_753a73f4b2140507197a8f80bff47b40 } from "../generated/types/LoanManager_ABI_753a73f4b2140507197a8f80bff47b40";
 import { LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286 } from "../generated/types/LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286";
-import { LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb } from "../generated/types/LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
@@ -12,7 +11,6 @@ import { EthereumConnection } from "./EthereumConnection";
 import { COLLECT_BASE_GAS, COLLECT_ONE_GAS, NEW_FIRST_LOAN_GAS, NEW_LOAN_GAS, REPAY_GAS } from "./gas";
 import { ILoanTuple, Loan } from "./Loan";
 import { ILoanProductTuple, LoanProduct } from "./LoanProduct";
-import { IRateInfo } from "./Rates";
 import { Transaction } from "./Transaction";
 import { Tokens, Wei } from "./units";
 
@@ -37,7 +35,6 @@ export class LoanManager extends AbstractContract {
     public static contractName: string = AugmintContracts.LoanManager;
     public instance: LoanManagerInstance;
     public augmintTokenAddress: Promise<string>;
-    public ratesAddress: Promise<string>;
 
     private web3: any;
 
@@ -56,7 +53,10 @@ export class LoanManager extends AbstractContract {
     }
 
     get tokenAddress(): Promise<string> {
-        return this.instance.methods.augmintToken().call();
+        if(!this.augmintTokenAddress) {
+            this.augmintTokenAddress = this.instance.methods.augmintToken().call();
+        }
+        return this.augmintTokenAddress;
     }
 
     public async getActiveProducts(): Promise<LoanProduct[]> {
@@ -105,6 +105,7 @@ export class LoanManager extends AbstractContract {
         let loans: Loan[] = [];
 
         const queryCount: number = Math.ceil(loanCount / chunkSize);
+        const tokenAddress: string = await this.tokenAddress;
 
         for (let i: number = 0; i < queryCount; i++) {
             const loansArray: string[][] = isLoanManagerV0(loanManagerInstance)
@@ -112,7 +113,7 @@ export class LoanManager extends AbstractContract {
                       .getLoansForAddress(userAccount, i * chunkSize)
                       .call()
                 : await loanManagerInstance.methods.getLoansForAddress(userAccount, i * chunkSize, chunkSize).call();
-            loans = loans.concat(loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address)));
+            loans = loans.concat(loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress)));
         }
 
         return loans;
@@ -180,11 +181,10 @@ export class LoanManager extends AbstractContract {
     public async getAllLoans(): Promise<Loan[]> {
         try {
             const loanManagerInstance:LoanManagerInstance = this.instance;
-            // @ts-ignore  TODO: how to detect better without ts-ignore?
             const chunkSize:number = isLoanManagerV0(loanManagerInstance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
 
             const loanCount: number = await this.getLoanCount();
-
+            const tokenAddress: string = await this.tokenAddress;
             let loansToCollect: Loan[] = [];
 
             const queryCount: number = Math.ceil(loanCount / chunkSize);
@@ -193,7 +193,7 @@ export class LoanManager extends AbstractContract {
                     ? await loanManagerInstance.methods.getLoans(i * chunkSize).call()
                     : await loanManagerInstance.methods.getLoans(i * chunkSize, chunkSize).call();
                 loansToCollect = loansToCollect.concat(
-                    loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address))
+                    loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress))
                 );
             }
 

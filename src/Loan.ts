@@ -29,9 +29,10 @@ export class Loan {
     public readonly repaymentAmount: Tokens;
     public readonly loanManagerAddress: string;
     public readonly marginCallRate: Tokens;
+    public readonly tokenAddress: string;
     private readonly _isCollectable: boolean;
 
-    constructor(loan: ILoanTuple, loanManagerAddress: string) {
+    constructor(loan: ILoanTuple, loanManagerAddress: string, tokenAddress: string) {
         const [
             configId,
             configCollateralAmount,
@@ -48,6 +49,7 @@ export class Loan {
         ]: ILoanTuple = loan;
 
         this.loanManagerAddress = loanManagerAddress;
+        this.tokenAddress = tokenAddress;
 
         const maturity:number = parseInt(configMaturity, 10);
         if (maturity > 0) {
