@@ -42,6 +42,12 @@ abstract class FixedPoint {
         return this.create(this.amount.mul(ratio.amount).divRound(Ratio.DIV_BN));
     }
 
+    // rounding mode: ceil
+    public mulCeil(ratio: Ratio): this {
+        this.check(ratio, Ratio);
+        return this.create(ceilDiv(this.amount.mul(ratio.amount), Ratio.DIV_BN));
+    }
+
     // our default div is ceilDiv
     // rounding mode: ceil
     public div(ratio: Ratio): this {
