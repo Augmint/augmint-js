@@ -269,42 +269,70 @@ describe("LoanProduct", () => {
         assert.equal(legacyValues.interestAmount.toString(), EXPECTED.interestAmount.toString());
     });
 
-    it.skip("should calculate loan values from disbursed amount (negative interest)", () => {
-        const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
+    // Note: negative interest rates are not in fact supported, but we calculate with them anyway
+    it("should calculate loan values from disbursed amount (negative interest)", () => {
+        // [id, minDisbursedAmount, term, discountRate, initialCollateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
+        const prod = new LoanProduct(["0", "1000", DAY_IN_SECS.toString(), "1031915", "1600000", "50000", "21801", "1", "1200000"]);
+        const legacyProd = new LoanProduct(["0", "1000", DAY_IN_SECS.toString(), "1031915", "625000", "50000", "21801", "1"]);
+
         const ETH_FIAT_RATE = Tokens.of(998.00);
         const EXPECTED_REPAY_BEFORE = new Date();
-        EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
+        EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + prod.termInSecs);
 
-        const EXPECTED_LOANVALUES = {
-            disbursedAmount: Tokens.of(100.00),
-            collateralAmount: Wei.parse("173076152304609218"),
-            repaymentAmount: Tokens.of(95.00),
-            interestAmount: Tokens.of(-5.00),
+        const EXPECTED = {
+            disbursedAmount: Tokens.of(32.18),
+            collateralAmount: Wei.of(0.05),
+            repaymentAmount: Tokens.of(31.18),
+            interestAmount: Tokens.of(-1.00),
             repayBefore: EXPECTED_REPAY_BEFORE
         };
 
-        const lv = lp.calculateLoanFromDisbursedAmount(EXPECTED_LOANVALUES.disbursedAmount, ETH_FIAT_RATE);
-        assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
-        assert.deepEqualExcluding(normalizeBN(lv), EXPECTED_LOANVALUES, "repayBefore");
+        const values = prod.calculateLoanFromDisbursedAmount(EXPECTED.disbursedAmount, ETH_FIAT_RATE);
+        assert.closeTo(values.repayBefore.getTime(), EXPECTED.repayBefore.getTime(), 1000);
+        assert.equal(values.disbursedAmount.toString(), EXPECTED.disbursedAmount.toString());
+        assert.closeTo(values.collateralAmount.toNumber(), EXPECTED.collateralAmount.toNumber(), 2e-5);
+        assert.equal(values.repaymentAmount.toString(), EXPECTED.repaymentAmount.toString());
+        assert.equal(values.interestAmount.toString(), EXPECTED.interestAmount.toString());
+
+        const legacyValues = legacyProd.calculateLoanFromDisbursedAmount(EXPECTED.disbursedAmount, ETH_FIAT_RATE);
+        assert.closeTo(legacyValues.repayBefore.getTime(), EXPECTED.repayBefore.getTime(), 1000);
+        assert.equal(legacyValues.disbursedAmount.toString(), EXPECTED.disbursedAmount.toString());
+        assert.closeTo(legacyValues.collateralAmount.toNumber(), EXPECTED.collateralAmount.toNumber(), 2e-5);
+        assert.equal(legacyValues.repaymentAmount.toString(), EXPECTED.repaymentAmount.toString());
+        assert.equal(legacyValues.interestAmount.toString(), EXPECTED.interestAmount.toString());
     });
 
-    it.skip("should calculate loan values from collateral (negative interest)", () => {
-        const lp = new LoanProduct(["0", "1000", "31536000", "1052632", "550000", "50000", "21801", "1"]);
+    // Note: negative interest rates are not in fact supported, but we calculate with them anyway
+    it("should calculate loan values from collateral (negative interest)", () => {
+        // [id, minDisbursedAmount, term, discountRate, initialCollateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
+        const prod = new LoanProduct(["0", "1000", DAY_IN_SECS.toString(), "1031915", "1600000", "50000", "21801", "1", "1200000"]);
+        const legacyProd = new LoanProduct(["0", "1000", DAY_IN_SECS.toString(), "1031915", "625000", "50000", "21801", "1"]);
+
         const ETH_FIAT_RATE = Tokens.of(998.00);
         const EXPECTED_REPAY_BEFORE = new Date();
-        EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + lp.termInSecs);
+        EXPECTED_REPAY_BEFORE.setSeconds(EXPECTED_REPAY_BEFORE.getSeconds() + prod.termInSecs);
 
-        const EXPECTED_LOANVALUES = {
-            disbursedAmount: Tokens.of(100.00),
-            collateralAmount: Wei.parse("173076152304609218"),
-            repaymentAmount: Tokens.of(95.00),
-            interestAmount: Tokens.of(-5.00),
+        const EXPECTED = {
+            disbursedAmount: Tokens.of(32.18),
+            collateralAmount: Wei.of(0.05),
+            repaymentAmount: Tokens.of(31.18),
+            interestAmount: Tokens.of(-1.00),
             repayBefore: EXPECTED_REPAY_BEFORE
         };
 
-        const lv = lp.calculateLoanFromCollateral(EXPECTED_LOANVALUES.collateralAmount, ETH_FIAT_RATE);
-        assert.isAtMost(Math.abs(lv.repayBefore - EXPECTED_REPAY_BEFORE), 1000);
-        assert.deepEqualExcluding(normalizeBN(lv), EXPECTED_LOANVALUES, "repayBefore");
+        const values = prod.calculateLoanFromCollateral(EXPECTED.collateralAmount, ETH_FIAT_RATE);
+        assert.closeTo(values.repayBefore.getTime(), EXPECTED.repayBefore.getTime(), 1000);
+        assert.equal(values.disbursedAmount.toString(), EXPECTED.disbursedAmount.toString());
+        assert.equal(values.collateralAmount.toString(), EXPECTED.collateralAmount.toString());
+        assert.equal(values.repaymentAmount.toString(), EXPECTED.repaymentAmount.toString());
+        assert.equal(values.interestAmount.toString(), EXPECTED.interestAmount.toString());
+
+        const legacyValues = legacyProd.calculateLoanFromCollateral(EXPECTED.collateralAmount, ETH_FIAT_RATE);
+        assert.closeTo(legacyValues.repayBefore.getTime(), EXPECTED.repayBefore.getTime(), 1000);
+        assert.equal(legacyValues.disbursedAmount.toString(), EXPECTED.disbursedAmount.toString());
+        assert.equal(legacyValues.collateralAmount.toString(), EXPECTED.collateralAmount.toString());
+        assert.equal(legacyValues.repaymentAmount.toString(), EXPECTED.repaymentAmount.toString());
+        assert.equal(legacyValues.interestAmount.toString(), EXPECTED.interestAmount.toString());
     });
 });
 
