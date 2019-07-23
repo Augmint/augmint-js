@@ -84,6 +84,10 @@ describe("Units", () => {
         assert.strictEqual(Tokens.of(10.00).mulRound(Ratio.of(2/3)).toNumber(), 6.67);
         assert.strictEqual(Tokens.of(10.00).mulRound(Ratio.of(2/3)).toString(), "667");
 
+        // ceil
+        assert.strictEqual(Tokens.of(10.00).mulCeil(Ratio.of(2/3)).toNumber(), 6.67);
+        assert.strictEqual(Tokens.of(10.00).mulCeil(Ratio.of(2/3)).toString(), "667");
+
         // floor
         assert.strictEqual(Tokens.of(10.00).mul(Ratio.of(1/3)).toNumber(), 3.33);
         assert.strictEqual(Tokens.of(10.00).mul(Ratio.of(1/3)).toString(), "333");
@@ -91,6 +95,10 @@ describe("Units", () => {
         // round
         assert.strictEqual(Tokens.of(10.00).mulRound(Ratio.of(1/3)).toNumber(), 3.33);
         assert.strictEqual(Tokens.of(10.00).mulRound(Ratio.of(1/3)).toString(), "333");
+
+        // ceil
+        assert.strictEqual(Tokens.of(10.00).mulCeil(Ratio.of(1/3)).toNumber(), 3.34);
+        assert.strictEqual(Tokens.of(10.00).mulCeil(Ratio.of(1/3)).toString(), "334");
     })
 
     it("division rounding modes", () => {
