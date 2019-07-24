@@ -35,9 +35,8 @@ export class DeployedContract<T extends Contract> {
         return new web3.eth.Contract(abiFile, address);
     }
 
-    public connectToAddressWithEthers(ethers: any, address: string): T {
+    public connectWithEthers(ethers: any, provider: any): T {
         const abiFile:any = AbiList[this.abiFileName];
-        const provider:any = ethers.provider;
-        return new ethers.Contract(address, abiFile, provider);
+        return new ethers.Contract(this.deployedAddress, abiFile, provider);
     }
 }
