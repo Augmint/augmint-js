@@ -66,7 +66,7 @@ export class Loan {
             this.loanAmount = Tokens.parse(configLoanAmount);
             this.repaymentAmount = Tokens.parse(configRepaymentAmount);
 
-            if(configMarginCallRate) {
+            if(configMarginCallRate !== undefined) {
                 this.marginCallRate = Tokens.parse(configMarginCallRate);
                 this._isCollectable = configIsCollectable === '1';
             }

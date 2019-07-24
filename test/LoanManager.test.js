@@ -361,6 +361,101 @@ describe("LoanManager connection", () => {
     });
 });
 
+describe("LoanManager invalid calls", () => {
+    let augmint;
+    let loanManager;
+    let legacyLoanManager;
+    let products;
+    let legacyProducts;
+    let accounts;
+    let snapshotId;
+
+    before(async () => {
+        augmint = await Augmint.create(config);
+        loanManager = new Augmint.LoanManager(augmint.latestContracts.LoanManager.connect(augmint.ethereumConnection.web3), augmint.ethereumConnection);
+        legacyLoanManager = augmint.getLegacyLoanManagers()[0];
+        accounts = augmint.ethereumConnection.accounts;
+        products = await loanManager.getAllProducts();
+        legacyProducts = await legacyLoanManager.getAllProducts();
+
+        snapshotId = await takeSnapshot(augmint.ethereumConnection.web3);
+    });
+
+    after(async () => {
+        await revertSnapshot(augmint.ethereumConnection.web3, snapshotId);
+    });
+
+    it("does not allow invalid calls to newEthBackedLoan", async () => {
+        // call the new loanmanager without minRate
+        try {
+            await loanManager.newEthBackedLoan(products[0], Wei.of(0.05), accounts[0]);
+            assert.fail('should have failed')
+        } catch (error) {
+            if (error instanceof AugmintJsError) {
+                assert.match(error.message, /missing minRate/);
+            } else {
+                throw error;
+            }
+        }
+
+        // call the old loanmanager with minRate
+        try {
+            await legacyLoanManager.newEthBackedLoan(legacyProducts[0], Wei.of(0.05), accounts[0], Tokens.of(0));
+            assert.fail('should have failed')
+        } catch (error) {
+            if (error instanceof AugmintJsError) {
+                assert.match(error.message, /unexpected minRate/);
+            } else {
+                throw error;
+            }
+        }
+    });
+
+    it("does not allow invalid calls to addExtraCollateral ", async () => {
+        // mock loan objects
+        const loanObject = new Augmint.LoanManager.Loan([0, 100, 100, "0xaddress", 0, 0, 1234, 1234, 100, 10, 0, 0], loanManager.address);
+        assert.isTrue(loanObject.isMarginLoan);
+        const legacyLoanObject = new Augmint.LoanManager.Loan([0, 100, 100, "0xaddress", 0, 0, 1234, 1234, 100, 10], legacyLoanManager.address);
+        assert.isFalse(legacyLoanObject.isMarginLoan);
+
+        // just calls the new method on the legacy manager with a legacy loan object
+        try {
+            await legacyLoanManager.addExtraCollateral(legacyLoanObject, Wei.of(0.05), accounts[0]);
+            assert.fail('should have failed')
+        } catch (error) {
+            if (error instanceof AugmintJsError) {
+                assert.match(error.message, /invalid call/);
+            } else {
+                throw error;
+            }
+        }
+
+        // passes a new loan object to the legacy manager
+        try {
+            await legacyLoanManager.addExtraCollateral(loanObject, Wei.of(0.05), accounts[0]);
+            assert.fail('should have failed')
+        } catch (error) {
+            if (error instanceof AugmintJsError) {
+                assert.match(error.message, /invalid call/);
+            } else {
+                throw error;
+            }
+        }
+
+        // passes a legacy loan object to the new manager
+        try {
+            await loanManager.addExtraCollateral(legacyLoanObject, Wei.of(0.05), accounts[0]);
+            assert.fail('should have failed')
+        } catch (error) {
+            if (error instanceof AugmintJsError) {
+                assert.match(error.message, /invalid call/);
+            } else {
+                throw error;
+            }
+        }
+    });
+});
+
 describe("LoanManager getters", () => {
     let augmint;
     let accounts;

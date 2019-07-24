@@ -55,6 +55,10 @@ export class LoanManager extends AbstractContract {
         return LoanProduct;
     }
 
+    static get Loan(): typeof Loan {
+        return Loan;
+    }
+
     get tokenAddress(): Promise<string> {
         return this.instance.methods.augmintToken().call();
     }
@@ -80,10 +84,13 @@ export class LoanManager extends AbstractContract {
         let web3Tx: TransactionObject<void>;
         if(isLoanManagerMarginLoan(this.instance)) {
             if(!minRate) {
-                throw new AugmintJsError('missing min rate in loanmanager!')
+                throw new AugmintJsError('missing minRate in loanmanager!')
             }
             web3Tx = this.instance.methods.newEthBackedLoan(product.id, minRate.toString());
         } else {
+            if(minRate) {
+                throw new AugmintJsError('unexpected minRate in loanmanager!')
+            }
             web3Tx = this.instance.methods.newEthBackedLoan(product.id)
         }
 
@@ -217,6 +224,8 @@ export class LoanManager extends AbstractContract {
                 from: userAccount,
                 value: weiAmount.amount
             });
+        } else {
+            throw new AugmintJsError('invalid call to addExtraCollateral');
         }
     }
 
