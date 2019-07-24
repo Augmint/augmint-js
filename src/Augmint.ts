@@ -14,12 +14,12 @@ import * as Errors from "./Errors";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
 import { Exchange, IExchangeOptions } from "./Exchange";
 import * as gas from "./gas";
+import { Loan } from "./Loan";
 import { LoanManager } from "./LoanManager";
+import { LoanProduct } from "./LoanProduct";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
-import { Loan } from "./Loan";
 import { Tokens, Wei } from "./units";
-import { LoanProduct } from "./LoanProduct";
 
 interface IDeployedEnvironmentStub {
     [propName: string]: IDeploymentItem[];
