@@ -85,7 +85,7 @@ export class Loan {
     }
 
     get isRepayable(): boolean {
-        return this.state === LOAN_STATES.Open;
+        return this.state === LOAN_STATES.Open && currentTime() < this.maturity;
     }
 
     get isCollectable(): boolean {
