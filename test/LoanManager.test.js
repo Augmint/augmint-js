@@ -22,15 +22,15 @@ if (config.LOG) {
 // ==========================================
 // localTest_initialSetup:
 // term (in sec), discountRate, initialCollateralRatio (ppm), minDisbursedAmount (token), defaultingFeePt (ppm), isActive, minCollateralRatio (ppm)
-// _loanManager.addLoanProduct(365 days, 854701, 1818182, 1000, 50000, true, 1500000); //  17% p.a., (collateral ratio: initial = ~181%, minimum = 150%)
-// _loanManager.addLoanProduct(180 days, 924753, 1818182, 1000, 50000, true, 1500000); // 16.5% p.a., (collateral ratio: initial = ~181%, minimum = 150%)
-// _loanManager.addLoanProduct(90 days, 962046, 1666667, 1000, 50000, true, 1200000); // 16%. p.a., (collateral ratio: initial = ~166%, minimum = 120%)
-// _loanManager.addLoanProduct(60 days, 975154, 1666667, 1000, 50000, true, 1200000); //  15.5% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
-// _loanManager.addLoanProduct(30 days, 987822, 1666667, 1000, 50000, true, 1200000); //  15% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
-// _loanManager.addLoanProduct(14 days, 994280, 1666667, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
-// _loanManager.addLoanProduct(7 days, 997132, 1666667, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = ~166%, minimum = 120%)
-// _loanManager.addLoanProduct(1 hours, 999998, 1020408, 2000, 50000, true, 1010000); // due in 1hr for testing repayments ~1.75% p.a., (collateral ratio: initial = ~102%, minimum = 101%)
-// _loanManager.addLoanProduct(1 seconds, 999999, 1010101, 3000, 50000, true, 1010000); // defaults in 1 secs for testing ~3153.6% p.a., (collateral ratio: initial = ~101.01%, minimum = 101%)
+// _loanManager.addLoanProduct(365 days, 854701, 1850000, 1000, 50000, true, 1500000); //  17% p.a., (collateral ratio: initial = 185%, minimum = 150%)
+// _loanManager.addLoanProduct(180 days, 924753, 1850000, 1000, 50000, true, 1500000); // 16.5% p.a., (collateral ratio: initial = 185%, minimum = 150%)
+// _loanManager.addLoanProduct(90 days, 962046, 1600000, 1000, 50000, true, 1200000); // 16%. p.a., (collateral ratio: initial = 160%, minimum = 120%)
+// _loanManager.addLoanProduct(60 days, 975154, 1600000, 1000, 50000, true, 1200000); //  15.5% p.a., (collateral ratio: initial = 160%, minimum = 120%)
+// _loanManager.addLoanProduct(30 days, 987822, 1600000, 1000, 50000, true, 1200000); //  15% p.a., (collateral ratio: initial = 160%, minimum = 120%)
+// _loanManager.addLoanProduct(14 days, 994280, 1600000, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = 160%, minimum = 120%)
+// _loanManager.addLoanProduct(7 days, 997132, 1600000, 1000, 50000, true, 1200000); // 15% p.a., (collateral ratio: initial = 160%, minimum = 120%)
+// _loanManager.addLoanProduct(1 hours, 999000, 1230000, 2000, 50000, true, 1050000); // due in 1hr for testing repayments ~877% p.a., (collateral ratio: initial = 123%, minimum = 105%)
+// _loanManager.addLoanProduct(1 seconds, 999000, 1110000, 3000, 50000, true, 1020000); // defaults in 1 secs for testing ~3156757% p.a., (collateral ratio: initial = 111%, minimum = 102%)
 
 function createMockProducts(augmint, loanManager) {
     const loanManagerAddress = augmint.ethereumConnection.web3.utils.toChecksumAddress(loanManager.address);
@@ -39,15 +39,15 @@ function createMockProducts(augmint, loanManager) {
     const maxLoanAmount = 218.00;   // where did this come from?
 
     return [
-        mockProd(0, 365 * DAY_IN_SECS, .854701, 1.818182, 10.00, .05, true, 1.5, maxLoanAmount, loanManagerAddress),
-        mockProd(1, 180 * DAY_IN_SECS, .924753, 1.818182, 10.00, .05, true, 1.5, maxLoanAmount, loanManagerAddress),
-        mockProd(2, 90 * DAY_IN_SECS, .962046, 1.666667, 10.00, .05, false, 1.2, maxLoanAmount, loanManagerAddress),    // will be disabled by before()
-        mockProd(3, 60 * DAY_IN_SECS, .975154, 1.666667, 10.00, .05, true, 1.2, maxLoanAmount, loanManagerAddress),
-        mockProd(4, 30 * DAY_IN_SECS, .987822, 1.666667, 10.00, .05, true, 1.2, maxLoanAmount, loanManagerAddress),
-        mockProd(5, 14 * DAY_IN_SECS, .994280, 1.666667, 10.00, .05, false, 1.2, maxLoanAmount, loanManagerAddress),    // will be disabled by before()
-        mockProd(6, 7 * DAY_IN_SECS, .997132, 1.666667, 10.00, .05, true, 1.2, maxLoanAmount, loanManagerAddress),
-        mockProd(7, 60 * 60, .999998, 1.020408, 20.00, .05, true, 1.01, maxLoanAmount, loanManagerAddress),
-        mockProd(8, 1, .999999, 1.010101, 30.00, .05, true, 1.01, maxLoanAmount, loanManagerAddress)
+        mockProd(0, 365 * DAY_IN_SECS, .854701, 1.85, 10.00, .05, true, 1.5, maxLoanAmount, loanManagerAddress),
+        mockProd(1, 180 * DAY_IN_SECS, .924753, 1.85, 10.00, .05, true, 1.5, maxLoanAmount, loanManagerAddress),
+        mockProd(2, 90 * DAY_IN_SECS, .962046, 1.6, 10.00, .05, false, 1.2, maxLoanAmount, loanManagerAddress),    // will be disabled by before()
+        mockProd(3, 60 * DAY_IN_SECS, .975154, 1.6, 10.00, .05, true, 1.2, maxLoanAmount, loanManagerAddress),
+        mockProd(4, 30 * DAY_IN_SECS, .987822, 1.6, 10.00, .05, true, 1.2, maxLoanAmount, loanManagerAddress),
+        mockProd(5, 14 * DAY_IN_SECS, .994280, 1.6, 10.00, .05, false, 1.2, maxLoanAmount, loanManagerAddress),    // will be disabled by before()
+        mockProd(6, 7 * DAY_IN_SECS, .997132, 1.6, 10.00, .05, true, 1.2, maxLoanAmount, loanManagerAddress),
+        mockProd(7, 60 * 60, .999000, 1.23, 20.00, .05, true, 1.05, maxLoanAmount, loanManagerAddress),
+        mockProd(8, 1, .999000, 1.11, 30.00, .05, true, 1.02, maxLoanAmount, loanManagerAddress)
     ];
 }
 
