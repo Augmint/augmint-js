@@ -10,9 +10,6 @@ const loadEnv = require("./testHelpers/loadEnv.js");
 const config = loadEnv();
 
 const DAY_IN_SECS = 86400;
-// TODO: check the max loan amount: is it valid and came from the monetary supervisor
-const maxLoanAmount = 374.36;   // where did this come from?
-
 
 if (config.LOG) {
     utils.logger.level = config.LOG;
@@ -38,6 +35,9 @@ if (config.LOG) {
 function createMockProducts(augmint, loanManager) {
     const loanManagerAddress = augmint.ethereumConnection.web3.utils.toChecksumAddress(loanManager.address);
 
+    // TODO: check the max loan amount: is it valid and came from the monetary supervisor
+    const maxLoanAmount = 218.00;   // where did this come from?
+
     return [
         mockProd(0, 365 * DAY_IN_SECS, .854701, 1.85, 10.00, .05, true, 1.5, maxLoanAmount, loanManagerAddress),
         mockProd(1, 180 * DAY_IN_SECS, .924753, 1.85, 10.00, .05, true, 1.5, maxLoanAmount, loanManagerAddress),
@@ -61,6 +61,7 @@ function createMockProducts(augmint, loanManager) {
 
 function createLegacyMockProducts(augmint, loanManager) {
     const loanManagerAddress = augmint.ethereumConnection.web3.utils.toChecksumAddress(loanManager.address);
+    const maxLoanAmount = 218.00;
     return [
         mockLegacyProd(0, 1, .999999, .990000, 10.00, .05, true, maxLoanAmount, loanManagerAddress),
         mockLegacyProd(1, 60 * 60, .999989, .980000, 10.00, .05, false, maxLoanAmount, loanManagerAddress),    // will be disabled by before()
@@ -494,22 +495,22 @@ describe("LoanManager getters", () => {
 
     it("should return all loan products", async () => {
         const products = await loanManager.getAllProducts();
-        assert.deepEqual(normalizeBN(products), normalizeBN([...EXPECTED_ACTIVE_PRODUCTS, ...EXPECTED_ACTIVE_LEGACY_PRODUCTS]));
+        assert.deepEqual(normalizeBN(products), EXPECTED_ALL_PRODUCTS);
     });
 
     it("should return active loan products", async () => {
         const products = await loanManager.getActiveProducts();
-        assert.deepEqual(normalizeBN(products), normalizeBN(EXPECTED_ACTIVE_PRODUCTS));
+        assert.deepEqual(normalizeBN(products), EXPECTED_ACTIVE_PRODUCTS);
     });
 
     it("should return all legacy loan products", async () => {
         const products = await legacyLoanManager.getAllProducts();
-        assert.deepEqual(normalizeBN(products), normalizeBN(EXPECTED_ACTIVE_LEGACY_PRODUCTS));
+        assert.deepEqual(normalizeBN(products), EXPECTED_ALL_LEGACY_PRODUCTS);
     });
 
     it("should return active legacy loan products", async () => {
         const products = await legacyLoanManager.getActiveProducts();
-        assert.deepEqual(normalizeBN(products), normalizeBN(EXPECTED_ACTIVE_LEGACY_PRODUCTS));
+        assert.deepEqual(normalizeBN(products), EXPECTED_ACTIVE_LEGACY_PRODUCTS);
     });
 });
 
