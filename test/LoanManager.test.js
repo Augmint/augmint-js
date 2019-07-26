@@ -32,11 +32,9 @@ if (config.LOG) {
 // _loanManager.addLoanProduct(1 hours, 999000, 1230000, 2000, 50000, true, 1050000); // due in 1hr for testing repayments ~877% p.a., (collateral ratio: initial = 123%, minimum = 105%)
 // _loanManager.addLoanProduct(1 seconds, 999000, 1110000, 3000, 50000, true, 1020000); // defaults in 1 secs for testing ~3156757% p.a., (collateral ratio: initial = 111%, minimum = 102%)
 
-function createMockProducts(augmint, loanManager) {
+async function createMockProducts(augmint, loanManager) {
     const loanManagerAddress = augmint.ethereumConnection.web3.utils.toChecksumAddress(loanManager.address);
-
-    // TODO: check the max loan amount: is it valid and came from the monetary supervisor
-    const maxLoanAmount = 218.00;   // where did this come from?
+    const maxLoanAmount = (await getMaxLoanAmount(augmint, Tokens.of(30.00))).toNumber();
 
     return [
         mockProd(0, 365 * DAY_IN_SECS, .854701, 1.85, 10.00, .05, true, 1.5, maxLoanAmount, loanManagerAddress),
@@ -59,9 +57,10 @@ function createMockProducts(augmint, loanManager) {
 // oldLoanManager.addLoanProduct(3600, 999989, 980000, 1000, 50000, true), // due in 1hr for testing repayments ? p.a.
 // oldLoanManager.addLoanProduct(31536000, 860000, 550000, 1000, 50000, true), // 365d, 14% p.a.
 
-function createLegacyMockProducts(augmint, loanManager) {
+async function createLegacyMockProducts(augmint, loanManager) {
     const loanManagerAddress = augmint.ethereumConnection.web3.utils.toChecksumAddress(loanManager.address);
-    const maxLoanAmount = 218.00;
+    const maxLoanAmount = (await getMaxLoanAmount(augmint, Tokens.of(10.00))).toNumber();
+
     return [
         mockLegacyProd(0, 1, .999999, .990000, 10.00, .05, true, maxLoanAmount, loanManagerAddress),
         mockLegacyProd(1, 60 * 60, .999989, .980000, 10.00, .05, false, maxLoanAmount, loanManagerAddress),    // will be disabled by before()
@@ -146,6 +145,10 @@ function calculateAdjustedMinDisbursedAmount(minDisbursedAmount) {
     return Tokens.of(minDisbursedAmount * Augmint.constants.MIN_LOAN_AMOUNT_ADJUSTMENT.toNumber());
 }
 
+async function getMaxLoanAmount(augmint, minLoanAmount) {
+    const contract = augmint.deployedEnvironment.getLatestContract("MonetarySupervisor").connect(augmint.ethereumConnection.web3);
+    return Tokens.parse(await contract.methods.getMaxLoanAmount(minLoanAmount.toString()).call());
+}
 
 describe("LoanProduct", () => {
     const LoanProduct = Augmint.LoanManager.LoanProduct;
@@ -474,8 +477,8 @@ describe("LoanManager getters", () => {
         loanManager = new Augmint.LoanManager(augmint.latestContracts.LoanManager.connect(augmint.ethereumConnection.web3), augmint.ethereumConnection);
         legacyLoanManager = augmint.getLegacyLoanManagers()[0];
 
-        EXPECTED_ALL_PRODUCTS = createMockProducts(augmint, loanManager);
-        EXPECTED_ALL_LEGACY_PRODUCTS = createLegacyMockProducts(augmint, legacyLoanManager);
+        EXPECTED_ALL_PRODUCTS = await createMockProducts(augmint, loanManager);
+        EXPECTED_ALL_LEGACY_PRODUCTS = await createLegacyMockProducts(augmint, legacyLoanManager);
 
         EXPECTED_ACTIVE_PRODUCTS = EXPECTED_ALL_PRODUCTS.filter(p => p.isActive);
         EXPECTED_ACTIVE_LEGACY_PRODUCTS = EXPECTED_ALL_LEGACY_PRODUCTS.filter(p => p.isActive);
