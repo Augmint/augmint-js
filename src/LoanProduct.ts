@@ -92,7 +92,14 @@ export class LoanProduct {
     }
 
     get isMarginLoan(): boolean {
-        return !!(this.minCollateralRatio && this.initialCollateralRatio)
+        return !!(this.minCollateralRatio && this.initialCollateralRatio);
+    }
+
+    get marginCallRateRatio():Ratio {
+        if(this.isMarginLoan) {
+            return this.minCollateralRatio.div(this.initialCollateralRatio);
+        }
+        return Ratio.of(0);
     }
 
     // Note: "disbursedAmount" is the loanAmount
@@ -137,5 +144,9 @@ export class LoanProduct {
 
     public getInitialCollateralRatio(): Ratio {
         return this.isMarginLoan ? this.initialCollateralRatio : Ratio.of(1).div(this.collateralRatio);
+    }
+
+    public getMarginCallRate(ethFiatRate: Tokens):Tokens {
+        return ethFiatRate.mul(this.marginCallRateRatio);
     }
 }
