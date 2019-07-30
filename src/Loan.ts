@@ -127,7 +127,15 @@ export class Loan {
             : "";
     }
 
+    // calculates the actual collateral ratio at a given rate (e.g. current)
     public calculateCollateralRatio(currentRate: Tokens): Ratio {
         return this.collateralAmount.toTokens(currentRate).divToRatio(this.repaymentAmount);
+    }
+
+    // calculates the required change in collateral amount to reach a target collateral ratio
+    // positive value means collateral has to be increased to reach target,
+    // negative value means collateral could be decreased to reach target
+    public calculateCollateralChange(currentRate: Tokens, targetRatio: Ratio): Wei {
+        return this.repaymentAmount.mulCeil(targetRatio).toWei(currentRate).sub(this.collateralAmount);
     }
 }
