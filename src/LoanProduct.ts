@@ -142,6 +142,7 @@ export class LoanProduct {
         return result;
     }
 
+    // this is an estimate! use it only on new loan page!
     public calculateMarginCallRate(ethFiatRate: Tokens):Tokens {
         return ethFiatRate.mul(this.marginCallRateRatio);
     }
