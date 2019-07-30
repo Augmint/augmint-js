@@ -1,5 +1,5 @@
 import { LOAN_STATES } from "./constants";
-import { Tokens, Wei } from "./units";
+import { Ratio, Tokens, Wei } from "./units";
 
 const collateralStatusTexts: string[] = ["in escrow", "released", "in escrow", "collected & leftover refunded"];
 const aDay: number = 24 * 60 * 60;
@@ -125,5 +125,9 @@ export class Loan {
                 ? "danger"
                 : "warning"
             : "";
+    }
+
+    public calculateCollateralRatio(currentRate: Tokens): Ratio {
+        return this.collateralAmount.toTokens(currentRate).divToRatio(this.repaymentAmount);
     }
 }
