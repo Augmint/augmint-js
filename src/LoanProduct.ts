@@ -142,11 +142,12 @@ export class LoanProduct {
         return result;
     }
 
+    public calculateMarginCallRate(ethFiatRate: Tokens):Tokens {
+        return ethFiatRate.mul(this.marginCallRateRatio);
+    }
+
     public getInitialCollateralRatio(): Ratio {
         return this.isMarginLoan ? this.initialCollateralRatio : Ratio.of(1).div(this.collateralRatio);
     }
 
-    public getMarginCallRate(ethFiatRate: Tokens):Tokens {
-        return ethFiatRate.mul(this.marginCallRateRatio);
-    }
 }
