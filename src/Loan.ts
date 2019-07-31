@@ -138,4 +138,10 @@ export class Loan {
     public calculateCollateralChange(currentRate: Tokens, targetRatio: Ratio): Wei {
         return this.repaymentAmount.mulCeil(targetRatio).toWei(currentRate).sub(this.collateralAmount);
     }
+
+    // calculates the resulting collateral ratio if collateral amount were changed by collateralChange wei
+    // positive collateralChange means the collateral was increased, negative means it was decreased
+    public calculateCollateralRatioChange(currentRate: Tokens, collateralChange: Wei): Ratio {
+        return this.collateralAmount.add(collateralChange).toTokens(currentRate).divToRatio(this.repaymentAmount);
+    }
 }
