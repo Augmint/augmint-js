@@ -63,7 +63,8 @@
         "ganache:start": "scripts/augmint-cli.sh ganache start --blockTime 1",
         "ganache:stop": "scripts/augmint-cli.sh ganache stop",
         "ganache:run": "scripts/augmint-cli.sh ganache run --blockTime 1",
-        "typedoc": "./generateDocs.sh"
+        "typedoc": "./generateDocs.sh",
+        "prepublishOnly": "yarn clean && yarn build"
     },
     "greenkeeper": {
         "ignore": [
