@@ -120,11 +120,7 @@ export class Loan {
     }
 
     get dueState(): string {
-        return this.state === LOAN_STATES.Open
-            ? this.maturity - currentTime() < threeDays
-                ? "danger"
-                : "warning"
-            : "";
+        return this.isDue ? (this.maturity - currentTime() < threeDays ? "danger" : "warning") : "";
     }
 
     // calculates the actual collateral ratio at a given rate (e.g. current)
