@@ -55,7 +55,7 @@
         "wait-on": "3.2.0"
     },
     "scripts": {
-        "clean": "rm -r ./dist ./generated",
+        "clean": "rm -rf ./dist ./generated",
         "build": "yarn build:typings && rollup -c",
         "build:typings": "ts-generator ./ts-generator.json",
         "test": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha 'test/**/*.test.js' --exit --timeout 5000",
