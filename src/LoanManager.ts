@@ -1,7 +1,7 @@
 import { Contract } from "web3-eth-contract";
 import { AugmintContracts, LoanManager as LoanManagerInstance, TokenAEur } from "../generated/index";
-import { LoanManager_ABI_753a73f4b2140507197a8f80bff47b40 } from "../generated/types/LoanManager_ABI_753a73f4b2140507197a8f80bff47b40";
 import { LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286 } from "../generated/types/LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286";
+import { LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb } from "../generated/types/LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
@@ -14,16 +14,16 @@ import { ILoanProductTuple, LoanProduct } from "./LoanProduct";
 import { Transaction } from "./Transaction";
 import { Tokens, Wei } from "./units";
 
-type LoanManagerMarginLoan = LoanManager_ABI_753a73f4b2140507197a8f80bff47b40; // margin (rinkeby only)
-// type LoanManagerV1 = LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb; // pre margin
 type LoanManagerPreChukSize = LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286; // pre chunk size
+type LoanManagerPreMarginLoan = LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb | LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286;
+
 
 function isLoanManagerV0(instance: LoanManagerInstance): instance is LoanManagerPreChukSize {
     return (instance as LoanManagerPreChukSize).methods.CHUNK_SIZE !== undefined;
 }
 
-function isLoanManagerMarginLoan(instance: LoanManagerInstance): instance is LoanManagerMarginLoan {
-    return (instance as LoanManagerMarginLoan).methods.addExtraCollateral !== undefined;
+function isLoanManagerPreMarginLoan(instance: LoanManagerInstance): instance is LoanManagerPreMarginLoan {
+    return "addExtraCollateral" in  instance.methods === undefined;
 }
 
 /**
@@ -82,7 +82,7 @@ export class LoanManager extends AbstractContract {
         }
 
         let web3Tx: TransactionObject<void>;
-        if(isLoanManagerMarginLoan(this.instance)) {
+        if(!isLoanManagerPreMarginLoan(this.instance)) {
             if(!minRate) {
                 throw new AugmintJsError('missing minRate in loanmanager!')
             }
@@ -144,32 +144,6 @@ export class LoanManager extends AbstractContract {
             gasLimit: REPAY_GAS,
             from: userAccount
         });
-        /*
-        const tx = augmintTokenInstance.methods
-            .transferAndNotify(this.address, repaymentAmount.toString(), loan.id)
-            .send({ from: userAccount, gas: REPAY_GAS });
-
-        const onReceipt = receipt => {
-            // loan repayment called on AugmintToken and web3 is not parsing event emmitted from LoanManager
-            const web3 = store.getState().web3Connect.web3Instance;
-            const loanRepayedEventInputs = loanManagerInstance.options.jsonInterface.find(
-                val => val.name === "LoanRepayed"
-            ).inputs;
-
-            const decodedArgs = web3.eth.abi.decodeLog(
-                loanRepayedEventInputs,
-                receipt.events[0].raw.data,
-                receipt.events[0].raw.topics.slice(1) // topics[0] is event name
-            );
-            receipt.events.LoanRepayed = receipt.events[0];
-            receipt.events.LoanRepayed.returnValues = decodedArgs;
-            return { loanId: decodedArgs.loanId };
-        };
-
-        const transactionHash = await processTx(tx, txName, REPAY_GAS, onReceipt);
-        return { txName, transactionHash };
-
- */
     }
 
     public collectLoans(loansToCollect: Loan[], userAccount: string): Transaction {
@@ -218,7 +192,7 @@ export class LoanManager extends AbstractContract {
     }
 
     public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string): Transaction | undefined {
-        if (loan.isMarginLoan && isLoanManagerMarginLoan(this.instance)) {
+        if (loan.isMarginLoan && !isLoanManagerPreMarginLoan(this.instance)) {
             const web3Tx: TransactionObject<void> = this.instance.methods.addExtraCollateral(loan.id);
             return new Transaction(this.ethereumConnection, web3Tx, {
                 from: userAccount,
