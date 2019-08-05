@@ -23,7 +23,7 @@ function isLoanManagerV0(instance: LoanManagerInstance): instance is LoanManager
 }
 
 function isLoanManagerPreMarginLoan(instance: LoanManagerInstance): instance is LoanManagerPreMarginLoan {
-    return "addExtraCollateral" in  instance.methods === undefined;
+    return !("addExtraCollateral" in  instance.methods);
 }
 
 /**
