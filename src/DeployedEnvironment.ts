@@ -65,7 +65,7 @@ export class DeployedEnvironment {
             throw new MissingContractError(name, address);
         }
 
-        return contract
+        return contract;
     }
 
 
