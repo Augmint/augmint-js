@@ -30,6 +30,8 @@ interface ILoanCount {
     loanCount: number
 }
 
+const loanManagers = new Map<string, LoanManager>();
+
 export class Augmint {
     public static async create(connectionOptions: IOptions, environment?: DeployedEnvironment): Promise<Augmint> {
         const ethereumConnection: EthereumConnection = new EthereumConnection(connectionOptions);
@@ -205,12 +207,8 @@ export class Augmint {
     }
 
     public async getLoansForAccount(userAccount: string): Promise<Loan[]> {
-        const loanManagerContracts: Array<DeployedContract<LoanManagerInstance>> = this.deployedEnvironment.contracts[
-            AugmintContracts.LoanManager
-        ];
         const result: Loan[] = [];
-        for (const contract of loanManagerContracts) {
-            const loanManager: LoanManager = new LoanManager(contract.connect(this.web3), this.ethereumConnection);
+        for (const loanManager of this.getAllLoanManagers()) {
             const lmLoans: Loan[] = await loanManager.getLoansForAccount(userAccount);
             result.push(...lmLoans);
         }
@@ -218,12 +216,8 @@ export class Augmint {
     }
 
     public async getLoanProducts(activeOnly: boolean): Promise<LoanProduct[]> {
-        const loanManagerContracts: Array<DeployedContract<LoanManagerInstance>> = this.deployedEnvironment.contracts[
-            AugmintContracts.LoanManager
-        ];
         const result: LoanProduct[] = [];
-        for (const contract of loanManagerContracts) {
-            const loanManager: LoanManager = new LoanManager(contract.connect(this.web3), this.ethereumConnection);
+        for (const loanManager of this.getAllLoanManagers()) {
             let products: LoanProduct[];
             if (activeOnly) {
                 products = await loanManager.getActiveProducts();
@@ -236,11 +230,7 @@ export class Augmint {
     }
 
     public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string): Promise<Transaction> {
-        const lmContract: DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(
-            AugmintContracts.LoanManager,
-            loan.loanManagerAddress
-        );
-        const loanManager: LoanManager = new LoanManager(lmContract.connect(this.web3), this.ethereumConnection);
+        const loanManager: LoanManager = this.getLoanManagerByAddress(loan.loanManagerAddress)
         const tokenAddress: string = await loanManager.tokenAddress;
         const tokenContract: DeployedContract<TokenAEur> = this.deployedEnvironment.getContractFromAddress(
             AugmintContracts.TokenAEur,
@@ -251,21 +241,13 @@ export class Augmint {
     }
 
     public async newEthBackedLoan(loanProduct: LoanProduct, weiAmount: Wei, userAccount: string, minRate?:Tokens): Promise<Transaction> {
-        const lmContract: DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(
-            AugmintContracts.LoanManager,
-            loanProduct.loanManagerAddress
-        );
-        const loanManager: LoanManager = new LoanManager(lmContract.connect(this.web3), this.ethereumConnection);
+        const loanManager: LoanManager = this.getLoanManagerByAddress(loanProduct.loanManagerAddress)
         return loanManager.newEthBackedLoan(loanProduct, weiAmount, userAccount, minRate);
     }
 
     public async getAllLoans(): Promise<Loan[]> {
-        const loanManagerContracts: Array<DeployedContract<LoanManagerInstance>> = this.deployedEnvironment.contracts[
-            AugmintContracts.LoanManager
-        ];
         const result: Loan[] = [];
-        for (const contract of loanManagerContracts) {
-            const loanManager: LoanManager = new LoanManager(contract.connect(this.web3), this.ethereumConnection);
+        for (const loanManager of this.getAllLoanManagers()) {
             const lmLoans: Loan[] = await loanManager.getAllLoans();
             result.push(...lmLoans);
         }
@@ -292,11 +274,7 @@ export class Augmint {
                 if (currentAddress !== null && loanManager !== null) {
                     result.push(loanManager.collectLoans(loans, userAccount));
                 }
-                const contract: DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(
-                    AugmintContracts.LoanManager,
-                    loan.loanManagerAddress
-                );
-                loanManager = new LoanManager(contract.connect(this.web3), this.ethereumConnection);
+                loanManager = this.getLoanManagerByAddress(loan.loanManagerAddress);
                 loans = [];
             }
             currentAddress = loan.loanManagerAddress;
@@ -309,13 +287,11 @@ export class Augmint {
     }
 
     public async getLoanCounts(): Promise<ILoanCount[]> {
-        const loanManagerContracts: Array<DeployedContract<LoanManagerInstance>> = this.deployedEnvironment.contracts[AugmintContracts.LoanManager];
         const result:ILoanCount[] = [];
-        for (const contract of loanManagerContracts) {
-            const loanManager:LoanManager = new LoanManager(contract.connect(this.web3), this.ethereumConnection);
+        for (const loanManager of this.getAllLoanManagers()) {
             const loanCount:number = await loanManager.getLoanCount();
             result.push({
-                loanManagerAddress: contract.deployedAddress,
+                loanManagerAddress: loanManager.address,
                 loanCount
             })
         }
@@ -323,12 +299,29 @@ export class Augmint {
     }
 
     public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string ): Transaction | undefined {
-        const lmContract: DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(
-            AugmintContracts.LoanManager,
-            loan.loanManagerAddress
-        );
-        const loanManager: LoanManager = new LoanManager(lmContract.connect(this.web3), this.ethereumConnection);
+        const loanManager: LoanManager = this.getLoanManagerByAddress(loan.loanManagerAddress)
         return loanManager.addExtraCollateral(loan, weiAmount, userAccount)
+    }
+
+    private getLoanManager(contract: DeployedContract<LoanManagerInstance>): LoanManager {
+        const loanManager: LoanManager | undefined = loanManagers.get(contract.deployedAddress);
+        if(loanManager) {
+            return loanManager
+        } else {
+            const newLoanManager: LoanManager = new LoanManager(contract.connect(this.web3), this.ethereumConnection);
+            loanManagers.set(contract.deployedAddress, newLoanManager);
+            return newLoanManager;
+        }
+    }
+
+    private getLoanManagerByAddress(address: string): LoanManager {
+        const contract:DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(AugmintContracts.LoanManager, address);
+        return this.getLoanManager(contract)
+    }
+
+    private getAllLoanManagers(): LoanManager[] {
+        const contracts:Array<DeployedContract<LoanManagerInstance>> = this.deployedEnvironment.contracts[AugmintContracts.LoanManager];
+        return contracts.map((contract:DeployedContract<LoanManagerInstance>) => this.getLoanManager(contract));
     }
 
 }
