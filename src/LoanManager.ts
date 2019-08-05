@@ -72,14 +72,8 @@ export class LoanManager extends AbstractContract {
     }
 
     public async newEthBackedLoan(product: LoanProduct, weiAmount: Wei, userAccount: string, minRate?: Tokens): Promise<Transaction> {
-        let gasEstimate: number;
         const loanCount: number = await this.getLoanCount();
-
-        if (loanCount === 0) {
-            gasEstimate = NEW_FIRST_LOAN_GAS;
-        } else {
-            gasEstimate = NEW_LOAN_GAS;
-        }
+        const gasEstimate: number = loanCount===0 ? NEW_FIRST_LOAN_GAS : NEW_LOAN_GAS;
 
         let web3Tx: TransactionObject<void>;
         if(!isLoanManagerPreMarginLoan(this.instance)) {
