@@ -52,6 +52,11 @@ export class Augmint {
         return deployedEnvironment;
     }
 
+    // TODO: move this to some generic util package
+    public static flatten<T>(arr: T[][]): T[] {
+        return ([] as T[]).concat(...arr);
+    }
+
     public ethereumConnection: EthereumConnection;
     public deployedEnvironment: DeployedEnvironment;
     public latestContracts: ILatestContracts;
@@ -219,7 +224,7 @@ export class Augmint {
         return await Promise.all(this.getAllLoanManagers().map(
             (loanManager: LoanManager): Promise<LoanProduct[]> =>
             activeOnly ? loanManager.getActiveProducts() : loanManager.getAllProducts())
-        ).then((prods: LoanProduct[][]): LoanProduct[] => ([] as LoanProduct[]).concat(...prods));
+        ).then(Augmint.flatten);
     }
 
     public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string): Promise<Transaction> {
@@ -316,5 +321,4 @@ export class Augmint {
         const contracts:Array<DeployedContract<LoanManagerInstance>> = this.deployedEnvironment.contracts[AugmintContracts.LoanManager];
         return contracts.map((contract:DeployedContract<LoanManagerInstance>) => this.getLoanManager(contract));
     }
-
 }
