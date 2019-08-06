@@ -215,12 +215,10 @@ export class Augmint {
     }
 
     public async getLoansForAccount(userAccount: string): Promise<Loan[]> {
-        const result: Loan[] = [];
-        for (const loanManager of this.getAllLoanManagers()) {
-            const lmLoans: Loan[] = await loanManager.getLoansForAccount(userAccount);
-            result.push(...lmLoans);
-        }
-        return result;
+        return await Augmint.collectPromises(
+            this.getAllLoanManagers(),
+            loanManager => loanManager.getLoansForAccount(userAccount)
+        );
     }
 
     public async getLoanProducts(activeOnly: boolean): Promise<LoanProduct[]> {
@@ -247,12 +245,10 @@ export class Augmint {
     }
 
     public async getAllLoans(): Promise<Loan[]> {
-        const result: Loan[] = [];
-        for (const loanManager of this.getAllLoanManagers()) {
-            const lmLoans: Loan[] = await loanManager.getAllLoans();
-            result.push(...lmLoans);
-        }
-        return result;
+        return await Augmint.collectPromises(
+            this.getAllLoanManagers(),
+            loanManager => loanManager.getAllLoans()
+        );
     }
 
     public async getLoansToCollect(): Promise<Loan[]> {
