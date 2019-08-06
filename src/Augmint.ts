@@ -52,9 +52,12 @@ export class Augmint {
         return deployedEnvironment;
     }
 
-    // TODO: move this to some generic util package
+    // TODO: move these to some generic util package
     public static flatten<T>(arr: T[][]): T[] {
         return ([] as T[]).concat(...arr);
+    }
+    public static collectPromises<S, T>(sources: S[], extractor: (s: S) => Promise<T[]>): Promise<T[]> {
+        return Promise.all(sources.map(extractor)).then(Augmint.flatten);
     }
 
     public ethereumConnection: EthereumConnection;
@@ -221,10 +224,10 @@ export class Augmint {
     }
 
     public async getLoanProducts(activeOnly: boolean): Promise<LoanProduct[]> {
-        return await Promise.all(this.getAllLoanManagers().map(
-            (loanManager: LoanManager): Promise<LoanProduct[]> =>
-            activeOnly ? loanManager.getActiveProducts() : loanManager.getAllProducts())
-        ).then(Augmint.flatten);
+        return await Augmint.collectPromises(
+            this.getAllLoanManagers(),
+            loanManager => activeOnly ? loanManager.getActiveProducts() : loanManager.getAllProducts()
+        );
     }
 
     public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string): Promise<Transaction> {
