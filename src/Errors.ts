@@ -33,12 +33,3 @@ export class TransactionSendError extends TransactionError {
         Object.setPrototypeOf(this, TransactionSendError.prototype);
     }
 }
-
-// tslint:disable-next-line:max-classes-per-file
-export class MissingContractError extends AugmintJsError {
-    constructor(contractName: string, address: string) {
-        super(`Missing contract: ${contractName}@${address}`);
-        this.name = MissingContractError.name;
-        Object.setPrototypeOf(this, MissingContractError.prototype);
-    }
-}

@@ -1,6 +1,5 @@
 import { Contract } from "web3-eth-contract";
 import { DeployedContract } from "./DeployedContract";
-import { MissingContractError } from "./Errors";
 
 export type IDeployedContractList = Array<DeployedContract<Contract>>;
 
@@ -62,7 +61,7 @@ export class DeployedEnvironment {
         );
 
         if (!contract) {
-            throw new MissingContractError(name, address);
+            throw new Error("missing contract: did not find " + name + " at " + address);
         }
 
         return contract;
