@@ -252,12 +252,8 @@ export class Augmint {
     }
 
     public async getLoansToCollect(): Promise<Loan[]> {
-        try {
-            const allLoans: Loan[] = await this.getAllLoans();
-            return allLoans.filter((loan: Loan) => loan.isCollectable);
-        } catch (error) {
-            throw new Error("fetchLoansToCollectTx failed.\n" + error);
-        }
+        const allLoans: Loan[] = await this.getAllLoans();
+        return allLoans.filter((loan: Loan) => loan.isCollectable);
     }
 
     public collectLoans(loansToCollect: Loan[], userAccount: string): Transaction[] {
