@@ -216,15 +216,10 @@ export class Augmint {
     }
 
     public async getLoanProducts(activeOnly: boolean): Promise<LoanProduct[]> {
-        const promises: Array<Promise<LoanProduct[]>> = [];
-        for (const loanManager of this.getAllLoanManagers()) {
-            if (activeOnly) {
-                promises.push(loanManager.getActiveProducts());
-            } else {
-                promises.push(loanManager.getAllProducts());
-            }
-        }
-        return await Promise.all(promises).then((x: LoanProduct[][]): LoanProduct[] => ([] as LoanProduct[]).concat(...x));
+        return await Promise.all(this.getAllLoanManagers().map(
+            (loanManager: LoanManager): Promise<LoanProduct[]> =>
+            activeOnly ? loanManager.getActiveProducts() : loanManager.getAllProducts())
+        ).then((prods: LoanProduct[][]): LoanProduct[] => ([] as LoanProduct[]).concat(...prods));
     }
 
     public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string): Promise<Transaction> {
