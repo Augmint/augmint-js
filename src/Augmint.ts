@@ -30,7 +30,7 @@ interface ILoanCount {
     loanCount: number
 }
 
-const loanManagers = new Map<string, LoanManager>();
+const loanManagers: Map<string, LoanManager> = new Map<string, LoanManager>();
 
 export class Augmint {
     public static async create(connectionOptions: IOptions, environment?: DeployedEnvironment): Promise<Augmint> {
@@ -45,8 +45,8 @@ export class Augmint {
     ): DeployedEnvironment {
         const deployedEnvironment: DeployedEnvironment = new DeployedEnvironment(environmentName);
         Object.keys(stubs).forEach(stub => {
-            const role = stub;
-            const contractListStub = stubs[stub];
+            const role: string = stub;
+            const contractListStub: Array<DeployedContract<any>> = stubs[stub];
             deployedEnvironment.addRole(role, contractListStub.map(contractStub => new DeployedContract(contractStub)));
         });
         return deployedEnvironment;
@@ -74,9 +74,8 @@ export class Augmint {
         this.web3 = this.ethereumConnection.web3;
         if (!environment) {
             const networkId: string = this.ethereumConnection.networkId.toString(10);
-            const selectedDeployedEnvironment = deployments.find(
-                (item: DeployedEnvironment) => item.name === networkId
-            );
+            const selectedDeployedEnvironment: DeployedEnvironment | undefined =
+                deployments.find(item => item.name === networkId);
             if (selectedDeployedEnvironment) {
                 this.deployedEnvironment = selectedDeployedEnvironment;
             }
