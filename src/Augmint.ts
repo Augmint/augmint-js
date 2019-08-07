@@ -30,8 +30,6 @@ interface ILoanCount {
     loanCount: number
 }
 
-const loanManagers: Map<string, LoanManager> = new Map<string, LoanManager>();
-
 export class Augmint {
     public static async create(connectionOptions: IOptions, environment?: DeployedEnvironment): Promise<Augmint> {
         const ethereumConnection: EthereumConnection = new EthereumConnection(connectionOptions);
@@ -78,6 +76,7 @@ export class Augmint {
     private _token: AugmintToken;
     private _rates: Rates;
     private _exchange: Exchange;
+    private loanManagers: Map<string, LoanManager> = new Map<string, LoanManager>();
 
     private constructor(ethereumConnection: EthereumConnection, environment: DeployedEnvironment) {
         this.ethereumConnection = ethereumConnection;
@@ -87,7 +86,7 @@ export class Augmint {
 
         if (this.deployedEnvironment.contracts[AugmintContracts.LoanManager]) {
             this.deployedEnvironment.contracts[AugmintContracts.LoanManager]
-                .forEach(contract => loanManagers.set(contract.deployedAddress,
+                .forEach(contract => this.loanManagers.set(contract.deployedAddress,
                     new LoanManager(contract.connect(this.web3), this.ethereumConnection)));
         }
     }
@@ -300,7 +299,7 @@ export class Augmint {
     }
 
     private getLoanManager(contract: DeployedContract<LoanManagerInstance>): LoanManager {
-        const loanManager: LoanManager | undefined = loanManagers.get(contract.deployedAddress);
+        const loanManager: LoanManager | undefined = this.loanManagers.get(contract.deployedAddress);
         if (!loanManager) {
             throw new Error("environment configuration error: there is no loanmanager at " + contract.deployedAddress);
         }
