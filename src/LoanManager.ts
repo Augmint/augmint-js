@@ -96,28 +96,24 @@ export class LoanManager extends AbstractContract {
     }
 
     public async getLoansForAccount(userAccount: string): Promise<Loan[]> {
-        const loanManagerInstance:LoanManagerInstance = this.instance;
-        const chunkSize: number = isLoanManagerV0(loanManagerInstance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
-        const loanCount: number = await loanManagerInstance.methods
-            .getLoanCountForAddress(userAccount)
-            .call()
-            .then((res: string) => parseInt(res, 10));
-
-        let loans: Loan[] = [];
-
-        const queryCount: number = Math.ceil(loanCount / chunkSize);
-        const tokenAddress: string = await this.tokenAddress;
-
-        for (let i: number = 0; i < queryCount; i++) {
-            const loansArray: string[][] = isLoanManagerV0(loanManagerInstance)
-                ? await loanManagerInstance.methods
-                      .getLoansForAddress(userAccount, i * chunkSize)
-                      .call()
-                : await loanManagerInstance.methods.getLoansForAddress(userAccount, i * chunkSize, chunkSize).call();
-            loans = loans.concat(loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress)));
-        }
-
+        const chunkSize: number = isLoanManagerV0(this.instance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
+        const loans: Loan[] = [];
+        let i: number = 0;
+        let fetched: Loan[];
+        do {
+            fetched = await this.getLoansForAccountChunk(userAccount, i * chunkSize, chunkSize);
+            loans.push(...fetched);
+            i += chunkSize;
+        } while (fetched.length === chunkSize);
         return loans;
+    }
+
+    private async getLoansForAccountChunk(userAccount: string, offset: number, chunkSize: number): Promise<Loan[]> {
+        const tokenAddress: string = await this.tokenAddress;
+        const loansArray: string[][] = isLoanManagerV0(this.instance)
+                ? await this.instance.methods.getLoansForAddress(userAccount, offset).call()
+                : await this.instance.methods.getLoansForAddress(userAccount, offset, chunkSize).call();
+        return loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
     }
 
     public repayLoan(
