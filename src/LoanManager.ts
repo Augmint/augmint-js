@@ -142,28 +142,16 @@ export class LoanManager extends AbstractContract {
     }
 
     public async getAllLoans(): Promise<Loan[]> {
-        try {
-            const loanManagerInstance:LoanManagerInstance = this.instance;
-            const chunkSize:number = isLoanManagerV0(loanManagerInstance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
-
-            const loanCount: number = await this.getLoanCount();
-            const tokenAddress: string = await this.tokenAddress;
-            let loansToCollect: Loan[] = [];
-
-            const queryCount: number = Math.ceil(loanCount / chunkSize);
-            for (let i: number = 0; i < queryCount; i++) {
-                const loansArray: string[][] = isLoanManagerV0(loanManagerInstance)
-                    ? await loanManagerInstance.methods.getLoans(i * chunkSize).call()
-                    : await loanManagerInstance.methods.getLoans(i * chunkSize, chunkSize).call();
-                loansToCollect = loansToCollect.concat(
-                    loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress))
-                );
-            }
-
-            return loansToCollect;
-        } catch (error) {
-            throw new Error("fetchAllLoansTx failed.\n" + error);
-        }
+        const chunkSize: number = isLoanManagerV0(this.instance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
+        const loans: Loan[] = [];
+        let i: number = 0;
+        let fetched: Loan[];
+        do {
+            fetched = await this.getAllLoansChunk(i * chunkSize, chunkSize);
+            loans.push(...fetched);
+            i += chunkSize;
+        } while (fetched.length === chunkSize);
+        return loans;
     }
 
     public getLoanCount(): Promise<number> {
@@ -190,6 +178,14 @@ export class LoanManager extends AbstractContract {
         const loansArray: string[][] = isLoanManagerV0(this.instance)
                 ? await this.instance.methods.getLoansForAddress(userAccount, offset).call()
                 : await this.instance.methods.getLoansForAddress(userAccount, offset, chunkSize).call();
+        return loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
+    }
+
+    private async getAllLoansChunk(offset: number, chunkSize: number): Promise<Loan[]> {
+        const tokenAddress: string = await this.tokenAddress;
+        const loansArray: string[][] = isLoanManagerV0(this.instance)
+                ? await this.instance.methods.getLoans(offset).call()
+                : await this.instance.methods.getLoans(offset, chunkSize).call();
         return loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
     }
 
