@@ -86,6 +86,12 @@ export class Augmint {
         if (this.deployedEnvironment) {
             this.latestContracts = this.deployedEnvironment.getLatestContracts();
         }
+
+        if (this.deployedEnvironment && this.deployedEnvironment.contracts[AugmintContracts.LoanManager]) {
+            this.deployedEnvironment.contracts[AugmintContracts.LoanManager]
+                .forEach(contract => loanManagers.set(contract.deployedAddress,
+                    new LoanManager(contract.connect(this.web3), this.ethereumConnection)));
+        }
     }
 
     static get constants(): typeof constants {
@@ -297,13 +303,10 @@ export class Augmint {
 
     private getLoanManager(contract: DeployedContract<LoanManagerInstance>): LoanManager {
         const loanManager: LoanManager | undefined = loanManagers.get(contract.deployedAddress);
-        if(loanManager) {
-            return loanManager
-        } else {
-            const newLoanManager: LoanManager = new LoanManager(contract.connect(this.web3), this.ethereumConnection);
-            loanManagers.set(contract.deployedAddress, newLoanManager);
-            return newLoanManager;
+        if (!loanManager) {
+            throw new Error("environment configuration error: there is no loanmanager at " + contract.deployedAddress);
         }
+        return loanManager;
     }
 
     private getLoanManagerByAddress(address: string): LoanManager {
