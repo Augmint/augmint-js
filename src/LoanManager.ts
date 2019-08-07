@@ -108,14 +108,6 @@ export class LoanManager extends AbstractContract {
         return loans;
     }
 
-    private async getLoansForAccountChunk(userAccount: string, offset: number, chunkSize: number): Promise<Loan[]> {
-        const tokenAddress: string = await this.tokenAddress;
-        const loansArray: string[][] = isLoanManagerV0(this.instance)
-                ? await this.instance.methods.getLoansForAddress(userAccount, offset).call()
-                : await this.instance.methods.getLoansForAddress(userAccount, offset, chunkSize).call();
-        return loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
-    }
-
     public repayLoan(
         loan: Loan,
         repaymentAmount: Tokens,
@@ -191,6 +183,14 @@ export class LoanManager extends AbstractContract {
         } else {
             throw new AugmintJsError('invalid call to addExtraCollateral');
         }
+    }
+
+    private async getLoansForAccountChunk(userAccount: string, offset: number, chunkSize: number): Promise<Loan[]> {
+        const tokenAddress: string = await this.tokenAddress;
+        const loansArray: string[][] = isLoanManagerV0(this.instance)
+                ? await this.instance.methods.getLoansForAddress(userAccount, offset).call()
+                : await this.instance.methods.getLoansForAddress(userAccount, offset, chunkSize).call();
+        return loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
     }
 
     private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
