@@ -294,7 +294,7 @@ export class Augmint {
         return result;
     }
 
-    public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string ): Transaction | undefined {
+    public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string ): Transaction {
         const loanManager: LoanManager = this.getLoanManagerByAddress(loan.loanManagerAddress)
         return loanManager.addExtraCollateral(loan, weiAmount, userAccount)
     }
