@@ -96,23 +96,16 @@ export class Loan {
         return this.state === LOAN_STATES.Open && (this.maturity - currentTime() < sevenDays);
     }
 
-    // TODO: update for margin loans!!!
-    get loanStateText(): string {
-        switch (this.state) {
-            case LOAN_STATES.Open:
-                if (this.maturity - currentTime() < sevenDays) {
-                    return "Payment Due";
-                } else {
-                    return "Open";
-                }
-            case LOAN_STATES.Repaid:
-                return "Repaid";
-            case LOAN_STATES.Defaulted:
-                return "Defaulted (not yet collected)";
-            case LOAN_STATES.Collected:
-                return "Defaulted and collected";
-        }
-        return "Invalid state";
+    get isExpired(): boolean {
+        return this.maturity < currentTime();
+    }
+
+    get isRepaid(): boolean {
+        return this.state === LOAN_STATES.Repaid;
+    }
+
+    get isCollected(): boolean {
+        return this.state === LOAN_STATES.Collected;
     }
 
     get collateralStatus(): string {
