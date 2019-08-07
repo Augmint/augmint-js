@@ -36,6 +36,16 @@ export class Augmint {
     public static async create(connectionOptions: IOptions, environment?: DeployedEnvironment): Promise<Augmint> {
         const ethereumConnection: EthereumConnection = new EthereumConnection(connectionOptions);
         await ethereumConnection.connect();
+
+        if (!environment) {
+            const networkId: string = ethereumConnection.networkId.toString(10);
+            const selectedDeployedEnvironment: DeployedEnvironment | undefined =
+                deployments.find(item => item.name === networkId);
+                environment = selectedDeployedEnvironment;
+        }
+        if (!environment) {
+            throw new Error("Missing environment, cannot create Augmint");
+        }
         return new Augmint(ethereumConnection, environment);
     }
 
@@ -69,25 +79,13 @@ export class Augmint {
     private _rates: Rates;
     private _exchange: Exchange;
 
-    private constructor(ethereumConnection: EthereumConnection, environment?: DeployedEnvironment) {
+    private constructor(ethereumConnection: EthereumConnection, environment: DeployedEnvironment) {
         this.ethereumConnection = ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
-        if (!environment) {
-            const networkId: string = this.ethereumConnection.networkId.toString(10);
-            const selectedDeployedEnvironment: DeployedEnvironment | undefined =
-                deployments.find(item => item.name === networkId);
-            if (selectedDeployedEnvironment) {
-                this.deployedEnvironment = selectedDeployedEnvironment;
-            }
-        } else {
-            this.deployedEnvironment = environment;
-        }
+        this.deployedEnvironment = environment;
+        this.latestContracts = this.deployedEnvironment.getLatestContracts();
 
-        if (this.deployedEnvironment) {
-            this.latestContracts = this.deployedEnvironment.getLatestContracts();
-        }
-
-        if (this.deployedEnvironment && this.deployedEnvironment.contracts[AugmintContracts.LoanManager]) {
+        if (this.deployedEnvironment.contracts[AugmintContracts.LoanManager]) {
             this.deployedEnvironment.contracts[AugmintContracts.LoanManager]
                 .forEach(contract => loanManagers.set(contract.deployedAddress,
                     new LoanManager(contract.connect(this.web3), this.ethereumConnection)));
