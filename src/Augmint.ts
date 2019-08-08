@@ -298,21 +298,15 @@ export class Augmint {
         return loanManager.addExtraCollateral(loan, weiAmount, userAccount)
     }
 
-    private getLoanManager(contract: DeployedContract<LoanManagerInstance>): LoanManager {
-        const loanManager: LoanManager | undefined = this.loanManagers.get(contract.deployedAddress);
+    private getLoanManagerByAddress(address: string): LoanManager {
+        const loanManager: LoanManager | undefined = this.loanManagers.get(address);
         if (!loanManager) {
-            throw new Error("environment configuration error: there is no loanmanager at " + contract.deployedAddress);
+            throw new Error("environment configuration error: there is no loanmanager at " + address);
         }
         return loanManager;
     }
 
-    private getLoanManagerByAddress(address: string): LoanManager {
-        const contract:DeployedContract<LoanManagerInstance> = this.deployedEnvironment.getContractFromAddress(AugmintContracts.LoanManager, address);
-        return this.getLoanManager(contract)
-    }
-
     private getAllLoanManagers(): LoanManager[] {
-        const contracts:Array<DeployedContract<LoanManagerInstance>> = this.deployedEnvironment.contracts[AugmintContracts.LoanManager];
-        return contracts.map((contract:DeployedContract<LoanManagerInstance>) => this.getLoanManager(contract));
+        return Array.from(this.loanManagers.values());
     }
 }
