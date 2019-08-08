@@ -102,7 +102,7 @@ export class LoanManager extends AbstractContract {
         do {
             fetched = await this.getLoansForAccountChunk(userAccount, i * chunkSize, chunkSize);
             loans.push(...fetched);
-            i += chunkSize;
+            i += 1;
         } while (fetched.length === chunkSize);
         return loans;
     }
@@ -148,7 +148,7 @@ export class LoanManager extends AbstractContract {
         do {
             fetched = await this.getAllLoansChunk(i * chunkSize, chunkSize);
             loans.push(...fetched);
-            i += chunkSize;
+            i += 1;
         } while (fetched.length === chunkSize);
         return loans;
     }
@@ -205,7 +205,7 @@ export class LoanManager extends AbstractContract {
         do {
             fetched = await this.getProductsChunk(i * chunkSize, chunkSize);
             products.push(...fetched);
-            i += chunkSize;
+            i += 1;
         } while (fetched.length === chunkSize);
         return products.filter((p: LoanProduct) => p.isActive || !onlyActive);
     }

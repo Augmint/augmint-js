@@ -46,7 +46,7 @@ export class OrderBook {
 
             const fillTokens: Tokens = Tokens.min(toTokens(order), remaining);
             const fillEthers: Wei = fillTokens.toWeiAt(rate, order.price);
- 
+
             ret.filledTokens = ret.filledTokens.add(fillTokens);
             ret.filledEthers = ret.filledEthers.add(fillEthers);
             ret.limitPrice = order.price;
@@ -317,7 +317,7 @@ export class Exchange extends AbstractContract {
         do {
             fetched = await this.getOrdersChunk(buy, i * chunkSize, chunkSize);
             orders.push(...fetched);
-            i += chunkSize;
+            i += 1;
         } while (fetched.length === chunkSize);
         return orders;
     }
