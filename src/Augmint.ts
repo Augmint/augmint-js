@@ -79,7 +79,7 @@ export class Augmint {
 
         if (this.deployedEnvironment.contracts[AugmintContracts.LoanManager]) {
             this.deployedEnvironment.contracts[AugmintContracts.LoanManager]
-                .forEach(contract => this.loanManagers.set(contract.deployedAddress,
+                .forEach(contract => this.loanManagers.set(contract.deployedAddress.toLowerCase(),
                     new LoanManager(contract.connect(this.web3), this.ethereumConnection)));
         }
     }
@@ -287,12 +287,12 @@ export class Augmint {
     }
 
     public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string ): Transaction {
-        const loanManager: LoanManager = this.getLoanManagerByAddress(loan.loanManagerAddress)
+        const loanManager: LoanManager = this.getLoanManagerByAddress(loan.loanManagerAddress);
         return loanManager.addExtraCollateral(loan, weiAmount, userAccount)
     }
 
     private getLoanManagerByAddress(address: string): LoanManager {
-        const loanManager: LoanManager | undefined = this.loanManagers.get(address);
+        const loanManager: LoanManager | undefined = this.loanManagers.get(address.toLowerCase());
         if (!loanManager) {
             throw new Error("environment configuration error: there is no loanmanager at " + address);
         }
