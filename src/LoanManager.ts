@@ -14,12 +14,12 @@ import { ILoanProductTuple, LoanProduct } from "./LoanProduct";
 import { Transaction } from "./Transaction";
 import { Tokens, Wei } from "./units";
 
-type LoanManagerPreChukSize = LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286; // pre chunk size
+type LoanManagerPreChunkSize = LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286; // pre chunk size
 type LoanManagerPreMarginLoan = LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb | LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286;
 
 
-function isLoanManagerV0(instance: LoanManagerInstance): instance is LoanManagerPreChukSize {
-    return (instance as LoanManagerPreChukSize).methods.CHUNK_SIZE !== undefined;
+function isLoanManagerV0(instance: LoanManagerInstance): instance is LoanManagerPreChunkSize {
+    return (instance as LoanManagerPreChunkSize).methods.CHUNK_SIZE !== undefined;
 }
 
 function isLoanManagerPreMarginLoan(instance: LoanManagerInstance): instance is LoanManagerPreMarginLoan {
