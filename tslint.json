@@ -6,7 +6,7 @@
     "rules": {
         "new-parens": true,
         "ordered-imports": {
-            "severity": "warn"
+            "severity": "off"
         },
         "jsdoc-format": {
             "severity": "warn"
@@ -50,6 +50,7 @@
         },
         "object-literal-shorthand": {
             "severity": "warn"
-        }
+        },
+        "max-classes-per-file": [true, 5]
     }
 }

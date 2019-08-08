@@ -65,7 +65,7 @@
         "ganache:run": "scripts/augmint-cli.sh ganache run --blockTime 1",
         "typedoc": "./generateDocs.sh",
         "prepublishOnly": "yarn clean && yarn build",
-        "lint": "tslint --project ."
+        "lint": "tslint -t stylish --project ."
     },
     "greenkeeper": {
         "ignore": [
