@@ -177,7 +177,9 @@ export class LoanManager extends AbstractContract {
         const loansArray: string[][] = isLoanManagerV0(this.instance)
                 ? await this.instance.methods.getLoansForAddress(userAccount, offset).call()
                 : await this.instance.methods.getLoansForAddress(userAccount, offset, chunkSize).call();
-        return loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
+        return loansArray
+            .filter((p:ILoanTuple) => p[3] !== "0")
+            .map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
     }
 
     private async getAllLoansChunk(offset: number, chunkSize: number): Promise<Loan[]> {
@@ -185,7 +187,9 @@ export class LoanManager extends AbstractContract {
         const loansArray: string[][] = isLoanManagerV0(this.instance)
                 ? await this.instance.methods.getLoans(offset).call()
                 : await this.instance.methods.getLoans(offset, chunkSize).call();
-        return loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
+        return loansArray
+            .filter((p:ILoanTuple) => p[3] !== "0")
+            .map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
     }
 
     private async getProductsChunk(offset: number, chunkSize: number): Promise<LoanProduct[]> {
