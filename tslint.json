@@ -40,7 +40,6 @@
             "severity": "warn",
             "options": [
                 "call-signature",
-                "arrow-call-signature",
                 "parameter",
                 "property-declaration",
                 "variable-declaration",
