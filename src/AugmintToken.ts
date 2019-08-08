@@ -3,7 +3,6 @@ import { AbstractContract } from "./AbstractContract";
 import { EthereumConnection } from "./EthereumConnection";
 
 export class AugmintToken extends AbstractContract {
-    public static contractName = AugmintContracts.TokenAEur;
     public instance: TokenAEur;
     private _peggedSymbol: Promise<string>;
     private _symbol: Promise<string>;

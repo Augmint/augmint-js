@@ -13,8 +13,6 @@ export interface IRateInfo {
 }
 
 export class Rates extends AbstractContract {
-    // overwrite Contract's  property to have typings
-    public static contractName = AugmintContracts.Rates;
     public instance: RatesInstance; /** web3.js Rates contract instance  */
     private web3: any;
     private ethereumConnection: EthereumConnection;

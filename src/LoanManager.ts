@@ -32,7 +32,6 @@ function isLoanManagerPreMarginLoan(instance: LoanManagerInstance): instance is 
  * @extends Contract
  */
 export class LoanManager extends AbstractContract {
-    public static contractName: string = AugmintContracts.LoanManager;
     public instance: LoanManagerInstance;
     public augmintTokenAddress: Promise<string>;
 
