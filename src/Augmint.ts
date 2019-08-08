@@ -20,6 +20,7 @@ import { LoanProduct } from "./LoanProduct";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
 import { Tokens, Wei } from "./units";
+import { collectPromises } from "./utils/generic";
 
 interface IDeployedEnvironmentStub {
     [propName: string]: IDeploymentItem[];
@@ -58,14 +59,6 @@ export class Augmint {
             deployedEnvironment.addRole(role, contractListStub.map(contractStub => new DeployedContract(contractStub)));
         });
         return deployedEnvironment;
-    }
-
-    // TODO: move these to some generic util package
-    public static flatten<T>(arr: T[][]): T[] {
-        return ([] as T[]).concat(...arr);
-    }
-    public static collectPromises<S, T>(sources: S[], extractor: (s: S) => Promise<T[]>): Promise<T[]> {
-        return Promise.all(sources.map(extractor)).then(Augmint.flatten);
     }
 
     public ethereumConnection: EthereumConnection;
@@ -217,14 +210,14 @@ export class Augmint {
     }
 
     public async getLoansForAccount(userAccount: string): Promise<Loan[]> {
-        return await Augmint.collectPromises(
+        return await collectPromises(
             this.getAllLoanManagers(),
             loanManager => loanManager.getLoansForAccount(userAccount)
         );
     }
 
     public async getLoanProducts(activeOnly: boolean): Promise<LoanProduct[]> {
-        return await Augmint.collectPromises(
+        return await collectPromises(
             this.getAllLoanManagers(),
             loanManager => activeOnly ? loanManager.getActiveProducts() : loanManager.getAllProducts()
         );
@@ -247,7 +240,7 @@ export class Augmint {
     }
 
     public async getAllLoans(): Promise<Loan[]> {
-        return await Augmint.collectPromises(
+        return await collectPromises(
             this.getAllLoanManagers(),
             loanManager => loanManager.getAllLoans()
         );
