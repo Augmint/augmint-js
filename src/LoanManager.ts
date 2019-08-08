@@ -189,30 +189,25 @@ export class LoanManager extends AbstractContract {
         return loansArray.map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
     }
 
-    private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
-        const chunkSize: number = isLoanManagerV0(this.instance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
-
-        const productCount: number = await this.instance.methods
-            .getProductCount()
-            .call()
-            .then((res: string) => parseInt(res, 10));
-
-        let products: LoanProduct[] = [];
-        const queryCount: number = Math.ceil(productCount / chunkSize);
-
-        for (let i: number = 0; i < queryCount; i++) {
-            const productTuples: ILoanProductTuple[] = isLoanManagerV0(this.instance)
-                ? ((await this.instance.methods.getProducts(i * chunkSize).call()) as ILoanProductTuple[])
-                : ((await this.instance.methods.getProducts(i * chunkSize, chunkSize).call()) as ILoanProductTuple[]);
-
-            const productInstances: LoanProduct[] = productTuples
-                .filter((p: ILoanProductTuple) => p[2] !== "0") // solidity can return only fixed size arrays so 0 terms means no product
-                .map((tuple: ILoanProductTuple) => new LoanProduct(tuple, this.address));
-
-            products = products.concat(productInstances);
-        }
-
-        return products.filter((p: LoanProduct) => p.isActive || !onlyActive);
+    private async getProductsChunk(offset: number, chunkSize: number): Promise<LoanProduct[]> {
+        const prodArray: string[][] = isLoanManagerV0(this.instance)
+            ? await this.instance.methods.getProducts(offset).call()
+            : await this.instance.methods.getProducts(offset, chunkSize).call();
+        return prodArray
+            .filter((p: ILoanProductTuple) => p[2] !== "0") // solidity can return only fixed size arrays so 0 terms means no product
+            .map((tuple: ILoanProductTuple) => new LoanProduct(tuple, this.address));
     }
 
+    private async getProducts(onlyActive: boolean): Promise<LoanProduct[]> {
+        const chunkSize: number = isLoanManagerV0(this.instance) ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
+        const products: LoanProduct[] = [];
+        let i: number = 0;
+        let fetched: LoanProduct[];
+        do {
+            fetched = await this.getProductsChunk(i * chunkSize, chunkSize);
+            products.push(...fetched);
+            i += chunkSize;
+        } while (fetched.length === chunkSize);
+        return products.filter((p: LoanProduct) => p.isActive || !onlyActive);
+    }
 }
