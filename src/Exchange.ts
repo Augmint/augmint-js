@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { Exchange as ExchangeInstance } from "../generated/index";
+import { AugmintContracts, Exchange as ExchangeInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
@@ -46,7 +46,7 @@ export class OrderBook {
 
             const fillTokens: Tokens = Tokens.min(toTokens(order), remaining);
             const fillEthers: Wei = fillTokens.toWeiAt(rate, order.price);
- 
+
             ret.filledTokens = ret.filledTokens.add(fillTokens);
             ret.filledEthers = ret.filledEthers.add(fillEthers);
             ret.limitPrice = order.price;
@@ -216,6 +216,11 @@ export class Exchange extends AbstractContract {
         this.token = options.token;
     }
 
+    public get isLegacyExchangeContract(): boolean {
+        // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
+        return typeof this.instance.methods.CHUNK_SIZE === "function";
+    }
+
     /**
      * Fetches, parses and orders the current, full orderBook from Exchange
      *
@@ -223,13 +228,9 @@ export class Exchange extends AbstractContract {
      * @memberof Exchange
      */
     public async getOrderBook(): Promise<OrderBook> {
-        // TODO: handle when order changes while iterating
-        // @ts-ignore  TODO: remove ts - ignore and handle properly when legacy contract support added
-        const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
-        const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
         const [buyOrders, sellOrders]: [IBuyOrder[], ISellOrder[]] = await Promise.all([
-            this.getOrders(true, chunkSize) as Promise<IBuyOrder[]>,
-            this.getOrders(false, chunkSize) as Promise<ISellOrder[]>
+            this.getOrders(true) as Promise<IBuyOrder[]>,
+            this.getOrders(false) as Promise<ISellOrder[]>
         ]);
         return new OrderBook(buyOrders, sellOrders);
     }
@@ -308,34 +309,31 @@ export class Exchange extends AbstractContract {
         return OrderBook;
     }
 
-    private async getOrders(buy: boolean, chunkSize: number): Promise<IOrder[]> {
+    private async getOrders(buy: boolean): Promise<IOrder[]> {
+        const chunkSize: number = this.isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
         const orders: IOrder[] = [];
         let i: number = 0;
         let fetched: IOrder[];
         do {
-            fetched = await this.getOrdersChunk(buy, i * chunkSize);
+            fetched = await this.getOrdersChunk(buy, i * chunkSize, chunkSize);
             orders.push(...fetched);
-            i += chunkSize;
+            i += 1;
         } while (fetched.length === chunkSize);
         return orders;
     }
 
-    private async getOrdersChunk(buy: boolean, offset: number): Promise<IOrder[]> {
+    private async getOrdersChunk(buy: boolean, offset: number, chunkSize: number): Promise<IOrder[]> {
         const blockGasLimit: number = this.safeBlockGasLimit;
-        // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
-        const isLegacyExchangeContract: boolean = typeof this.instance.methods.CHUNK_SIZE === "function";
-        const chunkSize: number = isLegacyExchangeContract ? LEGACY_CONTRACTS_CHUNK_SIZE : CHUNK_SIZE;
-
         let result: IOrderTuple[];
         if (buy) {
             // prettier-ignore
-            result = isLegacyExchangeContract
+            result = this.isLegacyExchangeContract
                 // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
                 ? await this.instance.methods.getActiveBuyOrders(offset).call({ gas: blockGasLimit })
                 : await this.instance.methods.getActiveBuyOrders(offset, chunkSize).call({ gas: blockGasLimit });
         } else {
             // prettier-ignore
-            result = isLegacyExchangeContract
+            result = this.isLegacyExchangeContract
                 // @ts-ignore  TODO: remove ts - ignore and handle properly when legacy contract support added
                 ? await this.instance.methods.getActiveSellOrders(offset).call({ gas: blockGasLimit })
                 : await this.instance.methods.getActiveSellOrders(offset, chunkSize).call({ gas: blockGasLimit });

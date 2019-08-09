@@ -1,4 +1,4 @@
-import { Rates as RatesInstance } from "../generated/index";
+import { AugmintContracts, Rates as RatesInstance } from "../generated/index";
 import { TransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { Wei, Tokens } from "./units";
@@ -13,7 +13,6 @@ export interface IRateInfo {
 }
 
 export class Rates extends AbstractContract {
-    // overwrite Contract's  property to have typings
     public instance: RatesInstance; /** web3.js Rates contract instance  */
     private web3: any;
     private ethereumConnection: EthereumConnection;

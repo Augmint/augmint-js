@@ -11,9 +11,9 @@ export interface ILoanValues {
 }
 
 /**  result from LoanManager contract's getProduct:
- *   [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
+ *   [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
  */
-export type ILoanProductTuple = [string, string, string, string, string, string, string, string];
+export type ILoanProductTuple = [string, string, string, string, string, string, string, string, string];
 export class LoanProduct {
     public readonly id: number;
 
@@ -29,10 +29,15 @@ export class LoanProduct {
     public readonly maxLoanAmount: Tokens;
 
     public readonly isActive: boolean;
+    public readonly loanManagerAddress: string;
 
-    constructor(loanProductTuple: ILoanProductTuple) {
+    public readonly initialCollateralRatio: Ratio;
+    public readonly minCollateralRatio: Ratio;
+
+
+    constructor(loanProductTuple: ILoanProductTuple, loanManagerAddress: string) {
         // Solidity LoanManager contract .getProducts() tuple:
-        // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive ]
+        // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
         const [
             sId,
             sMinDisbursedAmount,
@@ -41,7 +46,8 @@ export class LoanProduct {
             sCollateralRatio,
             sDefaultingFeePt,
             sMaxLoanAmount,
-            sIsActive
+            sIsActive,
+            sMinCollateralRatio
         ]: string[] = loanProductTuple;
 
         if (sTerm === "0") {
@@ -68,18 +74,39 @@ export class LoanProduct {
         this.termInSecs = termInSecs;
         this.discountRate = discountRate;
         this.interestRatePa = interestRatePa;
-        this.collateralRatio = Ratio.parse(sCollateralRatio);
         this.minDisbursedAmount = minDisbursedAmount;
         this.adjustedMinDisbursedAmount = adjustedMinDisbursedAmount;
         this.maxLoanAmount = Tokens.parse(sMaxLoanAmount);
         this.defaultingFeePt = Ratio.parse(sDefaultingFeePt);
         this.isActive = sIsActive === "1";
+
+        if(sMinCollateralRatio) {
+            this.initialCollateralRatio = Ratio.parse(sCollateralRatio);
+            this.minCollateralRatio = Ratio.parse(sMinCollateralRatio);
+        } else {
+            this.collateralRatio = Ratio.parse(sCollateralRatio);
+        }
+
+
+        this.loanManagerAddress = loanManagerAddress;
     }
 
+    get isMarginLoan(): boolean {
+        return !!(this.minCollateralRatio && this.initialCollateralRatio);
+    }
+
+    get marginCallRateRatio():Ratio {
+        if(this.isMarginLoan) {
+            return this.minCollateralRatio.div(this.initialCollateralRatio);
+        }
+        return Ratio.of(0);
+    }
+
+    // Note: "disbursedAmount" is the loanAmount
     public calculateLoanFromCollateral(collateralAmount: Wei, ethFiatRate: Tokens): ILoanValues {
         const tokenValue: Tokens = collateralAmount.toTokens(ethFiatRate);
-        const repaymentAmount: Tokens = tokenValue.mul(this.collateralRatio);
-        const disbursedAmount: Tokens = repaymentAmount.mul(this.discountRate);
+        const repaymentAmount: Tokens = tokenValue.divFloor(this.getInitialCollateralRatio());
+        const disbursedAmount: Tokens = repaymentAmount.mulCeil(this.discountRate);
         const interestAmount: Tokens = repaymentAmount.sub(disbursedAmount);
 
         const repayBefore: Date = new Date();
@@ -94,10 +121,11 @@ export class LoanProduct {
         };
     }
 
+    // Note: "disbursedAmount" is the loanAmount
     public calculateLoanFromDisbursedAmount(disbursedAmount: Tokens, ethFiatRate: Tokens): ILoanValues {
-        const repaymentAmount: Tokens = disbursedAmount.div(this.discountRate);
+        const repaymentAmount: Tokens = disbursedAmount.divFloor(this.discountRate);
 
-        const collateralValueInTokens: Tokens = repaymentAmount.div(this.collateralRatio);
+        const collateralValueInTokens: Tokens = repaymentAmount.mulCeil(this.getInitialCollateralRatio());
         const collateralAmount: Wei = collateralValueInTokens.toWei(ethFiatRate);
 
         const repayBefore: Date = new Date();
@@ -113,4 +141,14 @@ export class LoanProduct {
 
         return result;
     }
+
+    // this is an estimate! use it only on new loan page!
+    public calculateMarginCallRate(ethFiatRate: Tokens):Tokens {
+        return ethFiatRate.mul(this.marginCallRateRatio);
+    }
+
+    public getInitialCollateralRatio(): Ratio {
+        return this.isMarginLoan ? this.initialCollateralRatio : Ratio.of(1).div(this.collateralRatio);
+    }
+
 }
