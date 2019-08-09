@@ -14,18 +14,37 @@ import * as Errors from "./Errors";
 import { EthereumConnection, IOptions } from "./EthereumConnection";
 import { Exchange, IExchangeOptions } from "./Exchange";
 import * as gas from "./gas";
-import { ILoanManagerOptions, LoanManager } from "./LoanManager";
+import { Loan } from "./Loan";
+import { LoanManager } from "./LoanManager";
+import { LoanProduct } from "./LoanProduct";
 import { Rates } from "./Rates";
 import { Transaction } from "./Transaction";
+import { Tokens, Wei } from "./units";
+import { collectPromises } from "./utils/generic";
 
 interface IDeployedEnvironmentStub {
     [propName: string]: IDeploymentItem[];
+}
+
+interface ILoanCount {
+    loanManagerAddress: string
+    loanCount: number
 }
 
 export class Augmint {
     public static async create(connectionOptions: IOptions, environment?: DeployedEnvironment): Promise<Augmint> {
         const ethereumConnection: EthereumConnection = new EthereumConnection(connectionOptions);
         await ethereumConnection.connect();
+
+        if (!environment) {
+            const networkId: string = ethereumConnection.networkId.toString(10);
+            const selectedDeployedEnvironment: DeployedEnvironment | undefined =
+                deployments.find(item => item.name === networkId);
+                environment = selectedDeployedEnvironment;
+        }
+        if (!environment) {
+            throw new Error("Missing environment, cannot create Augmint");
+        }
         return new Augmint(ethereumConnection, environment);
     }
 
@@ -35,8 +54,8 @@ export class Augmint {
     ): DeployedEnvironment {
         const deployedEnvironment: DeployedEnvironment = new DeployedEnvironment(environmentName);
         Object.keys(stubs).forEach(stub => {
-            const role = stub;
-            const contractListStub = stubs[stub];
+            const role: string = stub;
+            const contractListStub: Array<DeployedContract<any>> = stubs[stub];
             deployedEnvironment.addRole(role, contractListStub.map(contractStub => new DeployedContract(contractStub)));
         });
         return deployedEnvironment;
@@ -50,25 +69,18 @@ export class Augmint {
     private _token: AugmintToken;
     private _rates: Rates;
     private _exchange: Exchange;
-    private _loanManager: LoanManager;
+    private loanManagers: Map<string, LoanManager> = new Map<string, LoanManager>();
 
-    private constructor(ethereumConnection: EthereumConnection, environment?: DeployedEnvironment) {
+    private constructor(ethereumConnection: EthereumConnection, environment: DeployedEnvironment) {
         this.ethereumConnection = ethereumConnection;
         this.web3 = this.ethereumConnection.web3;
-        if (!environment) {
-            const networkId: string = this.ethereumConnection.networkId.toString(10);
-            const selectedDeployedEnvironment = deployments.find(
-                (item: DeployedEnvironment) => item.name === networkId
-            );
-            if (selectedDeployedEnvironment) {
-                this.deployedEnvironment = selectedDeployedEnvironment;
-            }
-        } else {
-            this.deployedEnvironment = environment;
-        }
+        this.deployedEnvironment = environment;
+        this.latestContracts = this.deployedEnvironment.getLatestContracts();
 
-        if (this.deployedEnvironment) {
-            this.latestContracts = this.deployedEnvironment.getLatestContracts();
+        if (this.deployedEnvironment.contracts[AugmintContracts.LoanManager]) {
+            this.deployedEnvironment.contracts[AugmintContracts.LoanManager]
+                .forEach(contract => this.loanManagers.set(contract.deployedAddress.toLowerCase(),
+                    new LoanManager(contract.connect(this.web3), this.ethereumConnection)));
         }
     }
 
@@ -99,7 +111,7 @@ export class Augmint {
     static get Exchange(): typeof Exchange {
         return Exchange;
     }
-  
+
     static get LoanManager(): typeof LoanManager {
         return LoanManager;
     }
@@ -109,7 +121,7 @@ export class Augmint {
             const tokenContract: DeployedContract<TokenAEur> = this.deployedEnvironment.getLatestContract(
                 AugmintContracts.TokenAEur
             );
-            this._token = new AugmintToken(tokenContract.connect(this.web3), { web3: this.web3 });
+            this._token = new AugmintToken(tokenContract.connect(this.web3), this.ethereumConnection);
         }
         return this._token;
     }
@@ -138,20 +150,6 @@ export class Augmint {
         return this._exchange;
     }
 
-    get loanManager(): LoanManager {
-        if (!this._loanManager) {
-            const loanManagerContract: DeployedContract<
-                LoanManagerInstance
-            > = this.deployedEnvironment.getLatestContract(AugmintContracts.LoanManager);
-            this._loanManager = new LoanManager(loanManagerContract.connect(this.web3), {
-                token: this.token,
-                rates: this.rates,
-                ethereumConnection: this.ethereumConnection
-            });
-        }
-        return this._loanManager;
-    }
-
     public getLegacyTokens(addresses: string[] = []): AugmintToken[] {
         let legacyTokens: Array<DeployedContract<TokenAEur>> = [];
 
@@ -166,7 +164,7 @@ export class Augmint {
 
         return legacyTokens.map(
             (tokenContract: DeployedContract<TokenAEur>) =>
-                new AugmintToken(tokenContract.connect(this.web3), { web3: this.web3 })
+                new AugmintToken(tokenContract.connect(this.web3), this.ethereumConnection)
         );
     }
 
@@ -205,13 +203,103 @@ export class Augmint {
                 throw new Error("legacy contracts length mismatch!");
             }
         }
-        const options: ILoanManagerOptions = {
-            token: this.token, // FIXME: This should come from LoanManager contract's augmintToken property
-            rates: this.rates, // FIXME: This should come from LoanManager contract's rates property
-            ethereumConnection: this.ethereumConnection
-        };
         return legacyContracts.map(
-            (contract: DeployedContract<LoanManagerInstance>) => new LoanManager(contract.connect(this.web3), options)
+            (contract: DeployedContract<LoanManagerInstance>) =>
+                new LoanManager(contract.connect(this.web3), this.ethereumConnection)
         );
+    }
+
+    public async getLoansForAccount(userAccount: string): Promise<Loan[]> {
+        return await collectPromises(
+            this.getAllLoanManagers(),
+            loanManager => loanManager.getLoansForAccount(userAccount)
+        );
+    }
+
+    public async getLoanProducts(activeOnly: boolean): Promise<LoanProduct[]> {
+        return await collectPromises(
+            this.getAllLoanManagers(),
+            loanManager => activeOnly ? loanManager.getActiveProducts() : loanManager.getAllProducts()
+        );
+    }
+
+    public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string): Promise<Transaction> {
+        const loanManager: LoanManager = this.getLoanManagerByAddress(loan.loanManagerAddress)
+        const tokenAddress: string = await loanManager.tokenAddress;
+        const tokenContract: DeployedContract<TokenAEur> = this.deployedEnvironment.getContractFromAddress(
+            AugmintContracts.TokenAEur,
+            tokenAddress
+        );
+        const token: AugmintToken = new AugmintToken(tokenContract.connect(this.web3), this.ethereumConnection);
+        return loanManager.repayLoan(loan, repaymentAmount, userAccount, token);
+    }
+
+    public async newEthBackedLoan(loanProduct: LoanProduct, weiAmount: Wei, userAccount: string, minRate?:Tokens): Promise<Transaction> {
+        const loanManager: LoanManager = this.getLoanManagerByAddress(loanProduct.loanManagerAddress)
+        return loanManager.newEthBackedLoan(loanProduct, weiAmount, userAccount, minRate);
+    }
+
+    public async getAllLoans(): Promise<Loan[]> {
+        return await collectPromises(
+            this.getAllLoanManagers(),
+            loanManager => loanManager.getAllLoans()
+        );
+    }
+
+    public async getLoansToCollect(): Promise<Loan[]> {
+        const allLoans: Loan[] = await this.getAllLoans();
+        return allLoans.filter((loan: Loan) => loan.isCollectable);
+    }
+
+    public collectLoans(loansToCollect: Loan[], userAccount: string): Transaction[] {
+        let currentAddress: string | null = null;
+        let loanManager: LoanManager | null = null;
+        const result: Transaction[] = [];
+        let loans: Loan[] = [];
+        loansToCollect.sort((a: Loan, b: Loan) => (a.loanManagerAddress < b.loanManagerAddress ? 1 : -1));
+        for (const loan of loansToCollect) {
+            if (currentAddress !== loan.loanManagerAddress) {
+                if (currentAddress !== null && loanManager !== null) {
+                    result.push(loanManager.collectLoans(loans, userAccount));
+                }
+                loanManager = this.getLoanManagerByAddress(loan.loanManagerAddress);
+                loans = [];
+            }
+            currentAddress = loan.loanManagerAddress;
+            loans.push(loan);
+        }
+        if (loanManager) {
+            result.push(loanManager.collectLoans(loans, userAccount));
+        }
+        return result
+    }
+
+    public async getLoanCounts(): Promise<ILoanCount[]> {
+        const result:ILoanCount[] = [];
+        for (const loanManager of this.getAllLoanManagers()) {
+            const loanCount:number = await loanManager.getLoanCount();
+            result.push({
+                loanManagerAddress: loanManager.address,
+                loanCount
+            })
+        }
+        return result;
+    }
+
+    public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string ): Transaction {
+        const loanManager: LoanManager = this.getLoanManagerByAddress(loan.loanManagerAddress);
+        return loanManager.addExtraCollateral(loan, weiAmount, userAccount)
+    }
+
+    private getLoanManagerByAddress(address: string): LoanManager {
+        const loanManager: LoanManager | undefined = this.loanManagers.get(address.toLowerCase());
+        if (!loanManager) {
+            throw new Error("environment configuration error: there is no loanmanager at " + address);
+        }
+        return loanManager;
+    }
+
+    private getAllLoanManagers(): LoanManager[] {
+        return Array.from(this.loanManagers.values());
     }
 }

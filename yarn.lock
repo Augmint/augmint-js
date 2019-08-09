@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@augmint/contracts@1.0.12":
-  version "1.0.12"
-  resolved "https://registry.yarnpkg.com/@augmint/contracts/-/contracts-1.0.12.tgz#7a27331e2b85d886c582992c537bdf8e1273c52f"
-  integrity sha512-N32R6pPG2aEVH53rwm8ox6AnTZELpZPfduNZ7czhKn95TWM0tUbV96uLbNwJgdpgda2+hg34keUR0lN/rUcOLQ==
+"@augmint/contracts@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@augmint/contracts/-/contracts-1.1.0.tgz#22dd8a189c5e97974c6bac1a74acab4ccd1aa3d8"
+  integrity sha512-xdkXlK5k2f1wtXotjjLyCj9m42qj98izgigHVHBGy2a8omAPASaHv1flgYrxz6nr0IrIFU76GcoJ0dkRMuaQlA==
 
 "@babel/code-frame@^7.0.0":
   version "7.0.0"
@@ -415,7 +415,12 @@ bn.js@4.11.6:
   resolved "https://registry.yarnpkg.com/bn.js/-/bn.js-4.11.6.tgz#53344adb14617a13f6e8dd2ce28905d1c0ba3215"
   integrity sha1-UzRK2xRhehP26N0s4okF0cC6MhU=
 
-bn.js@4.11.8, bn.js@^4.0.0, bn.js@^4.1.0, bn.js@^4.1.1, bn.js@^4.11.6, bn.js@^4.4.0:
+bn.js@5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/bn.js/-/bn.js-5.0.0.tgz#5c3d398021b3ddb548c1296a16f857e908f35c70"
+  integrity sha512-bVwDX8AF+72fIUNuARelKAlQUNtPOfG2fRxorbVvFk4zpHbqLrPdOGfVg5vrKwVzLLePqPBiATaOZNELQzmS0A==
+
+bn.js@^4.0.0, bn.js@^4.1.0, bn.js@^4.1.1, bn.js@^4.11.6, bn.js@^4.4.0:
   version "4.11.8"
   resolved "https://registry.yarnpkg.com/bn.js/-/bn.js-4.11.8.tgz#2cde09eb5ee341f484746bb0309b3253b1b1442f"
   integrity sha512-ItfYfPLkWHUjckQCk8xC+LwxgK8NYcXywGigJgSwOP8Y2iyWT4f2vsZnoOXTTbo+o5yXmIUJ4gn5538SO5S3gA==

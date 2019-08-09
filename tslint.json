@@ -6,7 +6,7 @@
     "rules": {
         "new-parens": true,
         "ordered-imports": {
-            "severity": "warn"
+            "severity": "off"
         },
         "jsdoc-format": {
             "severity": "warn"
@@ -40,9 +40,7 @@
             "severity": "warn",
             "options": [
                 "call-signature",
-                "arrow-call-signature",
                 "parameter",
-                "arrow-parameter",
                 "property-declaration",
                 "variable-declaration",
                 "member-variable-declaration",
@@ -52,6 +50,7 @@
         },
         "object-literal-shorthand": {
             "severity": "warn"
-        }
+        },
+        "max-classes-per-file": [true, 5]
     }
 }
