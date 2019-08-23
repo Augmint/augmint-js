@@ -416,9 +416,9 @@ describe("LoanManager invalid calls", () => {
 
     it("does not allow invalid calls to addExtraCollateral ", async () => {
         // mock loan objects
-        const loanObject = new Augmint.LoanManager.Loan([0, 100, 100, "0xaddress", 0, 0, 1234, 1234, 100, 10, 0, 0], loanManager.address);
+        const loanObject = new Augmint.LoanManager.Loan([0, 100, 100, "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", 0, 0, 1234, 1234, 100, 10, 0, 0], loanManager.address);
         assert.isTrue(loanObject.isMarginLoan);
-        const legacyLoanObject = new Augmint.LoanManager.Loan([0, 100, 100, "0xaddress", 0, 0, 1234, 1234, 100, 10], legacyLoanManager.address);
+        const legacyLoanObject = new Augmint.LoanManager.Loan([0, 100, 100, "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", 0, 0, 1234, 1234, 100, 10], legacyLoanManager.address);
         assert.isFalse(legacyLoanObject.isMarginLoan);
 
         // just calls the new method on the legacy manager with a legacy loan object

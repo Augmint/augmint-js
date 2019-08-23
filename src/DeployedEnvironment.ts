@@ -55,17 +55,22 @@ export class DeployedEnvironment {
     }
 
     public getContractFromAddress(name: string, address: string): DeployedContract<Contract> {
-        const contractList: IDeployedContractList = this.contracts[name];
-        const contract: DeployedContract<Contract> | undefined = contractList.find(
-            (item: DeployedContract<Contract>) => item.deployedAddress.toLowerCase() === address.toLowerCase()
-        );
-
+        const contract: DeployedContract<Contract> | undefined = this.getContract(name, address);
         if (!contract) {
             throw new Error("missing contract: did not find " + name + " at " + address);
         }
-
         return contract;
     }
 
+    public getAbiHash(name: string, address: string): string | undefined {
+        const contract: DeployedContract<Contract> | undefined = this.getContract(name, address);
+        return contract && contract.abiFileName.split('_').pop();
+    }
 
+    private getContract(name: string, address: string): DeployedContract<Contract> | undefined {
+        const contracts: Array<DeployedContract<Contract>> | undefined = this.contracts[name];
+        return contracts && contracts.find(
+            (item: DeployedContract<Contract>) => item.deployedAddress.toLowerCase() === address.toLowerCase()
+        );
+    }
 }
