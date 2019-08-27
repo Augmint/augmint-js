@@ -1,5 +1,6 @@
 import { LOAN_STATES } from "./constants";
 import { Ratio, Tokens, Wei } from "./units";
+import Web3 from "web3";
 
 const collateralStatusTexts: string[] = ["in escrow", "released", "in escrow", "collected & leftover refunded"];
 const aDay: number = 24 * 60 * 60;
@@ -59,7 +60,7 @@ export class Loan {
 
             this.id = parseInt(configId, 10);
             this.collateralAmount = Wei.parse(configCollateralAmount);
-            this.borrower = configBorrower;
+            this.borrower = '0x' + Web3.utils.toBN(configBorrower).toString(16).padStart(40, '0');
             this.productId = parseInt(configProductId, 10);
             this.state = state;
             this.maturity = maturity;

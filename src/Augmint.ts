@@ -291,15 +291,15 @@ export class Augmint {
         return loanManager.addExtraCollateral(loan, weiAmount, userAccount)
     }
 
+    public getAllLoanManagers(): LoanManager[] {
+        return Array.from(this.loanManagers.values());
+    }
+
     private getLoanManagerByAddress(address: string): LoanManager {
         const loanManager: LoanManager | undefined = this.loanManagers.get(address.toLowerCase());
         if (!loanManager) {
             throw new Error("environment configuration error: there is no loanmanager at " + address);
         }
         return loanManager;
-    }
-
-    private getAllLoanManagers(): LoanManager[] {
-        return Array.from(this.loanManagers.values());
     }
 }
