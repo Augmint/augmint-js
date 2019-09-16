@@ -26,7 +26,7 @@
         "yarn": ">=1.15.2"
     },
     "dependencies": {
-        "@augmint/contracts": "1.1.0",
+        "@augmint/contracts": "1.1.1",
         "bn.js": "5.0.0",
         "dotenv": "8.0.0",
         "ulog": "2.0.0-beta.6",
