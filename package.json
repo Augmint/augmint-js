@@ -50,7 +50,7 @@
         "tslint-config-prettier": "1.18.0",
         "typechain": "0.3.14",
         "typedoc": "0.14.2",
-        "typedoc-plugin-sourcefile-url": "1.0.4",
+        "typedoc-plugin-sourcefile-url": "1.0.5",
         "typescript": "3.4.3",
         "wait-on": "3.2.0"
     },
