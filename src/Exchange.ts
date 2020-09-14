@@ -18,7 +18,6 @@ interface IMarketMatch {
 }
 
 export class OrderBook {
-
     public static compareBuyOrders(o1: IBuyOrder, o2: IBuyOrder): number {
         const cmp: number = o2.price.cmp(o1.price);
         return cmp !== 0 ? cmp : o1.id - o2.id;
@@ -29,10 +28,12 @@ export class OrderBook {
         return cmp !== 0 ? cmp : o1.id - o2.id;
     }
 
-    private static estimateMarketOrder<T extends IOrder>(orders: T[],
-                                                         tokens: Tokens,
-                                                         rate: Tokens,
-                                                         toTokens: (order: T) => Tokens): IMarketMatch {
+    private static estimateMarketOrder<T extends IOrder>(
+        orders: T[],
+        tokens: Tokens,
+        rate: Tokens,
+        toTokens: (order: T) => Tokens
+    ): IMarketMatch {
         const ret: IMarketMatch = {
             filledTokens: Tokens.of(0),
             filledEthers: Wei.of(0)
@@ -88,11 +89,9 @@ export class OrderBook {
         const highestBuyPrice: Ratio = this.buyOrders[0].price;
 
         const clone = o => Object.assign({}, o);
-        const buys: IBuyOrder[] = this.buyOrders
-            .filter(o => o.price.gte(lowestSellPrice)).map(clone);
+        const buys: IBuyOrder[] = this.buyOrders.filter(o => o.price.gte(lowestSellPrice)).map(clone);
 
-        const sells: ISellOrder[] = this.sellOrders
-            .filter(o => o.price.lte(highestBuyPrice)).map(clone);
+        const sells: ISellOrder[] = this.sellOrders.filter(o => o.price.lte(highestBuyPrice)).map(clone);
 
         let buyIdx: number = 0;
         let sellIdx: number = 0;
@@ -145,8 +144,7 @@ export class OrderBook {
      * @param ethFiatRate - current rate
      */
     public estimateMarketBuy(tokenAmount: Tokens, ethFiatRate: Tokens): IMarketMatch {
-        return OrderBook.estimateMarketOrder(this.sellOrders, tokenAmount, ethFiatRate,
-            order => order.amount);
+        return OrderBook.estimateMarketOrder(this.sellOrders, tokenAmount, ethFiatRate, order => order.amount);
     }
 
     /**
@@ -156,8 +154,9 @@ export class OrderBook {
      * @param ethFiatRate - current rate
      */
     public estimateMarketSell(tokenAmount: Tokens, ethFiatRate: Tokens): IMarketMatch {
-        return OrderBook.estimateMarketOrder(this.buyOrders, tokenAmount, ethFiatRate,
-            order => order.amount.toTokensAt(ethFiatRate, order.price));
+        return OrderBook.estimateMarketOrder(this.buyOrders, tokenAmount, ethFiatRate, order =>
+            order.amount.toTokensAt(ethFiatRate, order.price)
+        );
     }
 }
 
@@ -327,12 +326,14 @@ export class Exchange extends AbstractContract {
         let result: IOrderTuple[];
         if (buy) {
             // prettier-ignore
-            result = this.isLegacyExchangeContract
+            // @ts-ignore
+            result = this.isLegacyExchangeContract 
                 // @ts-ignore  TODO: remove ts-ignore and handle properly when legacy contract support added
                 ? await this.instance.methods.getActiveBuyOrders(offset).call({ gas: blockGasLimit })
                 : await this.instance.methods.getActiveBuyOrders(offset, chunkSize).call({ gas: blockGasLimit });
         } else {
             // prettier-ignore
+            // @ts-ignore
             result = this.isLegacyExchangeContract
                 // @ts-ignore  TODO: remove ts - ignore and handle properly when legacy contract support added
                 ? await this.instance.methods.getActiveSellOrders(offset).call({ gas: blockGasLimit })
