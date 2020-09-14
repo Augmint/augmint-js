@@ -4465,10 +4465,10 @@ uglify-js@^3.1.4:
   resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.10.4.tgz#dd680f5687bc0d7a93b14a3482d16db6eba2bfbb"
   integrity sha512-kBFT3U4Dcj4/pJ52vfjCSfyLyvG9VYYuGYPmrPvAxRw/i7xHiT4VvCev+uiEMcEEiu6UNB6KgWmGtSUYIWScbw==
 
-ulog@2.0.0-beta.6:
-  version "2.0.0-beta.6"
-  resolved "https://registry.yarnpkg.com/ulog/-/ulog-2.0.0-beta.6.tgz#e8410635ba1f6eddc164ddf221cdc4355d10c95e"
-  integrity sha512-nmE3GinIEr2IDOJTdUrX4VsfkHywapAwO+NYwOQPNEqV6mpSGPTEHOdFI/NzFr5GGcVk9Ayj8pw8zlfboh0W0A==
+ulog@2.0.0-beta.7:
+  version "2.0.0-beta.7"
+  resolved "https://registry.yarnpkg.com/ulog/-/ulog-2.0.0-beta.7.tgz#760a234f64ddbfc689e93fe8754c81cd97960340"
+  integrity sha512-LvQY6j+CcIilySof66EMr8spdCBmsklAUmvqvCqjWAGiyY2f44MgUbLgGyT27YM35pj0lLZlkCnNn1CcmDGbhQ==
 
 ultron@~1.1.0:
   version "1.1.1"
