@@ -41,7 +41,7 @@
         "cross-env": "7.0",
         "eslint": "7.9.0",
         "mocha": "6.1.4",
-        "rollup": "1.12.4",
+        "rollup": "2.26.11",
         "rollup-plugin-node-builtins": "2.1.2",
         "rollup-plugin-node-globals": "1.4.0",
         "rollup-plugin-typescript2": "0.24.3",
