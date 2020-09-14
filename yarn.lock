@@ -614,10 +614,10 @@ chai-as-promised@7.1.1:
   dependencies:
     check-error "^1.0.2"
 
-chai-exclude@2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/chai-exclude/-/chai-exclude-2.0.1.tgz#43e474a2a055d5efa414efcae30a91761148809c"
-  integrity sha512-9cZ0ZzlGRwZvNiKUPTbx4E1anQ4aTqtKOX96+cb4XrNa+8B5KNZg3d43clYNawgXgBcQAenXeX5fbeY7+TdkrA==
+chai-exclude@2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/chai-exclude/-/chai-exclude-2.0.2.tgz#8f2f2881ee8f3ddf4c5af0f949c063503eee30f8"
+  integrity sha512-QmNVnvdSw8Huccdjm49mKu3HtoHxvjdavgYkY0KPQ5MI5UWfbc9sX1YqRgaMPf2GGtDXPoF2ram3AeNS4945Xw==
   dependencies:
     fclone "^1.0.11"
 

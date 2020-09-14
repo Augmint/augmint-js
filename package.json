@@ -37,7 +37,7 @@
         "@types/node": "^10.14.5",
         "chai": "4.2.0",
         "chai-as-promised": "7.1.1",
-        "chai-exclude": "2.0.1",
+        "chai-exclude": "2.0.2",
         "cross-env": "7.0",
         "eslint": "7.9.0",
         "mocha": "8.1.3",
