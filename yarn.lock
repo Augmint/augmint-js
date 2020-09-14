@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@augmint/contracts@1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@augmint/contracts/-/contracts-1.1.1.tgz#2b93d815ad803e678cbe61a152538347fccbd461"
-  integrity sha512-peiemRgbTvI8rptBVwFMnp6beqNC4naUbPc1IXzUX+Vx2iRCRrYgtXTOSl0vNuw32oqe9schvWwvj0hgQNNdUg==
+"@augmint/contracts@1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@augmint/contracts/-/contracts-1.1.2.tgz#e3e4c9cd3976d5401ff5ab14606a4ec32e2d3af1"
+  integrity sha512-fgJ/uwch4/bq4tkrI/piK21K2HnAgUHao7mt5Pgmm2Vdg0wzKje3eWqyHeaXMTi/cpB3ftbg60/qMZVAkwk4DQ==
 
 "@babel/code-frame@^7.0.0":
   version "7.10.4"
