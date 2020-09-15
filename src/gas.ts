@@ -1,6 +1,6 @@
 export const NEW_LOAN_GAS: number = 240000; // As of now it's on ganache: 167,196-167390 - 182,000???
 export const NEW_FIRST_LOAN_GAS: number = 240000; // 227390
-export const REPAY_GAS: number = 150000; // AugmintToken.transferAndNotify, as of now on testRpc: first: 105,354, tehn : 120305 ?
+export const REPAY_GAS: number = 250000; // AugmintToken.transferAndNotify
 export const COLLECT_BASE_GAS: number = 90000; // as of now on testRpc: 1 loan = first: 73,333, consecutive:  64,683
 export const COLLECT_ONE_GAS: number = 40000; // as of now: ca. 10000
 

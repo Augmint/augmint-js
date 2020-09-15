@@ -1,4 +1,4 @@
-import { AugmintContracts, TokenAEur } from "../generated/index";
+import { TokenAEur } from "../generated/index";
 import { AbstractContract } from "./AbstractContract";
 import { EthereumConnection } from "./EthereumConnection";
 

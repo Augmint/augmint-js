@@ -34,7 +34,6 @@ export class LoanProduct {
     public readonly initialCollateralRatio: Ratio;
     public readonly minCollateralRatio: Ratio;
 
-
     constructor(loanProductTuple: ILoanProductTuple, loanManagerAddress: string) {
         // Solidity LoanManager contract .getProducts() tuple:
         // [id, minDisbursedAmount, term, discountRate, collateralRatio, defaultingFeePt, maxLoanAmount, isActive, minCollateralRatio ]
@@ -80,13 +79,12 @@ export class LoanProduct {
         this.defaultingFeePt = Ratio.parse(sDefaultingFeePt);
         this.isActive = sIsActive === "1";
 
-        if(sMinCollateralRatio) {
+        if (sMinCollateralRatio) {
             this.initialCollateralRatio = Ratio.parse(sCollateralRatio);
             this.minCollateralRatio = Ratio.parse(sMinCollateralRatio);
         } else {
             this.collateralRatio = Ratio.parse(sCollateralRatio);
         }
-
 
         this.loanManagerAddress = loanManagerAddress;
     }
@@ -95,8 +93,8 @@ export class LoanProduct {
         return !!(this.minCollateralRatio && this.initialCollateralRatio);
     }
 
-    get marginCallRateRatio():Ratio {
-        if(this.isMarginLoan) {
+    get marginCallRateRatio(): Ratio {
+        if (this.isMarginLoan) {
             return this.minCollateralRatio.div(this.initialCollateralRatio);
         }
         return Ratio.of(0);
@@ -143,12 +141,11 @@ export class LoanProduct {
     }
 
     // this is an estimate! use it only on new loan page!
-    public calculateMarginCallRate(ethFiatRate: Tokens):Tokens {
+    public calculateMarginCallRate(ethFiatRate: Tokens): Tokens {
         return ethFiatRate.mul(this.marginCallRateRatio);
     }
 
     public getInitialCollateralRatio(): Ratio {
         return this.isMarginLoan ? this.initialCollateralRatio : Ratio.of(1).div(this.collateralRatio);
     }
-
 }

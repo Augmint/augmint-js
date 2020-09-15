@@ -54,4 +54,9 @@ export const SUPPORTED_LEGACY_LOANMANAGERS: ISupportedLegacyContracts = {
     4: ["0x6cb7731c78e677f85942b5f1d646b3485e5820c1"]
 };
 
-export enum LOAN_STATES {Open, Repaid, Defaulted, Collected}
+export enum LOAN_STATES {
+    Open,
+    Repaid,
+    Defaulted,
+    Collected
+}

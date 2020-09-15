@@ -1,5 +1,5 @@
 import { Contract } from "web3-eth-contract";
-import * as AbiList from "../generated/abis"
+import * as AbiList from "../generated/abis";
 
 export interface IDeploymentItem {
     abiFileName: string;
@@ -17,26 +17,26 @@ export class DeployedContract<T extends Contract> {
         this.deployedAddress = deployedItem.deployedAddress;
     }
 
-    get instanceHash():string {
+    get instanceHash(): string {
         return `${this.abiFileName}_${this.deployedAddress}`;
     }
 
-    public connect(web3:any):T {
+    public connect(web3: any): T {
         let connectedInstance = connectedInstances.get(this.instanceHash);
-        if(!connectedInstance) {
+        if (!connectedInstance) {
             connectedInstance = this.connectToAddress(web3, this.deployedAddress);
-            connectedInstances.set(this.instanceHash, connectedInstance)
+            connectedInstances.set(this.instanceHash, connectedInstance);
         }
         return connectedInstance;
     }
 
     public connectToAddress(web3: any, address: string): T {
-        const abiFile:any = AbiList[this.abiFileName];
+        const abiFile: any = AbiList[this.abiFileName];
         return new web3.eth.Contract(abiFile, address);
     }
 
     public connectWithEthers(ethers: any, provider: any): T {
-        const abiFile:any = AbiList[this.abiFileName];
+        const abiFile: any = AbiList[this.abiFileName];
         return new ethers.Contract(this.deployedAddress, abiFile, provider);
     }
 }

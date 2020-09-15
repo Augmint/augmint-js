@@ -1,5 +1,5 @@
 import { AugmintContracts, Rates as RatesInstance } from "../generated/index";
-import { TransactionObject } from "../generated/types/types";
+import { NonPayableTransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { Wei, Tokens } from "./units";
 import { ZeroRateError } from "./Errors";
@@ -54,10 +54,9 @@ export class Rates extends AbstractContract {
     }
 
     public setRate(currency: string, price: Wei): Transaction {
-
         const bytesCCY: string = this.web3.utils.asciiToHex(currency);
 
-        const web3Tx: TransactionObject<void> = this.instance.methods.setRate(bytesCCY, price.toString());
+        const web3Tx: NonPayableTransactionObject<void> = this.instance.methods.setRate(bytesCCY, price.toString());
         const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
             gasLimit: SET_RATE_GAS_LIMIT,
             // setting to: in case it's going to be signed

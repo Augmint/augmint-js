@@ -33,6 +33,7 @@
         "web3": "1.0.0-beta.36"
     },
     "devDependencies": {
+        "@typechain/web3-v1": "1.0.0",
         "@types/bn.js": "4.11.6",
         "@types/node": "^10.14.5",
         "chai": "4.2.0",
@@ -56,8 +57,11 @@
     },
     "scripts": {
         "clean": "rm -rf ./dist ./generated",
-        "build": "yarn build:typings && rollup -c",
+        "//1": "The first typechain call is separated as a workaorund for latest typechain release when it's configured in ts-generator.json: ",
+        "//2": "Error: Loading plugin typechain failed. Plugin module has to export exactly one entity. Found 16 instead:",
+        "build": "yarn build:web3typings && yarn build:typings && rollup -c",
         "build:typings": "ts-generator ./ts-generator.json",
+        "build:web3typings": "typechain --target=web3-v1 './node_modules/@augmint/contracts/abiniser/abis/*.json' --outDir=./generated/types",
         "test": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha 'test/**/*.test.js' --exit --timeout 5000",
         "testOne": "yarn build && yarn cross-env NODE_ENV=test NODE_PATH=./  mocha $1 --exit --timeout 5000",
         "ganache:start": "scripts/augmint-cli.sh ganache start --blockTime 1",

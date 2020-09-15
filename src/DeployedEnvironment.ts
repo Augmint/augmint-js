@@ -1,7 +1,7 @@
 import { Contract } from "web3-eth-contract";
 import { DeployedContract } from "./DeployedContract";
 
-export type IDeployedContractList = Array<DeployedContract<Contract>>;
+export type IDeployedContractList = DeployedContract<Contract>[];
 
 export interface IDeployedContracts {
     [propName: string]: IDeployedContractList;
@@ -64,13 +64,16 @@ export class DeployedEnvironment {
 
     public getAbiHash(name: string, address: string): string | undefined {
         const contract: DeployedContract<Contract> | undefined = this.getContract(name, address);
-        return contract && contract.abiFileName.split('_').pop();
+        return contract && contract.abiFileName.split("_").pop();
     }
 
     private getContract(name: string, address: string): DeployedContract<Contract> | undefined {
-        const contracts: Array<DeployedContract<Contract>> | undefined = this.contracts[name];
-        return contracts && contracts.find(
-            (item: DeployedContract<Contract>) => item.deployedAddress.toLowerCase() === address.toLowerCase()
+        const contracts: DeployedContract<Contract>[] | undefined = this.contracts[name];
+        return (
+            contracts &&
+            contracts.find(
+                (item: DeployedContract<Contract>) => item.deployedAddress.toLowerCase() === address.toLowerCase()
+            )
         );
     }
 }

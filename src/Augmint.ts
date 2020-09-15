@@ -27,8 +27,8 @@ interface IDeployedEnvironmentStub {
 }
 
 interface ILoanCount {
-    loanManagerAddress: string
-    loanCount: number
+    loanManagerAddress: string;
+    loanCount: number;
 }
 
 export class Augmint {
@@ -38,9 +38,10 @@ export class Augmint {
 
         if (!environment) {
             const networkId: string = ethereumConnection.networkId.toString(10);
-            const selectedDeployedEnvironment: DeployedEnvironment | undefined =
-                deployments.find(item => item.name === networkId);
-                environment = selectedDeployedEnvironment;
+            const selectedDeployedEnvironment: DeployedEnvironment | undefined = deployments.find(
+                item => item.name === networkId
+            );
+            environment = selectedDeployedEnvironment;
         }
         if (!environment) {
             throw new Error("Missing environment, cannot create Augmint");
@@ -55,8 +56,11 @@ export class Augmint {
         const deployedEnvironment: DeployedEnvironment = new DeployedEnvironment(environmentName);
         Object.keys(stubs).forEach(stub => {
             const role: string = stub;
-            const contractListStub: Array<DeployedContract<any>> = stubs[stub];
-            deployedEnvironment.addRole(role, contractListStub.map(contractStub => new DeployedContract(contractStub)));
+            const contractListStub: DeployedContract<any>[] = stubs[stub];
+            deployedEnvironment.addRole(
+                role,
+                contractListStub.map(contractStub => new DeployedContract(contractStub))
+            );
         });
         return deployedEnvironment;
     }
@@ -78,9 +82,12 @@ export class Augmint {
         this.latestContracts = this.deployedEnvironment.getLatestContracts();
 
         if (this.deployedEnvironment.contracts[AugmintContracts.LoanManager]) {
-            this.deployedEnvironment.contracts[AugmintContracts.LoanManager]
-                .forEach(contract => this.loanManagers.set(contract.deployedAddress.toLowerCase(),
-                    new LoanManager(contract.connect(this.web3), this.ethereumConnection)));
+            this.deployedEnvironment.contracts[AugmintContracts.LoanManager].forEach(contract =>
+                this.loanManagers.set(
+                    contract.deployedAddress.toLowerCase(),
+                    new LoanManager(contract.connect(this.web3), this.ethereumConnection)
+                )
+            );
         }
     }
 
@@ -151,7 +158,7 @@ export class Augmint {
     }
 
     public getLegacyTokens(addresses: string[] = []): AugmintToken[] {
-        let legacyTokens: Array<DeployedContract<TokenAEur>> = [];
+        let legacyTokens: DeployedContract<TokenAEur>[] = [];
 
         if (addresses.length === 0) {
             legacyTokens = this.deployedEnvironment.getLegacyContracts(AugmintContracts.TokenAEur);
@@ -170,7 +177,7 @@ export class Augmint {
 
     //  myaugmint.getLegacyExchanges(Augmint.constants.SUPPORTED_LEGACY_EXCHANGES)
     public getLegacyExchanges(addresses: string[] = []): Exchange[] {
-        let legacyContracts: Array<DeployedContract<ExchangeInstance>> = [];
+        let legacyContracts: DeployedContract<ExchangeInstance>[] = [];
         if (addresses.length === 0) {
             legacyContracts = this.deployedEnvironment.getLegacyContracts(AugmintContracts.Exchange);
         } else {
@@ -191,7 +198,7 @@ export class Augmint {
 
     //  augmint.getLegacyLoanManagers(Augmint.constants.SUPPORTED_LEGACY_LOANMANAGERS)
     public getLegacyLoanManagers(addresses: string[] = []): LoanManager[] {
-        let legacyContracts: Array<DeployedContract<LoanManagerInstance>> = [];
+        let legacyContracts: DeployedContract<LoanManagerInstance>[] = [];
         if (addresses.length === 0) {
             legacyContracts = this.deployedEnvironment.getLegacyContracts(AugmintContracts.LoanManager);
         } else {
@@ -210,21 +217,19 @@ export class Augmint {
     }
 
     public async getLoansForAccount(userAccount: string): Promise<Loan[]> {
-        return await collectPromises(
-            this.getAllLoanManagers(),
-            loanManager => loanManager.getLoansForAccount(userAccount)
+        return await collectPromises(this.getAllLoanManagers(), loanManager =>
+            loanManager.getLoansForAccount(userAccount)
         );
     }
 
     public async getLoanProducts(activeOnly: boolean): Promise<LoanProduct[]> {
-        return await collectPromises(
-            this.getAllLoanManagers(),
-            loanManager => activeOnly ? loanManager.getActiveProducts() : loanManager.getAllProducts()
+        return await collectPromises(this.getAllLoanManagers(), loanManager =>
+            activeOnly ? loanManager.getActiveProducts() : loanManager.getAllProducts()
         );
     }
 
     public async repayLoan(loan: Loan, repaymentAmount: Tokens, userAccount: string): Promise<Transaction> {
-        const loanManager: LoanManager = this.getLoanManagerByAddress(loan.loanManagerAddress)
+        const loanManager: LoanManager = this.getLoanManagerByAddress(loan.loanManagerAddress);
         const tokenAddress: string = await loanManager.tokenAddress;
         const tokenContract: DeployedContract<TokenAEur> = this.deployedEnvironment.getContractFromAddress(
             AugmintContracts.TokenAEur,
@@ -234,16 +239,18 @@ export class Augmint {
         return loanManager.repayLoan(loan, repaymentAmount, userAccount, token);
     }
 
-    public async newEthBackedLoan(loanProduct: LoanProduct, weiAmount: Wei, userAccount: string, minRate?:Tokens): Promise<Transaction> {
-        const loanManager: LoanManager = this.getLoanManagerByAddress(loanProduct.loanManagerAddress)
+    public async newEthBackedLoan(
+        loanProduct: LoanProduct,
+        weiAmount: Wei,
+        userAccount: string,
+        minRate?: Tokens
+    ): Promise<Transaction> {
+        const loanManager: LoanManager = this.getLoanManagerByAddress(loanProduct.loanManagerAddress);
         return loanManager.newEthBackedLoan(loanProduct, weiAmount, userAccount, minRate);
     }
 
     public async getAllLoans(): Promise<Loan[]> {
-        return await collectPromises(
-            this.getAllLoanManagers(),
-            loanManager => loanManager.getAllLoans()
-        );
+        return await collectPromises(this.getAllLoanManagers(), loanManager => loanManager.getAllLoans());
     }
 
     public async getLoansToCollect(): Promise<Loan[]> {
@@ -271,24 +278,24 @@ export class Augmint {
         if (loanManager) {
             result.push(loanManager.collectLoans(loans, userAccount));
         }
-        return result
+        return result;
     }
 
     public async getLoanCounts(): Promise<ILoanCount[]> {
-        const result:ILoanCount[] = [];
+        const result: ILoanCount[] = [];
         for (const loanManager of this.getAllLoanManagers()) {
-            const loanCount:number = await loanManager.getLoanCount();
+            const loanCount: number = await loanManager.getLoanCount();
             result.push({
                 loanManagerAddress: loanManager.address,
                 loanCount
-            })
+            });
         }
         return result;
     }
 
-    public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string ): Transaction {
+    public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string): Transaction {
         const loanManager: LoanManager = this.getLoanManagerByAddress(loan.loanManagerAddress);
-        return loanManager.addExtraCollateral(loan, weiAmount, userAccount)
+        return loanManager.addExtraCollateral(loan, weiAmount, userAccount);
     }
 
     public getAllLoanManagers(): LoanManager[] {

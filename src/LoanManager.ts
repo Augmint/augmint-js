@@ -1,8 +1,7 @@
-import { Contract } from "web3-eth-contract";
-import { AugmintContracts, LoanManager as LoanManagerInstance, TokenAEur } from "../generated/index";
-import { LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286 } from "../generated/types/LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286";
-import { LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb } from "../generated/types/LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb";
-import { TransactionObject } from "../generated/types/types";
+import { LoanManager as LoanManagerInstance, TokenAEur } from "../generated/index";
+import { LoanManagerAbiEc709C3341045Caa3A75374B8Cfc7286 } from "../generated/types/LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286";
+import { LoanManagerAbiFdf5Fde95Aa940C6Dbfb8353C572C5Fb } from "../generated/types/LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb";
+import { NonPayableTransactionObject, PayableTransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE } from "./constants";
@@ -14,16 +13,17 @@ import { ILoanProductTuple, LoanProduct } from "./LoanProduct";
 import { Transaction } from "./Transaction";
 import { Tokens, Wei } from "./units";
 
-type LoanManagerPreChunkSize = LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286; // pre chunk size
-type LoanManagerPreMarginLoan = LoanManager_ABI_fdf5fde95aa940c6dbfb8353c572c5fb | LoanManager_ABI_ec709c3341045caa3a75374b8cfc7286;
-
+type LoanManagerPreChunkSize = LoanManagerAbiEc709C3341045Caa3A75374B8Cfc7286; // pre chunk size
+type LoanManagerPreMarginLoan =
+    | LoanManagerAbiFdf5Fde95Aa940C6Dbfb8353C572C5Fb
+    | LoanManagerAbiEc709C3341045Caa3A75374B8Cfc7286;
 
 function isLoanManagerV0(instance: LoanManagerInstance): instance is LoanManagerPreChunkSize {
     return (instance as LoanManagerPreChunkSize).methods.CHUNK_SIZE !== undefined;
 }
 
 function isLoanManagerPreMarginLoan(instance: LoanManagerInstance): instance is LoanManagerPreMarginLoan {
-    return !("addExtraCollateral" in  instance.methods);
+    return !("addExtraCollateral" in instance.methods);
 }
 
 /**
@@ -56,7 +56,7 @@ export class LoanManager extends AbstractContract {
     }
 
     get tokenAddress(): Promise<string> {
-        if(!this.augmintTokenAddress) {
+        if (!this.augmintTokenAddress) {
             this.augmintTokenAddress = this.instance.methods.augmintToken().call();
         }
         return this.augmintTokenAddress;
@@ -70,21 +70,26 @@ export class LoanManager extends AbstractContract {
         return this.getProducts(false);
     }
 
-    public async newEthBackedLoan(product: LoanProduct, weiAmount: Wei, userAccount: string, minRate?: Tokens): Promise<Transaction> {
+    public async newEthBackedLoan(
+        product: LoanProduct,
+        weiAmount: Wei,
+        userAccount: string,
+        minRate?: Tokens
+    ): Promise<Transaction> {
         const loanCount: number = await this.getLoanCount();
-        const gasEstimate: number = loanCount===0 ? NEW_FIRST_LOAN_GAS : NEW_LOAN_GAS;
+        const gasEstimate: number = loanCount === 0 ? NEW_FIRST_LOAN_GAS : NEW_LOAN_GAS;
 
-        let web3Tx: TransactionObject<void>;
-        if(!isLoanManagerPreMarginLoan(this.instance)) {
-            if(!minRate) {
-                throw new AugmintJsError('missing minRate in loanmanager!')
+        let web3Tx: PayableTransactionObject<void>;
+        if (!isLoanManagerPreMarginLoan(this.instance)) {
+            if (!minRate) {
+                throw new AugmintJsError("missing minRate in loanmanager!");
             }
             web3Tx = this.instance.methods.newEthBackedLoan(product.id, minRate.toString());
         } else {
-            if(minRate) {
-                throw new AugmintJsError('unexpected minRate in loanmanager!')
+            if (minRate) {
+                throw new AugmintJsError("unexpected minRate in loanmanager!");
             }
-            web3Tx = this.instance.methods.newEthBackedLoan(product.id)
+            web3Tx = this.instance.methods.newEthBackedLoan(product.id);
         }
 
         return new Transaction(this.ethereumConnection, web3Tx, {
@@ -113,9 +118,9 @@ export class LoanManager extends AbstractContract {
         userAccount: string,
         augmintToken: AugmintToken
     ): Transaction {
-        const augmintTokenInstance:TokenAEur = augmintToken.instance;
+        const augmintTokenInstance: TokenAEur = augmintToken.instance;
 
-        const web3Tx: TransactionObject<void> = augmintTokenInstance.methods.transferAndNotify(
+        const web3Tx: NonPayableTransactionObject<void> = augmintTokenInstance.methods.transferAndNotify(
             this.address,
             repaymentAmount.toString(),
             loan.id
@@ -130,9 +135,9 @@ export class LoanManager extends AbstractContract {
     public collectLoans(loansToCollect: Loan[], userAccount: string): Transaction {
         const gasEstimate: number = COLLECT_BASE_GAS + COLLECT_ONE_GAS * loansToCollect.length;
 
-        const loanIdsToCollect: number[] = loansToCollect.map((loan:Loan) => loan.id);
+        const loanIdsToCollect: number[] = loansToCollect.map((loan: Loan) => loan.id);
 
-        const web3Tx: TransactionObject<void> = this.instance.methods.collect(loanIdsToCollect);
+        const web3Tx: NonPayableTransactionObject<void> = this.instance.methods.collect(loanIdsToCollect);
 
         return new Transaction(this.ethereumConnection, web3Tx, {
             gasLimit: gasEstimate,
@@ -162,33 +167,33 @@ export class LoanManager extends AbstractContract {
 
     public addExtraCollateral(loan: Loan, weiAmount: Wei, userAccount: string): Transaction {
         if (loan.isMarginLoan && !isLoanManagerPreMarginLoan(this.instance)) {
-            const web3Tx: TransactionObject<void> = this.instance.methods.addExtraCollateral(loan.id);
+            const web3Tx: PayableTransactionObject<void> = this.instance.methods.addExtraCollateral(loan.id);
             return new Transaction(this.ethereumConnection, web3Tx, {
                 from: userAccount,
                 value: weiAmount.amount
             });
         } else {
-            throw new AugmintJsError('invalid call to addExtraCollateral');
+            throw new AugmintJsError("invalid call to addExtraCollateral");
         }
     }
 
     private async getLoansForAccountChunk(userAccount: string, offset: number, chunkSize: number): Promise<Loan[]> {
         const tokenAddress: string = await this.tokenAddress;
         const loansArray: string[][] = isLoanManagerV0(this.instance)
-                ? await this.instance.methods.getLoansForAddress(userAccount, offset).call()
-                : await this.instance.methods.getLoansForAddress(userAccount, offset, chunkSize).call();
+            ? await this.instance.methods.getLoansForAddress(userAccount, offset).call()
+            : await this.instance.methods.getLoansForAddress(userAccount, offset, chunkSize).call();
         return loansArray
-            .filter((p:ILoanTuple) => p[3] !== "0")
+            .filter((p: ILoanTuple) => p[3] !== "0")
             .map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
     }
 
     private async getAllLoansChunk(offset: number, chunkSize: number): Promise<Loan[]> {
         const tokenAddress: string = await this.tokenAddress;
         const loansArray: string[][] = isLoanManagerV0(this.instance)
-                ? await this.instance.methods.getLoans(offset).call()
-                : await this.instance.methods.getLoans(offset, chunkSize).call();
+            ? await this.instance.methods.getLoans(offset).call()
+            : await this.instance.methods.getLoans(offset, chunkSize).call();
         return loansArray
-            .filter((p:ILoanTuple) => p[3] !== "0")
+            .filter((p: ILoanTuple) => p[3] !== "0")
             .map((loan: ILoanTuple) => new Loan(loan, this.address, tokenAddress));
     }
 
