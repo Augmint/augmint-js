@@ -5,12 +5,14 @@ const E12: BN = new BN("1000000000000");
 const BN_ONE: BN = new BN(1);
 
 function ceilDiv(dividend: BN, divisor: BN): BN {
-    return dividend.add(divisor).sub(BN_ONE).div(divisor);
+    return dividend
+        .add(divisor)
+        .sub(BN_ONE)
+        .div(divisor);
 }
 
 abstract class FixedPoint {
-
-    constructor (readonly amount: BN) {
+    constructor(readonly amount: BN) {
         if (!BN.isBN(amount)) {
             throw new Error("Not a BN: " + amount);
         }
@@ -121,6 +123,7 @@ abstract class FixedPoint {
     // util
     //
 
+    // tslint:disable-next-line:ban-types
     protected check(other: FixedPoint, type: Function = this.constructor): void {
         if (!(other instanceof type)) {
             throw new Error("Type error. Expected " + type + " got " + typeof other);
@@ -130,11 +133,9 @@ abstract class FixedPoint {
     private create(amount: BN): this {
         return new (this.constructor as typeof Object)(amount) as this;
     }
-
 }
 
 export class Wei extends FixedPoint {
-
     static readonly PRECISION: number = 1000000;
     static readonly DIV_BN: BN = new BN("1000000000000000000");
     static readonly DIV_PRECISON: BN = Wei.DIV_BN.divn(Wei.PRECISION);
@@ -159,12 +160,11 @@ export class Wei extends FixedPoint {
     }
 
     public toNumber(): number {
-        return this.amount.divRound(Wei.DIV_PRECISON).toNumber() / Wei.PRECISION
+        return this.amount.divRound(Wei.DIV_PRECISON).toNumber() / Wei.PRECISION;
     }
 }
 
 export class Tokens extends FixedPoint {
-
     static readonly DIV: number = 100;
 
     public static parse(str: string): Tokens {
@@ -187,7 +187,12 @@ export class Tokens extends FixedPoint {
     public toWeiAt(rate: Tokens, price: Ratio): Wei {
         this.check(rate, Tokens);
         this.check(price, Ratio);
-        return new Wei(this.amount.mul(price.amount).mul(E12).divRound(rate.amount));
+        return new Wei(
+            this.amount
+                .mul(price.amount)
+                .mul(E12)
+                .divRound(rate.amount)
+        );
     }
 
     public toRate(ethers: Wei): Tokens {
@@ -200,9 +205,7 @@ export class Tokens extends FixedPoint {
     }
 }
 
-
 export class Ratio extends FixedPoint {
-
     static readonly DIV: number = 1000000;
     static readonly DIV_BN: BN = new BN(Ratio.DIV);
 
@@ -218,4 +221,3 @@ export class Ratio extends FixedPoint {
         return this.amount.toNumber() / Ratio.DIV;
     }
 }
-

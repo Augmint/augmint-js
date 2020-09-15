@@ -15,7 +15,20 @@ export type ILoanTuple = [string, string, string, string, string, string, string
 */
 
 // [loanId, collateralAmount, repaymentAmount, borrower, productId, state, maturity, disbursementTime, loanAmount, interestAmount, marginCallRate, isCollectable]
-export type ILoanTuple = [string, string, string, string, string, string, string, string, string, string, string, string];
+export type ILoanTuple = [
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string
+];
 
 export class Loan {
     public readonly id: number;
@@ -52,15 +65,20 @@ export class Loan {
         this.loanManagerAddress = loanManagerAddress;
         this.tokenAddress = tokenAddress;
 
-        const maturity:number = parseInt(configMaturity, 10);
+        const maturity: number = parseInt(configMaturity, 10);
         if (maturity > 0) {
-            const disbursementTime:number = parseInt(configDisbursementTime, 10);
+            const disbursementTime: number = parseInt(configDisbursementTime, 10);
 
             const state: number = parseInt(configState, 10);
 
             this.id = parseInt(configId, 10);
             this.collateralAmount = Wei.parse(configCollateralAmount);
-            this.borrower = '0x' + Web3.utils.toBN(configBorrower).toString(16).padStart(40, '0');
+            this.borrower =
+                "0x" +
+                Web3.utils
+                    .toBN(configBorrower)
+                    .toString(16)
+                    .padStart(40, "0");
             this.productId = parseInt(configProductId, 10);
             this.state = state;
             this.maturity = maturity;
@@ -69,16 +87,15 @@ export class Loan {
             this.loanAmount = Tokens.parse(configLoanAmount);
             this.repaymentAmount = Tokens.parse(configRepaymentAmount);
 
-            if(configMarginCallRate !== undefined) {
+            if (configMarginCallRate !== undefined) {
                 this.marginCallRate = Tokens.parse(configMarginCallRate);
-                this._isCollectable = configIsCollectable === '1';
+                this._isCollectable = configIsCollectable === "1";
             }
         }
     }
 
-
     get isMarginLoan(): boolean {
-        return !!this.marginCallRate
+        return !!this.marginCallRate;
     }
 
     get term(): number {
@@ -94,7 +111,7 @@ export class Loan {
     }
 
     get isDue(): boolean {
-        return this.state === LOAN_STATES.Open && (this.maturity - currentTime() < sevenDays);
+        return this.state === LOAN_STATES.Open && this.maturity - currentTime() < sevenDays;
     }
 
     get isExpired(): boolean {
@@ -126,12 +143,18 @@ export class Loan {
     // positive value means collateral has to be increased to reach target,
     // negative value means collateral could be decreased to reach target
     public calculateCollateralChange(currentRate: Tokens, targetRatio: Ratio): Wei {
-        return this.repaymentAmount.mulCeil(targetRatio).toWei(currentRate).sub(this.collateralAmount);
+        return this.repaymentAmount
+            .mulCeil(targetRatio)
+            .toWei(currentRate)
+            .sub(this.collateralAmount);
     }
 
     // calculates the resulting collateral ratio if collateral amount were changed by collateralChange wei
     // positive collateralChange means the collateral was increased, negative means it was decreased
     public calculateCollateralRatioChange(currentRate: Tokens, collateralChange: Wei): Ratio {
-        return this.collateralAmount.add(collateralChange).toTokens(currentRate).divToRatio(this.repaymentAmount);
+        return this.collateralAmount
+            .add(collateralChange)
+            .toTokens(currentRate)
+            .divToRatio(this.repaymentAmount);
     }
 }

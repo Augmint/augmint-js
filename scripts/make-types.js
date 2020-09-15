@@ -1,4 +1,5 @@
 const { TsGeneratorPlugin } = require("ts-generator");
+const { normalizeName } = require("./utils.js");
 const { join } = require("path");
 let content = {};
 
@@ -7,8 +8,9 @@ class TypeListPlugin extends TsGeneratorPlugin {
         const abiFile = JSON.parse(contents);
         const contractName = abiFile.contractName;
         const abiName = `${contractName}_ABI_${abiFile.abiHash}`;
+        const className = normalizeName(abiName); // this how latest typechain normalizes classnames
         const abis = content[contractName] || [];
-        abis.push(abiName);
+        abis.push({ abiName, className, contractName });
         content[contractName] = abis;
     }
 
@@ -21,14 +23,21 @@ class TypeListPlugin extends TsGeneratorPlugin {
         const imports = Object.keys(content)
             .reduce((prev, current) => {
                 return prev.concat(
-                    content[current].map(abiFileName => `import { ${abiFileName} } from "./types/${abiFileName}"`)
+                    content[current].map(abiInfo => `import { ${abiInfo.className} } from "./types/${abiInfo.abiName}"`)
                 );
             }, [])
             .join("\n");
-        const enums = Object.keys(content).map(contractName => `${contractName} = "${contractName}"`).join(",");
+
+        const enums = Object.keys(content)
+            .map(contractName => `${contractName} = "${contractName}"`)
+            .join(",");
+
         const types = Object.keys(content)
-            .map(contractName => `export type ${contractName} = ${content[contractName].join(" | ")};`)
+            .map(contract => {
+                return `export type ${contract} = ${content[contract].map(({ className }) => className).join(" | ")};`;
+            })
             .join("\n");
+
         return {
             contents: `
             ${imports}

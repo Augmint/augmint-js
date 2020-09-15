@@ -1,6 +1,6 @@
 import BN from "bn.js";
 import { AugmintContracts, Exchange as ExchangeInstance } from "../generated/index";
-import { TransactionObject } from "../generated/types/types";
+import { NonPayableTransactionObject, PayableTransactionObject } from "../generated/types/types";
 import { AbstractContract } from "./AbstractContract";
 import { AugmintToken } from "./AugmintToken";
 import { CHUNK_SIZE, LEGACY_CONTRACTS_CHUNK_SIZE } from "./constants";
@@ -40,7 +40,7 @@ export class OrderBook {
         };
 
         for (const order of orders) {
-            const remaining = tokens.sub(ret.filledTokens);
+            const remaining: Tokens = tokens.sub(ret.filledTokens);
             if (remaining.isZero()) {
                 break;
             }
@@ -252,7 +252,7 @@ export class Exchange extends AbstractContract {
     }
 
     public placeSellTokenOrder(price: Ratio, amount: Tokens): Transaction {
-        const web3Tx: TransactionObject<void> = this.token.instance.methods.transferAndNotify(
+        const web3Tx: NonPayableTransactionObject<void> = this.token.instance.methods.transferAndNotify(
             this.address,
             amount.toString(),
             price.toString()
@@ -267,7 +267,7 @@ export class Exchange extends AbstractContract {
     }
 
     public placeBuyTokenOrder(price: Ratio, amount: Wei): Transaction {
-        const web3Tx: TransactionObject<string> = this.instance.methods.placeBuyTokenOrder(price.toString());
+        const web3Tx: PayableTransactionObject<string> = this.instance.methods.placeBuyTokenOrder(price.toString());
 
         const transaction: Transaction = new Transaction(this.ethereumConnection, web3Tx, {
             gasLimit: PLACE_ORDER_GAS,
@@ -290,7 +290,7 @@ export class Exchange extends AbstractContract {
             throw new Error("invalid buyIds/sellIds recevied - no ids or the the params are not equal.");
         }
 
-        const web3Tx: TransactionObject<string> = this.instance.methods.matchMultipleOrders(
+        const web3Tx: NonPayableTransactionObject<string> = this.instance.methods.matchMultipleOrders(
             matchingOrders.buyIds,
             matchingOrders.sellIds
         );

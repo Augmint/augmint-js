@@ -1,4 +1,5 @@
 const { TsGeneratorPlugin } = require("ts-generator");
+const { normalizeName } = require("./utils.js");
 const { join, dirname, sep } = require("path");
 let environments = null;
 
@@ -6,7 +7,7 @@ function generateContracts(contracts) {
     return contracts
         .map(contract => {
             const stringContract = JSON.stringify(contract, null, 0);
-            return `new DeployedContract<${contract.abiFileName}>(${stringContract})`;
+            return `new DeployedContract<${normalizeName(contract.abiFileName)}>(${stringContract})`;
         })
         .join(",\n");
 }
@@ -41,8 +42,10 @@ class DeploymentListPlugin extends TsGeneratorPlugin {
         d.sort((a, b) => (a.current ? -1 : b.current ? 1 : b.generated - a.generated));
 
         const content = environments.get(nameSpace);
+
         content[contractName] = d.map(({ abiFileName, deployedAddress }) => ({
             abiFileName,
+            // className: normalizeName(abiFileName), // this how latest typechain normalizes classnames
             deployedAddress
         }));
     }
@@ -61,10 +64,11 @@ class DeploymentListPlugin extends TsGeneratorPlugin {
                             .reduce((prev, current) => {
                                 return prev.concat(content[current]);
                             }, [])
-                            .map(
-                                deployment =>
-                                    `import {${deployment.abiFileName}} from './types/${deployment.abiFileName}'`
-                            )
+                            .map(deployment => {
+                                return `import {${normalizeName(deployment.abiFileName)}} from './types/${
+                                    deployment.abiFileName
+                                }'`;
+                            })
                     ),
                 []
             )

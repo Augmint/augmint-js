@@ -1,7 +1,12 @@
-import BN from 'bn.js';
+import BN from "bn.js";
 import { EventEmitter } from "events";
 import { PromiEvent } from "web3-core";
-import { TransactionObject } from "../generated/types/types";
+import {
+    NonPayableTransactionObject,
+    PayableTransactionObject,
+    NonPayableTx,
+    PayableTx
+} from "../generated/types/types";
 import { TransactionError, TransactionSendError } from "./Errors";
 import { EthereumConnection } from "./EthereumConnection";
 
@@ -86,7 +91,7 @@ type ITransactionReceipt = any; // TODO: use Web3's type
  * @fires   transactionHash
  * @fires   receipt     fired as soon as a receipt received
  * @fires   confirmation    fired for each confirmation
- * @fires   error       @deprecated - fired in case of any error. kept for backward compatibility
+ * @fires   error       fired in case of any error. kept for backward compatibility
  * @fires   txRevert   fired when tx was mined but with REVERT opcode. error also fired in this case for backward compatibility
  * @class Transaction
  * @extends {EventEmitter}
@@ -97,7 +102,9 @@ export class Transaction extends EventEmitter {
     public txHash?: string;
     public txReceipt?: ITransactionReceipt;
 
-    public tx: TransactionObject<any>; /** web3.js TransactionObject result from .methods.<methodname> */
+    public tx:
+        | PayableTransactionObject<any>
+        | NonPayableTransactionObject<any>; /** web3.js TransactionObject result from .methods.<methodname> */
 
     public sendOptions: ISendOptions;
 
@@ -121,7 +128,11 @@ export class Transaction extends EventEmitter {
      * @param {ISendOptions} [sendOptions]  optionally specify any of the send options here or later at sign or send
      * @memberof Transaction
      */
-    constructor(ethereumConnection: EthereumConnection, tx: TransactionObject<any>, sendOptions?: ISendOptions) {
+    constructor(
+        ethereumConnection: EthereumConnection,
+        tx: PayableTransactionObject<any> | NonPayableTransactionObject<any>,
+        sendOptions?: ISendOptions
+    ) {
         super();
         if (!ethereumConnection || !tx) {
             throw new TransactionError("Both ethereumConnection and tx must be provided for Transaction constructor");
@@ -200,7 +211,10 @@ export class Transaction extends EventEmitter {
                 throw new TransactionError("from account is not set for send");
             }
             try {
-                this.sentTx = this.tx.send(Object.assign({}, this.sendOptions)); // webjs writes into passed params (beta36) (added .data to .sendOptions and Metamask hang for long before confirmation apperaed)
+                // webjs writes into passed params (beta36) (added .data to sendOptions and Metamask hang for long before confirmation apperaed)
+                // TODO: check if issues exists in latest web3
+                const _sendOptions: PayableTx | NonPayableTx = Object.assign({}, this.sendOptions);
+                this.sentTx = this.tx.send(_sendOptions);
             } catch (error) {
                 this.sendError = new TransactionSendError(error);
                 throw this.sendError;

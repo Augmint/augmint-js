@@ -230,9 +230,7 @@ export class EthereumConnection extends EventEmitter {
                         this.removeListener("providerError", tempOnproviderError);
                         reject(
                             new AugmintJsError(
-                                `EthereumConnection connect failed. connectionLost received instead of connect. Code: ${
-                                    e.code
-                                } Reason: ${e.reason}`
+                                `EthereumConnection connect failed. connectionLost received instead of connect. Code: ${e.code} Reason: ${e.reason}`
                             )
                         );
                     };
@@ -254,13 +252,11 @@ export class EthereumConnection extends EventEmitter {
         clearTimeout(this.connectionCheckTimer);
         if (this.isProviderWithEvents) {
             if (this.web3 && (await this.isConnected())) {
-                const disconnectedEventPromise: Promise<void> = new Promise(
-                    (resolve: () => void): void => {
-                        this.once("disconnected", () => {
-                            resolve();
-                        });
-                    }
-                );
+                const disconnectedEventPromise: Promise<void> = new Promise((resolve: () => void): void => {
+                    this.once("disconnected", () => {
+                        resolve();
+                    });
+                });
 
                 await this.web3.currentProvider.connection.close();
 

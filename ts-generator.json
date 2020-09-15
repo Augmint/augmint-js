@@ -1,11 +1,5 @@
 [
     {
-        "generator": "typechain",
-        "files": "./node_modules/@augmint/contracts/abiniser/abis/*.json",
-        "target": "web3-1.0.0",
-        "outDir": "./generated/types"
-    },
-    {
         "generator": "./scripts/make-abis.js",
         "files": "./node_modules/@augmint/contracts/abiniser/abis/*.json",
         "outDir": "./generated",
