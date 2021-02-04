@@ -30,7 +30,7 @@
         "bn.js": "5.1.3",
         "dotenv": "8.2.0",
         "ulog": "2.0.0-beta.7",
-        "web3": "1.0.0-beta.36"
+        "web3": "1.3.4"
     },
     "devDependencies": {
         "@typechain/web3-v1": "1.0.0",
