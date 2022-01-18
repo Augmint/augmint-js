@@ -28,7 +28,7 @@
     "dependencies": {
         "@augmint/contracts": "1.1.2",
         "bn.js": "5.1.3",
-        "dotenv": "8.2.0",
+        "dotenv": "14.2.0",
         "ulog": "2.0.0-beta.7",
         "web3": "1.0.0-beta.36"
     },
